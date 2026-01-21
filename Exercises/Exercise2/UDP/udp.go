@@ -66,7 +66,7 @@ func main() {
 	serverIP := getServerIP()
 	fmt.Println("Server IP:", serverIP)
 
-    n := 13
+    n := 1
     port := 20000 + n
 
     go UDPReceiver(port)
