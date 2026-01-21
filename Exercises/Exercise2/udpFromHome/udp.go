@@ -65,7 +65,7 @@ func UDPSender(serverIP net.IP, port int) {
 	}
 	defer conn.Close()
 
-	for i := 0; ; i++ {
+	for i := 0; i < 3 ; i++ {
 		msg := fmt.Sprintf("hei %d", i)
 		_, err := conn.Write([]byte(msg))
 		if err != nil {
