@@ -1,9 +1,11 @@
-package main
+package localsingle
 
-import "../ElevIO/elevio"
+//TODO: Implement elevalgo in Go with fsm.go, requests.go and perhaps more
+
+import "TTK4145/ElevIO"
 import "fmt"
 
-func main(){
+func Run(){
 
     numFloors := 4
 
