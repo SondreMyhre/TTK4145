@@ -1,14 +1,11 @@
 package main
 
-//TODO: Get localsingle.Run() to be Go version of elevalgo
-
 import (
-	"TTK4145/LocalSingleElevator"
+	localsingle2 "TTK4145/LocalSingleElevator2"
 )
 
 func main() {
-	
-	go localsingle.Run()
+	go localsingle2.Run()
 
-    select {}
+	select {}
 }

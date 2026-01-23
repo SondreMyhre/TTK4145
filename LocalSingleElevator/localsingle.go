@@ -28,7 +28,8 @@ func Run(){
     for {
         select {
         case a := <- drv_buttons:
-            fmt.Printf("%+v\n", a)
+          
+  fmt.Printf("%+v\n", a)
             elevio.SetButtonLamp(a.Button, a.Floor, true)
             
         case a := <- drv_floors:
