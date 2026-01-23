@@ -1,5 +1,5 @@
 package localsingle
 
-type LocalRequests struct {
+type Requests struct {
     // kommer senere
 }
