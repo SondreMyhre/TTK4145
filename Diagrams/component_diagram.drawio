@@ -1,11 +1,11 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36" version="29.3.4">
   <diagram id="R2lEEEUBdFMjLlhIrx00" name="Page-1">
-    <mxGraphModel dx="2592" dy="1568" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0" extFonts="Permanent Marker^https://fonts.googleapis.com/css?family=Permanent+Marker">
+    <mxGraphModel dx="2999" dy="1780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0" extFonts="Permanent Marker^https://fonts.googleapis.com/css?family=Permanent+Marker">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
         <mxCell id="Li5jwP5F72NqoR-SEKxY-2" connectable="0" parent="1" style="group" value="" vertex="1">
-          <mxGeometry height="790" width="1130" x="-1160" y="-827" as="geometry" />
+          <mxGeometry height="790" width="1130" x="-1110" y="-827" as="geometry" />
         </mxCell>
         <mxCell id="GstEm3v9U_mho4oylXKb-2" parent="Li5jwP5F72NqoR-SEKxY-2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=none;" value="" vertex="1">
           <mxGeometry height="790" width="1130" as="geometry" />
@@ -34,15 +34,7 @@
           <mxGeometry height="40.51282051282051" width="61.49659863945578" x="15.374149659863946" y="212.69230769230768" as="geometry" />
         </mxCell>
         <mxCell id="RQCx-Z1YgTzJrWGlehC2-43" parent="Li5jwP5F72NqoR-SEKxY-2" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;ElevatorNode (x3)&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- id: ElevID&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- elevator-serverAddr: string&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- udpPort: int&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- peers []PeerAddr&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- initElevator()&lt;/p&gt;" vertex="1">
-          <mxGeometry height="129.74" width="122.99" x="161.43" y="20.26" as="geometry" />
-        </mxCell>
-        <mxCell id="Li5jwP5F72NqoR-SEKxY-5" edge="1" parent="Li5jwP5F72NqoR-SEKxY-2" source="RQCx-Z1YgTzJrWGlehC2-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.25;entryDx=0;entryDy=0;" target="RQCx-Z1YgTzJrWGlehC2-49">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="700" y="287" />
-              <mxPoint x="700" y="287" />
-            </Array>
-          </mxGeometry>
+          <mxGeometry height="132.74" width="122.99" x="161.43" y="20.26" as="geometry" />
         </mxCell>
         <mxCell id="dIbx_XN2ECq2KDW1kXZS-1" edge="1" parent="Li5jwP5F72NqoR-SEKxY-2" source="RQCx-Z1YgTzJrWGlehC2-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="RQCx-Z1YgTzJrWGlehC2-48">
           <mxGeometry relative="1" as="geometry" />
@@ -62,6 +54,14 @@
             </Array>
           </mxGeometry>
         </mxCell>
+        <mxCell id="dIbx_XN2ECq2KDW1kXZS-17" edge="1" parent="Li5jwP5F72NqoR-SEKxY-2" source="RQCx-Z1YgTzJrWGlehC2-47" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="RQCx-Z1YgTzJrWGlehC2-49">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="690" y="327" />
+              <mxPoint x="690" y="327" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
         <mxCell id="RQCx-Z1YgTzJrWGlehC2-47" parent="Li5jwP5F72NqoR-SEKxY-2" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;span style=&quot;color: rgba(0, 0, 0, 0); font-family: monospace; text-wrap-mode: nowrap; background-color: transparent; text-align: left; font-size: 0px;&quot;&gt;%3CmxGraphModel%3E%3Croot%3E%3CmxCell%20id%3D%220%22%2F%3E%3CmxCell%20id%3D%221%22%20parent%3D%220%22%2F%3E%3CmxCell%20id%3D%222%22%20parent%3D%221%22%20style%3D%22verticalAlign%3Dtop%3Balign%3Dleft%3Boverflow%3Dfill%3Bhtml%3D1%3BwhiteSpace%3Dwrap%3B%22%20value%3D%22%26lt%3Bp%20style%3D%26quot%3Bmargin%3A0px%3Bmargin-top%3A4px%3Btext-align%3Acenter%3B%26quot%3B%26gt%3B%26lt%3Bb%26gt%3BorderSync%26lt%3B%2Fb%26gt%3B%26lt%3B%2Fp%26gt%3B%26lt%3Bhr%20size%3D%26quot%3B1%26quot%3B%20style%3D%26quot%3Bborder-style%3Asolid%3B%26quot%3B%26gt%3B%26lt%3Bp%20style%3D%26quot%3Bmargin%3A0px%3Bmargin-left%3A4px%3B%26quot%3B%26gt%3B%2B%20field%3A%20Type%26lt%3B%2Fp%26gt%3B%26lt%3Bhr%20size%3D%26quot%3B1%26quot%3B%20style%3D%26quot%3Bborder-style%3Asolid%3B%26quot%3B%26gt%3B%26lt%3Bp%20style%3D%26quot%3Bmargin%3A0px%3Bmargin-left%3A4px%3B%26quot%3B%26gt%3B%2B%20method()%3A%20Type%26lt%3B%2Fp%26gt%3B%22%20vertex%3D%221%22%3E%3CmxGeometry%20height%3D%2290%22%20width%3D%22160%22%20x%3D%22160%22%20y%3D%22195%22%20as%3D%22geometry%22%2F%3E%3C%2FmxCell%3E%3C%2Froot%3E%3C%2FmxGraphModel%3E&lt;/span&gt;&lt;b&gt;OrderSync&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- globalHallOrders: map[HallOrder]HallEntry&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- myAssigned: set[HallOrders]&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- myID: ElevID&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- OnLocalButtonPress(order)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- HandleOnFloorArrival(floor)&amp;nbsp;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- OnNetMsg(msg)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- BuildHeartbeat() HeartbeatMsg&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- AssignLoop()&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- AssignOrder(order) ElevID&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- BroadcastClaimOrder(order)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- BroadcastDone(order)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- ReleaseDeadPeerOrders(deadElevID)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- BroadcastHeartbeatLoop()&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- ApplyAssignment(order, assignedTo)&lt;/p&gt;" vertex="1">
           <mxGeometry height="248.85" width="246.07" x="440" y="91.15" as="geometry" />
         </mxCell>
@@ -72,7 +72,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="RQCx-Z1YgTzJrWGlehC2-49" parent="Li5jwP5F72NqoR-SEKxY-2" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;PeerMonitor&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- peerState: map[ElevID]PeerElevState&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- lastSeen: map[ElevID]time&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- timeout: time.duration&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- UpdatePeer(ElevID, state PeerElevState&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;)&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- AlivePeers() []ElevID&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- DetectDead() []ElevID&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- IsAlive(ElevID) bool&lt;/span&gt;&lt;/p&gt;" vertex="1">
-          <mxGeometry height="175.9" width="217.81" x="720" y="243.08" as="geometry" />
+          <mxGeometry height="166.92" width="217.81" x="736.66" y="243.08" as="geometry" />
         </mxCell>
         <mxCell id="RQCx-Z1YgTzJrWGlehC2-50" parent="Li5jwP5F72NqoR-SEKxY-2" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;LocalRequests&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- requests:&amp;nbsp;[N_FLOORS][N_BTNS]bool&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- SetCab(floor, value)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- SetHall(floor, dir, value)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- RequestsAbove(state) bool&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- RequestsBelow(state) bool&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- RequestsHere(state) bool&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- ChooseDirection(state) (dir, behaviour)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- ShouldStop(state) bool&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- ClearAtFloor(state) clearedOrders&lt;/p&gt;" vertex="1">
           <mxGeometry height="182.31" width="220" x="685.8199999999999" y="495.45" as="geometry" />
@@ -106,7 +106,7 @@
           <mxGeometry height="237.95" width="205.51" x="184.49" y="162.05" as="geometry" />
         </mxCell>
         <mxCell id="RQCx-Z1YgTzJrWGlehC2-86" parent="Li5jwP5F72NqoR-SEKxY-2" style="verticalAlign=top;align=left;overflow=fill;html=1;whiteSpace=wrap;" value="&lt;p style=&quot;margin:0px;margin-top:4px;text-align:center;&quot;&gt;&lt;b&gt;LocalSingleElevator&lt;/b&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- elevator: Elevator&lt;br&gt;&lt;/span&gt;&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;- doorTimer: Timer&lt;/span&gt;&lt;/p&gt;&lt;hr size=&quot;1&quot; style=&quot;border-style:solid;&quot;&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- OnCabButtonPress(floor)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- SetAssignedHall(order HallOrder, value)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- OnFloorArrival(floor) clearedOrders&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- OnDoorTimeout()&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- OnObstructionChanged(bool)&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- GetMyPeerState() PeerElevState&lt;/p&gt;&lt;p style=&quot;margin:0px;margin-left:4px;&quot;&gt;- GetCabOrders() [N_FLOORS]bool&lt;/p&gt;" vertex="1">
-          <mxGeometry height="234.1" width="230.88" x="169.12" y="465.9" as="geometry" />
+          <mxGeometry height="174.1" width="230.88" x="169.12" y="465.9" as="geometry" />
         </mxCell>
         <mxCell id="Li5jwP5F72NqoR-SEKxY-4" edge="1" parent="Li5jwP5F72NqoR-SEKxY-2" source="RQCx-Z1YgTzJrWGlehC2-94" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="RQCx-Z1YgTzJrWGlehC2-7">
           <mxGeometry relative="1" as="geometry" />
@@ -133,15 +133,15 @@
             <mxPoint x="1120" y="180" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="dIbx_XN2ECq2KDW1kXZS-15" edge="1" parent="Li5jwP5F72NqoR-SEKxY-2" source="RQCx-Z1YgTzJrWGlehC2-79" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="RQCx-Z1YgTzJrWGlehC2-2" value="Polls">
+        <mxCell id="dIbx_XN2ECq2KDW1kXZS-15" edge="1" parent="Li5jwP5F72NqoR-SEKxY-2" source="RQCx-Z1YgTzJrWGlehC2-2" style="endArrow=open;endSize=12;dashed=1;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="RQCx-Z1YgTzJrWGlehC2-79" value="">
           <mxGeometry relative="1" width="160" x="0.0126" as="geometry">
             <mxPoint as="offset" />
             <mxPoint x="90" y="310" as="sourcePoint" />
             <mxPoint x="250" y="310" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="dIbx_XN2ECq2KDW1kXZS-16" edge="1" parent="Li5jwP5F72NqoR-SEKxY-2" source="RQCx-Z1YgTzJrWGlehC2-79" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.001;exitY=0.723;exitDx=0;exitDy=0;exitPerimeter=0;" target="RQCx-Z1YgTzJrWGlehC2-3" value="Polls">
-          <mxGeometry relative="1" x="0.015" y="9" as="geometry">
+        <mxCell id="dIbx_XN2ECq2KDW1kXZS-16" edge="1" parent="Li5jwP5F72NqoR-SEKxY-2" source="RQCx-Z1YgTzJrWGlehC2-3" style="html=1;verticalAlign=bottom;endArrow=open;dashed=1;endSize=8;curved=0;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=-0.004;entryY=0.722;entryDx=0;entryDy=0;entryPerimeter=0;" target="RQCx-Z1YgTzJrWGlehC2-79" value="">
+          <mxGeometry relative="1" x="-0.0056" y="-9" as="geometry">
             <mxPoint as="offset" />
             <Array as="points">
               <mxPoint x="150" y="334" />
