@@ -2,24 +2,41 @@ package localsingle2
 
 import (
 	elevio "TTK4145/ElevIO"
-	"fmt"
 )
 
 // FSM encapsulates the finite state machine for a single elevator.
 type FSM struct {
-	elevator Elevator
+	elevator     Elevator
+	initialPrint bool // Track if we've done the initial print
 }
 
 // NewFSM creates a new FSM.
 func NewFSM() *FSM {
 	return &FSM{
-		elevator: NewElevator(),
+		elevator:     NewElevator(),
+		initialPrint: false,
 	}
 }
 
 // GetElevator returns a copy of the current elevator state.
 func (fsm *FSM) GetElevator() Elevator {
 	return fsm.elevator
+}
+
+// printState prints the elevator state, updating in place after the first print.
+func (fsm *FSM) printState() {
+	if !fsm.initialPrint {
+		fsm.elevator.PrintInitial()
+		fsm.initialPrint = true
+	} else {
+		fsm.elevator.PrintInPlace()
+	}
+}
+
+// PrintInitialState prints the initial state and marks it as printed.
+func (fsm *FSM) PrintInitialState() {
+	fsm.elevator.PrintInitial()
+	fsm.initialPrint = true
 }
 
 // SetDoorOpenDuration configures the door open duration.
@@ -45,9 +62,6 @@ func (fsm *FSM) OnInitBetweenFloors() {
 
 // OnRequestButtonPress handles a button press event.
 func (fsm *FSM) OnRequestButtonPress(btnFloor int, btnType ButtonType) {
-	fmt.Printf("\n\nOnRequestButtonPress(%d, %s)\n", btnFloor, btnType)
-	fsm.elevator.Print()
-
 	switch fsm.elevator.Behaviour {
 	case BehaviourDoorOpen:
 		if ShouldClearImmediately(fsm.elevator, btnFloor, btnType) {
@@ -80,16 +94,11 @@ func (fsm *FSM) OnRequestButtonPress(btnFloor int, btnType ButtonType) {
 	}
 
 	fsm.setAllLights()
-
-	fmt.Println("\nNew state:")
-	fsm.elevator.Print()
+	fsm.printState()
 }
 
 // OnFloorArrival handles arrival at a floor.
 func (fsm *FSM) OnFloorArrival(newFloor int) {
-	fmt.Printf("\n\nOnFloorArrival(%d)\n", newFloor)
-	fsm.elevator.Print()
-
 	fsm.elevator.Floor = newFloor
 	elevio.SetFloorIndicator(fsm.elevator.Floor)
 
@@ -108,15 +117,11 @@ func (fsm *FSM) OnFloorArrival(newFloor int) {
 		// Nothing to do.
 	}
 
-	fmt.Println("\nNew state:")
-	fsm.elevator.Print()
+	fsm.printState()
 }
 
 // OnDoorTimeout handles the door timeout event.
 func (fsm *FSM) OnDoorTimeout() {
-	fmt.Println("\n\nOnDoorTimeout()")
-	fsm.elevator.Print()
-
 	switch fsm.elevator.Behaviour {
 	case BehaviourDoorOpen:
 		pair := ChooseDirection(fsm.elevator)
@@ -138,6 +143,5 @@ func (fsm *FSM) OnDoorTimeout() {
 		// Nothing to do.
 	}
 
-	fmt.Println("\nNew state:")
-	fsm.elevator.Print()
+	fsm.printState()
 }

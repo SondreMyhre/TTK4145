@@ -1,7 +1,10 @@
 // Package localsingle2 provides a single-elevator FSM implementation.
 package localsingle2
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Constants for elevator configuration.
 const (
@@ -117,6 +120,73 @@ func (e Elevator) Print() {
 		fmt.Printf("  | %d", f)
 		for btn := 0; btn < NumButtons; btn++ {
 			// Skip invalid buttons (no up on top floor, no down on ground floor).
+			if (f == NumFloors-1 && btn == int(ButtonHallUp)) ||
+				(f == 0 && btn == int(ButtonHallDown)) {
+				fmt.Print("|     ")
+			} else if e.Requests[f][btn] {
+				fmt.Print("|  #  ")
+			} else {
+				fmt.Print("|  -  ")
+			}
+		}
+		fmt.Println("|")
+	}
+	fmt.Println("  +--------------------+")
+}
+
+// PrintInPlace outputs the elevator state and updates in place using ANSI escape codes.
+// Call this repeatedly to update the display without scrolling.
+func (e Elevator) PrintInPlace() {
+	// Number of lines in the output (header + 4 state lines + floor header + NumFloors + bottom border)
+	numLines := 7 + NumFloors
+
+	var sb strings.Builder
+
+	// Move cursor up to overwrite previous output
+	sb.WriteString(fmt.Sprintf("\033[%dA", numLines))
+
+	// Clear from cursor to end of screen
+	sb.WriteString("\033[J")
+
+	// Print state
+	sb.WriteString("  +--------------------+\n")
+	sb.WriteString(fmt.Sprintf("  |floor = %-2d          |\n", e.Floor))
+	sb.WriteString(fmt.Sprintf("  |dirn  = %-12s|\n", e.Direction))
+	sb.WriteString(fmt.Sprintf("  |behav = %-12s|\n", e.Behaviour))
+	sb.WriteString("  +--------------------+\n")
+	sb.WriteString("  |  | up  | dn  | cab |\n")
+
+	for f := NumFloors - 1; f >= 0; f-- {
+		sb.WriteString(fmt.Sprintf("  | %d", f))
+		for btn := 0; btn < NumButtons; btn++ {
+			if (f == NumFloors-1 && btn == int(ButtonHallUp)) ||
+				(f == 0 && btn == int(ButtonHallDown)) {
+				sb.WriteString("|     ")
+			} else if e.Requests[f][btn] {
+				sb.WriteString("|  #  ")
+			} else {
+				sb.WriteString("|  -  ")
+			}
+		}
+		sb.WriteString("|\n")
+	}
+	sb.WriteString("  +--------------------+\n")
+
+	fmt.Print(sb.String())
+}
+
+// PrintInitial prints the elevator state for the first time (no cursor movement).
+func (e Elevator) PrintInitial() {
+	fmt.Println("  +--------------------+")
+	fmt.Printf("  |floor = %-2d          |\n", e.Floor)
+	fmt.Printf("  |dirn  = %-12s|\n", e.Direction)
+	fmt.Printf("  |behav = %-12s|\n", e.Behaviour)
+	fmt.Println("  +--------------------+")
+	fmt.Println("  |  | up  | dn  | cab |")
+
+	for f := NumFloors - 1; f >= 0; f-- {
+		fmt.Printf("  | %d", f)
+		for btn := 0; btn < NumButtons; btn++ {
 			if (f == NumFloors-1 && btn == int(ButtonHallUp)) ||
 				(f == 0 && btn == int(ButtonHallDown)) {
 				fmt.Print("|     ")
