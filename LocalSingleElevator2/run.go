@@ -16,6 +16,7 @@ const (
 // This is the entry point for running the single elevator FSM.
 func Run() {
 	fmt.Println("Started!")
+	fmt.Println()
 
 	// Initialize hardware via ElevIO.
 	elevio.Init(DefaultServerAddr, NumFloors)
@@ -28,6 +29,9 @@ func Run() {
 	if elevio.GetFloor() == -1 {
 		fsm.OnInitBetweenFloors()
 	}
+
+	// Print initial state.
+	fsm.PrintInitialState()
 
 	// Channels for events from ElevIO polling.
 	buttonCh := make(chan elevio.ButtonEvent)
