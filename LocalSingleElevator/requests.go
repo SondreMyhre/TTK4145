@@ -1,145 +1,136 @@
 package localsingle
 
-import "TTK4145/ElevIO"
+import (
+    elevio "TTK4145/ElevIO"
+)
 
-type DirnBehaviourPair struct {
-    Dirn dirn
-    ElevatorBehaviour behaviour
+type DirectionBehaviourPair struct {
+    direction Direction
+    behaviour ElevatorBehaviour
 }
 
-func (e *LocalSingleElevator) requests_above()
-
-
-static int requests_above(Elevator e){
-    for(int f = e.floor+1; f < N_FLOORS; f++){
-        for(int btn = 0; btn < N_BUTTONS; btn++){
-            if(e.requests[f][btn]){
-                return 1;
+func (e *LocalSingleElevator) requestsAbove() bool {
+    for f := e.state.floor+1; f < N_FLOORS; f++ {
+        for btn := range N_BUTTONS {
+            if (e.requests[f][btn]){
+                return true
             }
         }
     }
-    return 0;
+    return false
 }
 
-static int requests_below(Elevator e){
-    for(int f = 0; f < e.floor; f++){
-        for(int btn = 0; btn < N_BUTTONS; btn++){
-            if(e.requests[f][btn]){
-                return 1;
+func (e *LocalSingleElevator) requestsBelow() bool {
+    for f := range e.state.floor {
+        for btn := range N_BUTTONS {
+            if (e.requests[f][btn]){
+                return true
             }
         }
     }
-    return 0;
+    return false
 }
 
-static int requests_here(Elevator e){
-    for(int btn = 0; btn < N_BUTTONS; btn++){
-        if(e.requests[e.floor][btn]){
-            return 1;
+func (e *LocalSingleElevator) requestsHere() bool {
+    for btn := range N_BUTTONS {
+        if (e.requests[e.state.floor][btn]){
+            return true
         }
     }
-    return 0;
+    return false
 }
 
-
-DirnBehaviourPair requests_chooseDirection(Elevator e){
-    switch(e.dirn){
-    case D_Up:
-        return  requests_above(e) ? (DirnBehaviourPair){D_Up,   EB_Moving}   :
-                requests_here(e)  ? (DirnBehaviourPair){D_Down, EB_DoorOpen} :
-                requests_below(e) ? (DirnBehaviourPair){D_Down, EB_Moving}   :
-                                    (DirnBehaviourPair){D_Stop, EB_Idle}     ;
-    case D_Down:
-        return  requests_below(e) ? (DirnBehaviourPair){D_Down, EB_Moving}   :
-                requests_here(e)  ? (DirnBehaviourPair){D_Up,   EB_DoorOpen} :
-                requests_above(e) ? (DirnBehaviourPair){D_Up,   EB_Moving}   :
-                                    (DirnBehaviourPair){D_Stop, EB_Idle}     ;
-    case D_Stop: // there should only be one request in the Stop case. Checking up or down first is arbitrary.
-        return  requests_here(e)  ? (DirnBehaviourPair){D_Stop, EB_DoorOpen} :
-                requests_above(e) ? (DirnBehaviourPair){D_Up,   EB_Moving}   :
-                requests_below(e) ? (DirnBehaviourPair){D_Down, EB_Moving}   :
-                                    (DirnBehaviourPair){D_Stop, EB_Idle}     ;
-    default:
-        return (DirnBehaviourPair){D_Stop, EB_Idle};
-    }
-}
-
-
-
-int requests_shouldStop(Elevator e){
-    switch(e.dirn){
-    case D_Down:
-        return
-            e.requests[e.floor][B_HallDown] ||
-            e.requests[e.floor][B_Cab]      ||
-            !requests_below(e);
-    case D_Up:
-        return
-            e.requests[e.floor][B_HallUp]   ||
-            e.requests[e.floor][B_Cab]      ||
-            !requests_above(e);
-    case D_Stop:
-    default:
-        return 1;
-    }
-}
-
-int requests_shouldClearImmediately(Elevator e, int btn_floor, Button btn_type){
-    switch(e.config.clearRequestVariant){
-    case CV_All:
-        return e.floor == btn_floor;
-    case CV_InDirn:
-        return 
-            e.floor == btn_floor && 
-            (
-                (e.dirn == D_Up   && btn_type == B_HallUp)    ||
-                (e.dirn == D_Down && btn_type == B_HallDown)  ||
-                e.dirn == D_Stop ||
-                btn_type == B_Cab
-            );  
-    default:
-        return 0;
-    }
-}
-
-Elevator requests_clearAtCurrentFloor(Elevator e){
-        
-    switch(e.config.clearRequestVariant){
-    case CV_All:
-        for(Button btn = 0; btn < N_BUTTONS; btn++){
-            e.requests[e.floor][btn] = 0;
+func (e *LocalSingleElevator) ChooseDirection() DirectionBehaviourPair {
+    switch e.state.direction {
+    case DirUp:
+        if e.requestsAbove() {
+            return DirectionBehaviourPair{DirUp, BehaviourMoving}
+        } else if e.requestsHere() {
+            return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
+        } else if e.requestsBelow() {
+            return DirectionBehaviourPair{DirDown, BehaviourMoving}
+        } else {
+            return DirectionBehaviourPair{DirStop, BehaviourIdle}
         }
-        break;
-        
-    case CV_InDirn:
-        e.requests[e.floor][B_Cab] = 0;
-        switch(e.dirn){
-        case D_Up:
-            if(!requests_above(e) && !e.requests[e.floor][B_HallUp]){
-                e.requests[e.floor][B_HallDown] = 0;
-            }
-            e.requests[e.floor][B_HallUp] = 0;
-            break;
-            
-        case D_Down:
-            if(!requests_below(e) && !e.requests[e.floor][B_HallDown]){
-                e.requests[e.floor][B_HallUp] = 0;
-            }
-            e.requests[e.floor][B_HallDown] = 0;
-            break;
-            
-        case D_Stop:
-        default:
-            e.requests[e.floor][B_HallUp] = 0;
-            e.requests[e.floor][B_HallDown] = 0;
-            break;
+    case DirDown:
+        if e.requestsBelow() {
+            return DirectionBehaviourPair{DirDown, BehaviourMoving}
+        } else if e.requestsHere() {
+            return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
+        } else if e.requestsAbove() {
+            return DirectionBehaviourPair{DirUp, BehaviourMoving}
+        } else {
+            return DirectionBehaviourPair{DirStop, BehaviourIdle}
         }
-        break;
-        
+    case DirStop:
+        if e.requestsHere() {
+            return DirectionBehaviourPair{DirStop, BehaviourIdle}
+        } else if e.requestsAbove() {
+            return DirectionBehaviourPair{DirUp, BehaviourMoving}
+        } else if e.requestsBelow() {
+            return DirectionBehaviourPair{DirDown, BehaviourMoving}
+        } else {
+            return DirectionBehaviourPair{DirStop, BehaviourIdle}
+        }
     default:
-        break;
+        return DirectionBehaviourPair{DirStop, BehaviourIdle}
     }
-    
-    return e;
 }
-¨
+
+
+func (e *LocalSingleElevator) ShouldStop() bool {
+    switch e.state.direction {
+    case DirDown: 
+        return e.requests[e.state.floor][elevio.BT_HallDown] ||
+               e.requests[e.state.floor][elevio.BT_Cab]      ||
+               !e.requestsBelow()
+    case DirUp: 
+        return e.requests[e.state.floor][elevio.BT_HallUp] || 
+               e.requests[e.state.floor][elevio.BT_Cab]    || 
+               !e.requestsAbove()
+    default:
+        return true
+    }
+}
+
+func (e *LocalSingleElevator) ShouldClearImmediately(buttonFloor int, buttonType elevio.ButtonType) bool {
+    switch e.state.direction {
+    case DirDown: 
+        return e.requests[e.state.floor][elevio.BT_HallDown] ||
+               e.requests[e.state.floor][elevio.BT_Cab]      ||
+               !e.requestsBelow()
+    case DirUp: 
+        return e.requests[e.state.floor][elevio.BT_HallUp] || 
+               e.requests[e.state.floor][elevio.BT_Cab]    || 
+               !e.requestsAbove()
+    default:
+        return true
+    }
+}
+
+func (e *LocalSingleElevator) shouldClearImmediately(buttonFloor int, buttonType elevio.ButtonType) bool {
+    return e.state.floor == buttonFloor && 
+           ((e.state.direction == DirUp && buttonType == elevio.BT_HallUp)     ||
+            (e.state.direction == DirDown && buttonType == elevio.BT_HallDown) ||
+            e.state.direction == DirStop ||
+            buttonType == elevio.BT_Cab)
+}
+
+func (e *LocalSingleElevator) ClearAtCurrentFloor() {
+		e.requests[e.state.floor][elevio.BT_Cab] = false
+		switch e.state.direction {
+		case DirUp:
+			if !e.requestsAbove() && !e.requests[e.state.floor][elevio.BT_HallUp] {
+				e.requests[e.state.floor][elevio.BT_HallDown] = false
+			}
+			e.requests[e.state.floor][elevio.BT_HallUp] = false
+		case DirDown:
+			if !e.requestsBelow() && !e.requests[e.state.floor][elevio.BT_HallDown] {
+				e.requests[e.state.floor][elevio.BT_HallUp] = false
+			}
+			e.requests[e.state.floor][elevio.BT_HallDown] = false
+		default:
+			e.requests[e.state.floor][elevio.BT_HallUp] = false
+			e.requests[e.state.floor][elevio.BT_HallDown] = false
+		}
+}

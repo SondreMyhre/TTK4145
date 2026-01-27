@@ -1,5 +1,5 @@
 package localsingle
 
-type ElevatorState struct {
+type FSMElevatorState struct {
     // kommer senere
 }

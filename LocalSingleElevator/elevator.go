@@ -21,9 +21,9 @@ const (
 type Direction int
 
 const (
-	D_Down Direction = -1
-	D_Stop Direction = 0
-	D_Up   Direction = 1
+	DirDown Direction = -1
+	DirStop Direction = 0
+	DirUp   Direction = 1
 )
 
 type ElevatorState struct {
@@ -34,7 +34,7 @@ type ElevatorState struct {
 
 type LocalSingleElevator struct {
 	state 			   ElevatorState
-	requests           [N_FLOORS][N_BUTTONS]int
+	requests           [N_FLOORS][N_BUTTONS]bool
 	doorOpenDuration_s float64
 
 	// dropper config
@@ -57,11 +57,11 @@ func eb_toString(eb ElevatorBehaviour) string {
 
 func direction_toString(direction Direction) string {
 	switch direction {
-	case D_Up:
+	case DirUp:
 		return "D_Up"
-	case D_Down:
+	case DirDown:
 		return "D_Down"
-	case D_Stop:
+	case DirStop:
 		return "D_Stop"
 	default:
 		return "D_UNDEFINED"
@@ -88,7 +88,7 @@ func elevator_print(elevator LocalSingleElevator) {
 				(f == 0 && btn == int(elevio.BT_HallDown)) {
 				fmt.Printf("|     ")
 			} else {
-				if elevator.requests[f][btn] != 0 {
+				if elevator.requests[f][btn] != false {
 					fmt.Print("|  #  ")
 				} else {
 					fmt.Print("|  -  ")
@@ -102,9 +102,10 @@ func elevator_print(elevator LocalSingleElevator) {
 
 func elevator_uninitialized() LocalSingleElevator {
 	return LocalSingleElevator{
-		floor:              -1,
-		direction:          D_Stop,
-		behaviour:          BehaviourIdle,
+		state: ElevatorState{floor:              -1,
+							 direction:          DirStop,
+							 behaviour:          BehaviourIdle,
+							},
 		doorOpenDuration_s: 3.0,
 	}
 }
