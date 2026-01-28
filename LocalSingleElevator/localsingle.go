@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	DefaultServerAddr       = "localhost:15657"
+	DefaultServerAddr       = "localhost:15657" // TODO: gjøre dette mulig å sette med flags
 	DefaultDoorOpenDuration = 3.0
 )
 
@@ -24,13 +24,13 @@ func Run() {
 	buttonCh := make(chan elevio.ButtonEvent)
 	floorCh := make(chan int)
 
-	go elevio.PollButtons(buttonCh)
+	go elevio.PollButtons(buttonCh)	// Her vil vi Polle fra OrderSync også
 	go elevio.PollFloorSensor(floorCh)
 
 	for {
 		select {
 		case evt := <-buttonCh:
-			elevator.FSM_OnRequestButtonPress(evt.Floor, evt.Button)
+			elevator.FSM_OnRequestButtonPress(evt.Floor, evt.Button)	// Her vil vi sjekke if Cab
 
 		case floor := <-floorCh:
 			elevator.FSM_OnFloorArrival(floor)

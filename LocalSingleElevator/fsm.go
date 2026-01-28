@@ -4,7 +4,7 @@ import (
 	elevio "TTK4145/ElevIO"
 )
 
-func setAllLights(elevator LocalSingleElevator) {
+func setAllLights(elevator LocalSingleElevator) {	// Bør endres til setCabLights hvis kun Cab eies av localsingle
 	for floor := range N_FLOORS {
 		for btn := range N_BUTTONS {
 			elevio.SetButtonLamp(elevio.ButtonType(btn), floor, elevator.requests[floor][btn])

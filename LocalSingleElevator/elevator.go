@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	N_FLOORS  = 4
+	N_FLOORS  = 4	// TODO: gjøre dette mulig å sette med flags
 	N_BUTTONS = 3
 )
 
