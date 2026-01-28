@@ -35,11 +35,12 @@ func Run() {
 		case floor := <-floorCh:
 			elevator.FSM_OnFloorArrival(floor)
 
-		default:
-			// if TimerTimedOut() {
-			// 	TimerStop()
-			// 	fsm.OnDoorTimeout()
-			// }
+		case <-elevator.doorTimer.C:
+            if elevator.doorTimer != nil {
+                elevator.FSM_OnDoorTimeout()
+            }
+            
+        default:
 			time.Sleep(10 * time.Millisecond)
 		}
 	}

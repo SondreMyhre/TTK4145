@@ -34,12 +34,10 @@ type ElevatorState struct {
 }
 
 type LocalSingleElevator struct {
-	state              ElevatorState
-	requests           [N_FLOORS][N_BUTTONS]bool
-	doorOpenDuration_s time.Duration
-
-	// dropper config
-
+	state     ElevatorState
+	requests  [N_FLOORS][N_BUTTONS]bool
+	doorTimer *time.Timer
+	doorDur   time.Duration
 }
 
 func ElevatorBehaviourToString(eb ElevatorBehaviour) string {
@@ -115,11 +113,38 @@ func PrintElevator(elevator LocalSingleElevator) {
 }
 
 func MakeUninitializedElevator() LocalSingleElevator {
-	return LocalSingleElevator{
+	elevator := LocalSingleElevator{
 		state: ElevatorState{floor: -1,
 			direction: DirStop,
 			behaviour: BehaviourIdle,
 		},
-		doorOpenDuration_s: 3 * time.Second,
 	}
+	elevator.InitDoorTimer()
+	return elevator
+}
+
+func (elevator *LocalSingleElevator) InitDoorTimer() {
+	elevator.doorDur = 3 * time.Second
+
+	// Lag timer, men start den "deaktivert"
+	elevator.doorTimer = time.NewTimer(elevator.doorDur)
+	if !elevator.doorTimer.Stop() {
+		select {
+		case <-elevator.doorTimer.C:
+		default:
+		}
+	}
+}
+
+func (elevator *LocalSingleElevator) ResetDoorTimer() {
+	if elevator.doorTimer == nil {
+		elevator.InitDoorTimer()
+	}
+	if !elevator.doorTimer.Stop() {
+		select {
+		case <-elevator.doorTimer.C:
+		default:
+		}
+	}
+	elevator.doorTimer.Reset(elevator.doorDur)
 }

@@ -4,9 +4,11 @@ import (
 	elevio "TTK4145/ElevIO"
 )
 
-func setCabLights(elevator LocalSingleElevator) {
+func setAllLights(elevator LocalSingleElevator) {
 	for floor := range N_FLOORS {
-		elevio.SetButtonLamp(elevio.BT_Cab, floor, elevator.requests[floor][elevio.BT_Cab])
+		for btn := range N_BUTTONS {
+			elevio.SetButtonLamp(elevio.ButtonType(btn), floor, elevator.requests[floor][btn])
+		}
 	}
 }
 
@@ -20,7 +22,7 @@ func (elevator *LocalSingleElevator) FSM_OnRequestButtonPress(buttonFloor int, b
 	switch elevator.state.behaviour {
 	case BehaviourDoorOpen:
 		if elevator.ShouldClearImmediately(buttonFloor, buttonType) {
-			// StartTimer(elevator.doorOpenDuration_s)
+			elevator.ResetDoorTimer()
 		} else {
 			elevator.requests[buttonFloor][buttonType] = true
 		}
@@ -34,7 +36,7 @@ func (elevator *LocalSingleElevator) FSM_OnRequestButtonPress(buttonFloor int, b
 		switch pair.behaviour {
 		case BehaviourDoorOpen:
 			elevio.SetDoorOpenLamp(true)
-			// StartTimer()
+			elevator.ResetDoorTimer()
 			elevator.ClearAtCurrentFloor()
 		case BehaviourMoving:
 			elevio.SetMotorDirection(DirectionToMotorDirection(elevator.state.direction))
@@ -42,7 +44,7 @@ func (elevator *LocalSingleElevator) FSM_OnRequestButtonPress(buttonFloor int, b
 
 		}
 	}
-	setCabLights(*elevator)
+	setAllLights(*elevator)
 }
 
 func (elevator *LocalSingleElevator) FSM_OnFloorArrival(newFloor int) {
@@ -55,8 +57,8 @@ func (elevator *LocalSingleElevator) FSM_OnFloorArrival(newFloor int) {
 			elevio.SetMotorDirection(elevio.MD_Stop)
 			elevio.SetDoorOpenLamp(true)
 			elevator.ClearAtCurrentFloor()
-			// StartTimer(doorOpenDuration_s)
-			setCabLights(*elevator)
+			elevator.ResetDoorTimer()
+			setAllLights(*elevator)
 			elevator.state.behaviour = BehaviourDoorOpen
 		}
 	default:
@@ -65,6 +67,7 @@ func (elevator *LocalSingleElevator) FSM_OnFloorArrival(newFloor int) {
 }
 
 func (elevator *LocalSingleElevator) FSM_OnDoorTimeout() {
+	elevator.ResetDoorTimer()
 	switch elevator.state.behaviour {
 	case BehaviourDoorOpen:
 		pair := elevator.ChooseDirection()
@@ -73,11 +76,11 @@ func (elevator *LocalSingleElevator) FSM_OnDoorTimeout() {
 
 		switch elevator.state.behaviour {
 		case BehaviourDoorOpen:
-			// StartTimer(doorOpenDuration_s)
+			elevator.ResetDoorTimer()
 			elevator.ClearAtCurrentFloor()
-			setCabLights(*elevator)
+			setAllLights(*elevator)
 		case BehaviourMoving:
-            elevio.SetDoorOpenLamp(false)
+			elevio.SetDoorOpenLamp(false)
 			elevio.SetMotorDirection(DirectionToMotorDirection(elevator.state.direction))
 		case BehaviourIdle:
 			elevio.SetDoorOpenLamp(false)
