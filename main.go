@@ -1,11 +1,11 @@
 package main
 
 import (
-	localsingle2 "TTK4145/LocalSingleElevator2"
+	localsingle "TTK4145/LocalSingleElevator"
 )
 
 func main() {
-	go localsingle2.Run()
+	go localsingle.Run()
 
 	select {}
 }

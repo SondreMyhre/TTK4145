@@ -3,6 +3,7 @@ package localsingle
 import (
 	elevio "TTK4145/ElevIO"
 	"fmt"
+	"time"
 )
 
 const (
@@ -27,57 +28,70 @@ const (
 )
 
 type ElevatorState struct {
-	floor              int
-	direction          Direction
-	behaviour          ElevatorBehaviour
+	floor     int
+	direction Direction
+	behaviour ElevatorBehaviour
 }
 
 type LocalSingleElevator struct {
-	state 			   ElevatorState
+	state              ElevatorState
 	requests           [N_FLOORS][N_BUTTONS]bool
-	doorOpenDuration_s float64
+	doorOpenDuration_s time.Duration
 
 	// dropper config
 
 }
 
-func eb_toString(eb ElevatorBehaviour) string {
+func ElevatorBehaviourToString(eb ElevatorBehaviour) string {
 	switch eb {
 	case BehaviourIdle:
-		return "EB_Idle"
+		return "BehaviourIdle"
 	case BehaviourDoorOpen:
-		return "EB_DoorOpen"
+		return "BehaviourDoorOpen"
 	case BehaviourMoving:
-		return "EB_Moving"
+		return "BehaviourMoving"
 	default:
-		return "EB_UNDEFINED"
+		return "BehaviourUndefined"
 
 	}
 }
 
-func direction_toString(direction Direction) string {
+func DirectionToString(direction Direction) string {
 	switch direction {
 	case DirUp:
-		return "D_Up"
+		return "DirUp"
 	case DirDown:
-		return "D_Down"
+		return "DirDown"
 	case DirStop:
-		return "D_Stop"
+		return "DirStop"
 	default:
-		return "D_UNDEFINED"
+		return "DirUndefined"
 
 	}
 }
 
-func elevator_print(elevator LocalSingleElevator) {
+func DirectionToMotorDirection(direction Direction) elevio.MotorDirection {
+	switch direction {
+	case DirUp:
+		return elevio.MD_Up
+	case DirDown:
+		return elevio.MD_Down
+	case DirStop:
+		return elevio.MD_Stop
+	default:
+		return elevio.MD_Stop
+	}
+}
+
+func PrintElevator(elevator LocalSingleElevator) {
 	fmt.Printf("  +--------------------+\n")
 	fmt.Printf(
 		"  |floor = %-2d          |\n"+
 			"  |direction  = %-12.12s|\n"+
 			"  |behav = %-12.12s|\n",
 		elevator.state.floor,
-		direction_toString(elevator.state.direction),
-		eb_toString(elevator.state.behaviour),
+		DirectionToString(elevator.state.direction),
+		ElevatorBehaviourToString(elevator.state.behaviour),
 	)
 	fmt.Printf("  +--------------------+\n")
 	fmt.Printf("  |  | up  | dn  | cab |\n")
@@ -100,12 +114,12 @@ func elevator_print(elevator LocalSingleElevator) {
 	fmt.Printf("  +--------------------+\n")
 }
 
-func elevator_uninitialized() LocalSingleElevator {
+func MakeUninitializedElevator() LocalSingleElevator {
 	return LocalSingleElevator{
-		state: ElevatorState{floor:              -1,
-							 direction:          DirStop,
-							 behaviour:          BehaviourIdle,
-							},
-		doorOpenDuration_s: 3.0,
+		state: ElevatorState{floor: -1,
+			direction: DirStop,
+			behaviour: BehaviourIdle,
+		},
+		doorOpenDuration_s: 3 * time.Second,
 	}
 }

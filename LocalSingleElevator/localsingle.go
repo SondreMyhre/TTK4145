@@ -1,62 +1,46 @@
 package localsingle
 
-//TODO: Implement elevalgo in Go with fsm.go, requests.go and perhaps more
+import (
+	elevio "TTK4145/ElevIO"
+	"fmt"
+	"time"
+)
 
-import "TTK4145/ElevIO"
-import "fmt"
+const (
+	DefaultServerAddr       = "localhost:15657"
+	DefaultDoorOpenDuration = 3.0
+)
 
-func Run(){
+func Run() {
+	fmt.Println("Started!")
+	elevio.Init(DefaultServerAddr, 4)
 
-    numFloors := 4
+	elevator := MakeUninitializedElevator()
 
-    elevio.Init("localhost:15657", numFloors)
-    
-    var d elevio.MotorDirection = elevio.MD_Up
-    //elevio.SetMotorDirection(d)
-    
-    drv_buttons := make(chan elevio.ButtonEvent)
-    drv_floors  := make(chan int)
-    drv_obstr   := make(chan bool)
-    drv_stop    := make(chan bool)    
-    
-    go elevio.PollButtons(drv_buttons)
-    go elevio.PollFloorSensor(drv_floors)
-    go elevio.PollObstructionSwitch(drv_obstr)
-    go elevio.PollStopButton(drv_stop)
-    
-    
-    for {
-        select {
-        case a := <- drv_buttons:
-          
-  fmt.Printf("%+v\n", a)
-            elevio.SetButtonLamp(a.Button, a.Floor, true)
-            
-        case a := <- drv_floors:
-            fmt.Printf("%+v\n", a)
-            if a == numFloors-1 {
-                d = elevio.MD_Down
-            } else if a == 0 {
-                d = elevio.MD_Up
-            }
-            elevio.SetMotorDirection(d)
-            
-            
-        case a := <- drv_obstr:
-            fmt.Printf("%+v\n", a)
-            if a {
-                elevio.SetMotorDirection(elevio.MD_Stop)
-            } else {
-                elevio.SetMotorDirection(d)
-            }
-            
-        case a := <- drv_stop:
-            fmt.Printf("%+v\n", a)
-            for f := 0; f < numFloors; f++ {
-                for b := elevio.ButtonType(0); b < 3; b++ {
-                    elevio.SetButtonLamp(b, f, false)
-                }
-            }
-        }
-    }    
+	if elevio.GetFloor() == -1 {
+		elevator.FSM_OnInitBetweenFloors()
+	}
+
+	buttonCh := make(chan elevio.ButtonEvent)
+	floorCh := make(chan int)
+
+	go elevio.PollButtons(buttonCh)
+	go elevio.PollFloorSensor(floorCh)
+
+	for {
+		select {
+		case evt := <-buttonCh:
+			elevator.FSM_OnRequestButtonPress(evt.Floor, evt.Button)
+
+		case floor := <-floorCh:
+			elevator.FSM_OnFloorArrival(floor)
+
+		default:
+			// if TimerTimedOut() {
+			// 	TimerStop()
+			// 	fsm.OnDoorTimeout()
+			// }
+			time.Sleep(10 * time.Millisecond)
+		}
+	}
 }

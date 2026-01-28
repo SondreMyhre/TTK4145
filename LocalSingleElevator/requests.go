@@ -1,136 +1,120 @@
 package localsingle
 
 import (
-    elevio "TTK4145/ElevIO"
+	elevio "TTK4145/ElevIO"
 )
 
 type DirectionBehaviourPair struct {
-    direction Direction
-    behaviour ElevatorBehaviour
+	direction Direction
+	behaviour ElevatorBehaviour
 }
 
-func (e *LocalSingleElevator) requestsAbove() bool {
-    for f := e.state.floor+1; f < N_FLOORS; f++ {
-        for btn := range N_BUTTONS {
-            if (e.requests[f][btn]){
-                return true
-            }
-        }
-    }
-    return false
-}
-
-func (e *LocalSingleElevator) requestsBelow() bool {
-    for f := range e.state.floor {
-        for btn := range N_BUTTONS {
-            if (e.requests[f][btn]){
-                return true
-            }
-        }
-    }
-    return false
-}
-
-func (e *LocalSingleElevator) requestsHere() bool {
-    for btn := range N_BUTTONS {
-        if (e.requests[e.state.floor][btn]){
-            return true
-        }
-    }
-    return false
-}
-
-func (e *LocalSingleElevator) ChooseDirection() DirectionBehaviourPair {
-    switch e.state.direction {
-    case DirUp:
-        if e.requestsAbove() {
-            return DirectionBehaviourPair{DirUp, BehaviourMoving}
-        } else if e.requestsHere() {
-            return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
-        } else if e.requestsBelow() {
-            return DirectionBehaviourPair{DirDown, BehaviourMoving}
-        } else {
-            return DirectionBehaviourPair{DirStop, BehaviourIdle}
-        }
-    case DirDown:
-        if e.requestsBelow() {
-            return DirectionBehaviourPair{DirDown, BehaviourMoving}
-        } else if e.requestsHere() {
-            return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
-        } else if e.requestsAbove() {
-            return DirectionBehaviourPair{DirUp, BehaviourMoving}
-        } else {
-            return DirectionBehaviourPair{DirStop, BehaviourIdle}
-        }
-    case DirStop:
-        if e.requestsHere() {
-            return DirectionBehaviourPair{DirStop, BehaviourIdle}
-        } else if e.requestsAbove() {
-            return DirectionBehaviourPair{DirUp, BehaviourMoving}
-        } else if e.requestsBelow() {
-            return DirectionBehaviourPair{DirDown, BehaviourMoving}
-        } else {
-            return DirectionBehaviourPair{DirStop, BehaviourIdle}
-        }
-    default:
-        return DirectionBehaviourPair{DirStop, BehaviourIdle}
-    }
-}
-
-
-func (e *LocalSingleElevator) ShouldStop() bool {
-    switch e.state.direction {
-    case DirDown: 
-        return e.requests[e.state.floor][elevio.BT_HallDown] ||
-               e.requests[e.state.floor][elevio.BT_Cab]      ||
-               !e.requestsBelow()
-    case DirUp: 
-        return e.requests[e.state.floor][elevio.BT_HallUp] || 
-               e.requests[e.state.floor][elevio.BT_Cab]    || 
-               !e.requestsAbove()
-    default:
-        return true
-    }
-}
-
-func (e *LocalSingleElevator) ShouldClearImmediately(buttonFloor int, buttonType elevio.ButtonType) bool {
-    switch e.state.direction {
-    case DirDown: 
-        return e.requests[e.state.floor][elevio.BT_HallDown] ||
-               e.requests[e.state.floor][elevio.BT_Cab]      ||
-               !e.requestsBelow()
-    case DirUp: 
-        return e.requests[e.state.floor][elevio.BT_HallUp] || 
-               e.requests[e.state.floor][elevio.BT_Cab]    || 
-               !e.requestsAbove()
-    default:
-        return true
-    }
-}
-
-func (e *LocalSingleElevator) shouldClearImmediately(buttonFloor int, buttonType elevio.ButtonType) bool {
-    return e.state.floor == buttonFloor && 
-           ((e.state.direction == DirUp && buttonType == elevio.BT_HallUp)     ||
-            (e.state.direction == DirDown && buttonType == elevio.BT_HallDown) ||
-            e.state.direction == DirStop ||
-            buttonType == elevio.BT_Cab)
-}
-
-func (e *LocalSingleElevator) ClearAtCurrentFloor() {
-		e.requests[e.state.floor][elevio.BT_Cab] = false
-		switch e.state.direction {
-		case DirUp:
-			if !e.requestsAbove() && !e.requests[e.state.floor][elevio.BT_HallUp] {
-				e.requests[e.state.floor][elevio.BT_HallDown] = false
+func (elevator *LocalSingleElevator) RequestsAbove() bool {
+	for f := elevator.state.floor + 1; f < N_FLOORS; f++ {
+		for btn := range N_BUTTONS {
+			if elevator.requests[f][btn] {
+				return true
 			}
-			e.requests[e.state.floor][elevio.BT_HallUp] = false
-		case DirDown:
-			if !e.requestsBelow() && !e.requests[e.state.floor][elevio.BT_HallDown] {
-				e.requests[e.state.floor][elevio.BT_HallUp] = false
-			}
-			e.requests[e.state.floor][elevio.BT_HallDown] = false
-		default:
-			e.requests[e.state.floor][elevio.BT_HallUp] = false
-			e.requests[e.state.floor][elevio.BT_HallDown] = false
 		}
+	}
+	return false
+}
+
+func (elevator *LocalSingleElevator) RequestsBelow() bool {
+	for f := range elevator.state.floor {
+		for btn := range N_BUTTONS {
+			if elevator.requests[f][btn] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (elevator *LocalSingleElevator) RequestsHere() bool {
+	for btn := range N_BUTTONS {
+		if elevator.requests[elevator.state.floor][btn] {
+			return true
+		}
+	}
+	return false
+}
+
+func (elevator *LocalSingleElevator) ChooseDirection() DirectionBehaviourPair {
+	switch elevator.state.direction {
+	case DirUp:
+		if elevator.RequestsAbove() {
+			return DirectionBehaviourPair{DirUp, BehaviourMoving}
+		} else if elevator.RequestsHere() {
+			return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
+		} else if elevator.RequestsBelow() {
+			return DirectionBehaviourPair{DirDown, BehaviourMoving}
+		} else {
+			return DirectionBehaviourPair{DirStop, BehaviourIdle}
+		}
+	case DirDown:
+		if elevator.RequestsBelow() {
+			return DirectionBehaviourPair{DirDown, BehaviourMoving}
+		} else if elevator.RequestsHere() {
+			return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
+		} else if elevator.RequestsAbove() {
+			return DirectionBehaviourPair{DirUp, BehaviourMoving}
+		} else {
+			return DirectionBehaviourPair{DirStop, BehaviourIdle}
+		}
+	case DirStop:
+		if elevator.RequestsHere() {
+			return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
+		} else if elevator.RequestsAbove() {
+			return DirectionBehaviourPair{DirUp, BehaviourMoving}
+		} else if elevator.RequestsBelow() {
+			return DirectionBehaviourPair{DirDown, BehaviourMoving}
+		} else {
+			return DirectionBehaviourPair{DirStop, BehaviourIdle}
+		}
+	default:
+		return DirectionBehaviourPair{DirStop, BehaviourIdle}
+	}
+}
+
+func (elevator *LocalSingleElevator) ShouldStop() bool {
+	switch elevator.state.direction {
+	case DirDown:
+		return elevator.requests[elevator.state.floor][elevio.BT_HallDown] ||
+			elevator.requests[elevator.state.floor][elevio.BT_Cab] ||
+			!elevator.RequestsBelow()
+	case DirUp:
+		return elevator.requests[elevator.state.floor][elevio.BT_HallUp] ||
+			elevator.requests[elevator.state.floor][elevio.BT_Cab] ||
+			!elevator.RequestsAbove()
+	default:
+		return true
+	}
+}
+
+func (elevator *LocalSingleElevator) ShouldClearImmediately(buttonFloor int, buttonType elevio.ButtonType) bool {
+	return elevator.state.floor == buttonFloor &&
+		((elevator.state.direction == DirUp && buttonType == elevio.BT_HallUp) ||
+			(elevator.state.direction == DirDown && buttonType == elevio.BT_HallDown) ||
+			elevator.state.direction == DirStop ||
+			buttonType == elevio.BT_Cab)
+}
+
+func (elevator *LocalSingleElevator) ClearAtCurrentFloor() {
+	elevator.requests[elevator.state.floor][elevio.BT_Cab] = false
+	switch elevator.state.direction {
+	case DirUp:
+		if !elevator.RequestsAbove() && !elevator.requests[elevator.state.floor][elevio.BT_HallUp] {
+			elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
+		}
+		elevator.requests[elevator.state.floor][elevio.BT_HallUp] = false
+	case DirDown:
+		if !elevator.RequestsBelow() && !elevator.requests[elevator.state.floor][elevio.BT_HallDown] {
+			elevator.requests[elevator.state.floor][elevio.BT_HallUp] = false
+		}
+		elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
+	default:
+		elevator.requests[elevator.state.floor][elevio.BT_HallUp] = false
+		elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
+	}
 }
