@@ -4,6 +4,7 @@ import (
 	elevio "TTK4145/ElevIO"
 	"fmt"
 	"time"
+	"flag"
 )
 
 const (
@@ -13,7 +14,10 @@ const (
 
 func Run() {
 	fmt.Println("Started!")
-	elevio.Init(DefaultServerAddr, 4)
+	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the server")
+	flag.Parse()
+
+	elevio.Init(*serverAddr, 4)
 
 	elevator := MakeUninitializedElevator()
 
