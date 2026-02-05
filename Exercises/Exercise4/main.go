@@ -8,6 +8,7 @@ import (
 	"net"
 	"log"
 	"strconv"
+	"syscall"
 )
 
 const (
@@ -16,7 +17,10 @@ const (
 
 func main() {
 	if len(os.Args) > 1 && os.Args[1] == "backup" {
-		port, _ := strconv.Atoi(os.Args[2])
+		port, err := strconv.Atoi(os.Args[2])
+		if err != nil {
+            log.Fatal("Kunne ikke parse port:", err)
+        }
 		addr := &net.UDPAddr{
 			Port: port,
 			IP:   net.ParseIP("127.0.0.1"),
@@ -27,19 +31,21 @@ func main() {
 			Port: 20002,
 			IP:   net.ParseIP("127.0.0.1"),
 		}
-		runPrimary(0, addr)
+		runPrimary(0, addr.Port)
 	}
 }
 
-func runPrimary(startCounter int, addr *net.UDPAddr) {
+func runPrimary(startCounter int, listenPort int) {
 	time.Sleep(100 * time.Millisecond)
 
-	nextAddr := &net.UDPAddr{
-		Port: addr.Port + 1,
-		IP:   addr.IP,
+	backupPort := listenPort + 1
+	backupAddr := &net.UDPAddr{
+		Port: backupPort,
+		IP:   net.ParseIP("127.0.0.1"),
 	}
 
-	cmd := exec.Command("konsole", "-e", "go", "run", "main.go", "backup", nextAddr.String())
+	cmd := exec.Command("konsole", "-e", "go", "run", "main.go", "backup", strconv.Itoa(backupPort))
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Start()
 	time.Sleep(time.Second)
 
@@ -47,7 +53,7 @@ func runPrimary(startCounter int, addr *net.UDPAddr) {
     ticker := time.NewTicker(500 * time.Millisecond)
     heartbeat := time.NewTicker(500 * time.Millisecond)
     
-    conn, err := net.DialUDP("udp", nil, nextAddr)
+    conn, err := net.DialUDP("udp", nil, backupAddr)
 	if err != nil {
         log.Fatal("Primary kunne ikke åpne UDP:", err)
     }
@@ -76,7 +82,6 @@ func runBackup(addr *net.UDPAddr) {
 	if err != nil {
         log.Fatal("Backup kunne ikke lytte på port:", err)
     }
-	defer conn.Close()
 	
 	fmt.Printf("Backup startet og lytter på %s\n", addr.String())
 	counter := 0
@@ -90,7 +95,7 @@ func runBackup(addr *net.UDPAddr) {
 			fmt.Println("Primary døde! Blir primary...")
 			conn.Close()
 			time.Sleep(500 * time.Millisecond)
-			runPrimary(counter, addr)
+			runPrimary(counter, addr.Port)
 			return
 		}
 		fmt.Sscanf(string(buf[:n]), "%d", &counter)
