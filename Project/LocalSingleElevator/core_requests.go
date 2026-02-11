@@ -4,11 +4,6 @@ import (
 	elevio "Project/ElevIO"
 )
 
-type DirectionBehaviourPair struct {
-	direction Direction
-	behaviour ElevatorBehaviour
-}
-
 func (elevator *LocalSingleElevator) RequestsAbove() bool {
 	for f := elevator.state.floor + 1; f < N_FLOORS; f++ {
 		for btn := range N_BUTTONS {
@@ -100,21 +95,62 @@ func (elevator *LocalSingleElevator) ShouldClearImmediately(buttonFloor int, but
 			buttonType == elevio.BT_Cab)
 }
 
-func (elevator *LocalSingleElevator) ClearAtCurrentFloor() {
-	elevator.requests[elevator.state.floor][elevio.BT_Cab] = false
+
+//Returnerer en liste over Ordre som ble fjernet
+func (elevator *LocalSingleElevator) ClearAtCurrentFloor() []Order {
+	var clearedOrders []Order
+
+	if elevator.requests[elevator.state.floor][elevio.BT_Cab] {
+		elevator.requests[elevator.state.floor][elevio.BT_Cab] = false
+		clearedOrders = append(clearedOrders, Order{elevator.state.floor, elevio.BT_Cab})
+	}
+	
+
 	switch elevator.state.direction {
 	case DirUp:
-		if !elevator.RequestsAbove() && !elevator.requests[elevator.state.floor][elevio.BT_HallUp] {
-			elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
-		}
-		elevator.requests[elevator.state.floor][elevio.BT_HallUp] = false
-	case DirDown:
-		if !elevator.RequestsBelow() && !elevator.requests[elevator.state.floor][elevio.BT_HallDown] {
+		if elevator.requests[elevator.state.floor][elevio.BT_HallUp] {
 			elevator.requests[elevator.state.floor][elevio.BT_HallUp] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.floor, elevio.BT_HallUp})
 		}
-		elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
+		
+		if !elevator.RequestsAbove() && !elevator.requests[elevator.state.floor][elevio.BT_HallUp] && elevator.requests[elevator.state.floor][elevio.BT_HallDown] {
+			elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.floor, elevio.BT_HallDown})
+		}
+		
+	case DirDown:
+		if elevator.requests[elevator.state.floor][elevio.BT_HallDown] {
+			elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.floor, elevio.BT_HallDown})
+		}
+
+		if !elevator.RequestsBelow() && !elevator.requests[elevator.state.floor][elevio.BT_HallDown] && elevator.requests[elevator.state.floor][elevio.BT_HallUp] {
+			elevator.requests[elevator.state.floor][elevio.BT_HallUp] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.floor, elevio.BT_HallUp})
+		}
+
 	default:
-		elevator.requests[elevator.state.floor][elevio.BT_HallUp] = false
-		elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
+		if elevator.requests[elevator.state.floor][elevio.BT_HallUp] {
+			elevator.requests[elevator.state.floor][elevio.BT_HallUp] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.floor, elevio.BT_HallUp})
+		}
+
+		if elevator.requests[elevator.state.floor][elevio.BT_HallDown] {
+			elevator.requests[elevator.state.floor][elevio.BT_HallDown] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.floor, elevio.BT_HallDown})
+		}
 	}
+
+	return clearedOrders
+}
+
+func (elevator *LocalSingleElevator) generateLightCommands() []Command {
+	cmds := make([]Command, 0, N_FLOORS*N_BUTTONS)
+	for f := range N_FLOORS {
+		for btn := range N_BUTTONS {
+			cmds = append(cmds, Command{_type: setButtonLamp, value: ButtonLampArgs{f, elevio.ButtonType(btn), elevator.requests[f][btn]}})
+		}
+	}
+	
+	return cmds
 }
