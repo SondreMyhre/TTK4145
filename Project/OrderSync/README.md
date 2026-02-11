@@ -26,8 +26,8 @@ OrderSync does **not** control motors/lamps directly.
 ### Run() interface
 
 #### Inputs (receive-only)
-- `Buttons chan<- ButtonEvent`
-- `Floor chan<- int`
+- `Buttons <-chan ButtonEvent`
+- `Floor <-chan int`
 - `LocalState <-chan ElevatorState`
 - `Cleared <-chan ClearedOrders`
 - `NetRx <-chan NetMsg`
@@ -58,6 +58,14 @@ Effects are value objects such as:
 - periodic tick to generate heartbeats / recompute
 - `apply(effects)` by sending on channels
 
+
+
+    Buttons chan<- ButtonEvent
+    Floor chan<- int
+    LocalState <-chan ElevatorState
+    Cleared <-chan ClearedOrders
+    NetRx <-chan NetMsg
+    DeadPeers <-chan []ElevID
 
 
 DETTE ER SKREVET AV AI, KUN BRUK TIL EKSEMPEL TIL FCIS
