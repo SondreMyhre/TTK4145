@@ -41,157 +41,157 @@
 
 api.go:
 
-package module
+	package module
 
-import (
-	"context"
-	"time"
-)
+	import (
+		"context"
+		"time"
+	)
 
-type Config struct {
-	TickPeriod time.Duration // 0 => no internal ticker
-}
+	type Config struct {
+		TickPeriod time.Duration // 0 => no internal ticker
+	}
 
-// Inputs: kun receive-only
-type Inputs struct {
-	// Stil C: flere små kanaler
-	// Navnene bør være domene-ord (ikke generiske)
-	A <-chan MsgA
-	B <-chan MsgB
-	// Optional external tick channel, if you don't want internal ticker
-	Tick <-chan time.Time
-}
+	// Inputs: kun receive-only
+	type Inputs struct {
+		// Stil C: flere små kanaler
+		// Navnene bør være domene-ord (ikke generiske)
+		A <-chan MsgA
+		B <-chan MsgB
+		// Optional external tick channel, if you don't want internal ticker
+		Tick <-chan time.Time
+	}
 
-// Outputs: kun send-only
-type Outputs struct {
-	X chan<- OutX
-	Y chan<- OutY
-}
+	// Outputs: kun send-only
+	type Outputs struct {
+		X chan<- OutX
+		Y chan<- OutY
+	}
 
-// Run = shell entrypoint (one goroutine owns all state in this module)
-func Run(ctx context.Context, cfg Config, in Inputs, out Outputs) {
-	run(ctx, cfg, in, out)
-}
+	// Run = shell entrypoint (one goroutine owns all state in this module)
+	func Run(ctx context.Context, cfg Config, in Inputs, out Outputs) {
+		run(ctx, cfg, in, out)
+	}
 
 
 types.go:
 
-package module
+	package module
 
-// --- Inbound messages (events) ---
+	// --- Inbound messages (events) ---
 
-type MsgA struct {
-	// small, intention-revealing payload
-	ID int
-}
+	type MsgA struct {
+		// small, intention-revealing payload
+		ID int
+	}
 
-type MsgB struct {
-	Flag bool
-}
+	type MsgB struct {
+		Flag bool
+	}
 
-// --- Outbound messages ---
+	// --- Outbound messages ---
 
-type OutX struct {
-	Value int
-}
+	type OutX struct {
+		Value int
+	}
 
-type OutY struct {
-	Text string
-}
+	type OutY struct {
+		Text string
+	}
 
-// --- Internal state: ONLY owned/mutated by this module's goroutine ---
+	// --- Internal state: ONLY owned/mutated by this module's goroutine ---
 
-type state struct {
-	counter int
-	flag    bool
-}
+	type state struct {
+		counter int
+		flag    bool
+	}
 
-func initState() state {
-	return state{}
-}
+	func initState() state {
+		return state{}
+	}
 
 core.go:
 
-package module
+	package module
 
-type cmdKind int
+	type cmdKind int
 
-const (
-	cmdSendX cmdKind = iota
-	cmdSendY
-)
+	const (
+		cmdSendX cmdKind = iota
+		cmdSendY
+	)
 
-type cmd struct {
-	kind cmdKind
-	x    OutX
-	y    OutY
-}
-
-func onA(s *state, m MsgA) []cmd {
-	s.counter += m.ID
-	return []cmd{{kind: cmdSendX, x: OutX{Value: s.counter}}}
-}
-
-func onB(s *state, m MsgB) []cmd {
-	s.flag = m.Flag
-	if s.flag {
-		return []cmd{{kind: cmdSendY, y: OutY{Text: "flag enabled"}}}
+	type cmd struct {
+		kind cmdKind
+		x    OutX
+		y    OutY
 	}
-	return nil
-}
 
-func onTick(s *state) []cmd {
-	// optional periodic logic
-	return nil
-}
+	func onA(s *state, m MsgA) []cmd {
+		s.counter += m.ID
+		return []cmd{{kind: cmdSendX, x: OutX{Value: s.counter}}}
+	}
+
+	func onB(s *state, m MsgB) []cmd {
+		s.flag = m.Flag
+		if s.flag {
+			return []cmd{{kind: cmdSendY, y: OutY{Text: "flag enabled"}}}
+		}
+		return nil
+	}
+
+	func onTick(s *state) []cmd {
+		// optional periodic logic
+		return nil
+	}
 
 
 shell.go:
 
-package module
+	package module
 
-import (
-	"context"
-	"time"
-)
+	import (
+		"context"
+		"time"
+	)
 
-func run(ctx context.Context, cfg Config, in Inputs, out Outputs) {
-	s := initState()
+	func run(ctx context.Context, cfg Config, in Inputs, out Outputs) {
+		s := initState()
 
-	var tickerC <-chan time.Time
-	var ticker *time.Ticker
-	if cfg.TickPeriod > 0 {
-		ticker = time.NewTicker(cfg.TickPeriod)
-		tickerC = ticker.C
-		defer ticker.Stop()
-	} else if in.Tick != nil {
-		tickerC = in.Tick
-	}
+		var tickerC <-chan time.Time
+		var ticker *time.Ticker
+		if cfg.TickPeriod > 0 {
+			ticker = time.NewTicker(cfg.TickPeriod)
+			tickerC = ticker.C
+			defer ticker.Stop()
+		} else if in.Tick != nil {
+			tickerC = in.Tick
+		}
 
-	apply := func(cmds []cmd) {
-		for _, c := range cmds {
-			switch c.kind {
-			case cmdSendX:
-				out.X <- c.x
-			case cmdSendY:
-				out.Y <- c.y
+		apply := func(cmds []cmd) {
+			for _, c := range cmds {
+				switch c.kind {
+				case cmdSendX:
+					out.X <- c.x
+				case cmdSendY:
+					out.Y <- c.y
+				}
+			}
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+
+			case m := <-in.A:
+				apply(onA(&s, m))
+
+			case m := <-in.B:
+				apply(onB(&s, m))
+
+			case <-tickerC:
+				apply(onTick(&s))
 			}
 		}
 	}
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-
-		case m := <-in.A:
-			apply(onA(&s, m))
-
-		case m := <-in.B:
-			apply(onB(&s, m))
-
-		case <-tickerC:
-			apply(onTick(&s))
-		}
-	}
-}
