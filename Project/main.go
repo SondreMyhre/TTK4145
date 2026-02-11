@@ -25,9 +25,6 @@ func main() {
     go elevio.PollFloorSensor(floorCh)
     go elevio.PollObstructionSwitch(obstructionCh)
 
-	go elevio.PollButtons(buttonCh)	// Her vil vi Polle fra OrderSync også
-	go elevio.PollFloorSensor(floorCh)
-
 	go func() { for range clearedCh {} }()
     go func() { for range stateOutCh {} }()
 
