@@ -28,7 +28,7 @@ func main() {
 	go func() { for range clearedCh {} }()
     go func() { for range stateOutCh {} }()
 
-	localsingle.Run(buttonCh, floorCh, obstructionCh, cmdCh, clearedCh, stateOutCh)
+	go localsingle.Run(buttonCh, floorCh, obstructionCh, cmdCh, clearedCh, stateOutCh)
 
-	// select {}
+	select {}
 }
