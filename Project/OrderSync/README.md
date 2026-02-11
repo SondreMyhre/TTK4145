@@ -1,3 +1,82 @@
+# ordersync/README.md
+
+## OrderSync
+
+### Responsibility
+- Distributed synchronization and assignment of **hall orders** across all elevators.
+- Maintains global hall-order state and who is assigned to what.
+- Receives:
+  - local hall button presses
+  - local elevator state updates
+  - cleared orders
+  - network messages
+  - dead peer notifications
+- Produces:
+  - assignments to the local elevator
+  - outbound network messages (heartbeat/claim/assign/done)
+
+OrderSync does **not** control motors/lamps directly.
+
+---
+
+### Owns (mutable state)
+- Hall order state:
+  - `hallOrderMatrix [N_FLOORS][N_HALL_BTNS]HallOrderState` *(or equivalent)*
+  - `assignedTo map[HallOrder]ElevID`
+- World view:
+  - `lastKnownStates map[ElevID]ElevatorState`
+- Protocol/bookkeeping:
+  - `seq counters`, dedup cache *(recommended)*
+
+---
+
+### Run() interface
+
+#### Inputs (receive-only)
+- `HallButton <-chan HallOrder`
+- `LocalState <-chan ElevatorState`
+- `Cleared <-chan ClearedOrders`
+- `NetRx <-chan NetMsg`
+- `DeadPeers <-chan []ElevID`
+- `Tick <-chan time.Time` *(optional, or internal ticker)*
+
+#### Outputs (send-only)
+- `AssignToLocal chan<- HallAssignment`
+- `NetTx chan<- NetMsg`
+
+Optional:
+- `Err chan<- error` (if you want OrderSync to surface issues upward)
+
+---
+
+### Functional core vs Imperative shell
+
+#### Core (testable)
+- `Step(state, event) -> (newState, effects)`
+- No IO, no timers; deterministic transitions.
+
+Effects are value objects such as:
+- `SendNet(NetMsg)`
+- `AssignLocal(HallAssignment)`
+- `RecomputeAssignments`
+- `ReleaseDeadPeerOrders(peerID)`
+- `EmitDone(order)`
+- `BuildHeartbeat`
+
+#### Shell
+- select-loop consuming all inputs
+- periodic tick to generate heartbeats / recompute
+- `apply(effects)` by sending on channels
+
+---
+
+### Suggested files
+
+
+
+
+
+
 
 DETTE ER SKREVET AV AI, KUN BRUK TIL EKSEMPEL TIL FCIS
 

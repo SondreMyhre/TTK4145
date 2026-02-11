@@ -1,5 +1,3 @@
-# localsingle/README.md
-
 ## LocalSingleElevator
 
 ### Responsibility
