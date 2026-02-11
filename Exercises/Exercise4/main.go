@@ -44,7 +44,7 @@ func runPrimary(startCounter int, listenPort int) {
 		IP:   net.ParseIP("127.0.0.1"),
 	}
 
-	cmd := exec.Command("konsole", "-e", "go", "run", "main.go", "backup", strconv.Itoa(backupPort))
+	cmd := exec.Command("gnome-terminal", "--", "go", "run", "main.go", "backup", strconv.Itoa(backupPort))
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Start()
 	time.Sleep(time.Second)
@@ -97,7 +97,10 @@ func runBackup(addr *net.UDPAddr) {
 			time.Sleep(500 * time.Millisecond)
 			runPrimary(counter, addr.Port)
 			return
-		}
+		}cmd := exec.Command("gnome-terminal", "--", "go", "run", "main.go", "backup", strconv.Itoa(backupPort))
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Start()
+	time.Sleep(time.Second)
 		fmt.Sscanf(string(buf[:n]), "%d", &counter)
 	}
 }
