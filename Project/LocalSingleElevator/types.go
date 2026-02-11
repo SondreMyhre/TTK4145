@@ -1,11 +1,7 @@
 package localsingle
 
-import (
-	elevio "Project/ElevIO"
-)
-
 const (
-	N_FLOORS  = 4	// TODO: gjøre dette mulig å sette med flags
+	N_FLOORS  = 4 // TODO: gjøre dette mulig å sette med flags
 	N_BUTTONS = 3
 )
 
@@ -25,6 +21,14 @@ const (
 	DirUp   Direction = 1
 )
 
+type ButtonType int
+
+const (
+	BtnHallUp ButtonType = iota
+	BtnHallDown
+	BtnCab
+)
+
 type ElevatorState struct {
 	floor     int
 	direction Direction
@@ -34,10 +38,8 @@ type ElevatorState struct {
 type LocalSingleElevator struct {
 	state     ElevatorState
 	requests  [N_FLOORS][N_BUTTONS]bool
-	doorTimer *time.Timer
-	doorDur   time.Duration
+	obstructed bool
 }
-
 
 type DirectionBehaviourPair struct {
 	direction Direction
@@ -72,19 +74,6 @@ func DirectionToString(direction Direction) string {
 	}
 }
 
-func DirectionToMotorDirection(direction Direction) elevio.MotorDirection {
-	switch direction {
-	case DirUp:
-		return elevio.MD_Up
-	case DirDown:
-		return elevio.MD_Down
-	case DirStop:
-		return elevio.MD_Stop
-	default:
-		return elevio.MD_Stop
-	}
-}
-
 func MakeUninitializedElevator() LocalSingleElevator {
 	elevator := LocalSingleElevator{
 		state: ElevatorState{floor: -1,
@@ -92,19 +81,17 @@ func MakeUninitializedElevator() LocalSingleElevator {
 			behaviour: BehaviourIdle,
 		},
 	}
-	elevator.InitDoorTimer()
 	return elevator
 }
-
 
 type CommandType int
 
 const (
-	setMotor CommandType = iota
-	setDoorLamp
+	setMotorDirection CommandType = iota
+	setDoorOpenLamp
 	setFloorIndicator
 	setButtonLamp
-	startDoorTimer
+	ResetDoorTimer
 	sendClearedOrders
 )
 
@@ -115,40 +102,43 @@ type Command struct {
 
 type ButtonLampArgs struct {
 	Floor int
-	Btn elevio.ButtonType
+	Btn   ButtonType
 	Value bool
 }
 
 type Order struct {
-	Floor int
-	Button elevio.ButtonType
+	Floor  int
+	Button ButtonType
 }
 
 
-func (elevator *LocalSingleElevator) InitDoorTimer() { //Vurder å lage egen timer modul
-	elevator.doorDur = 3 * time.Second
-
-	// Lag timer, men start den "deaktivert"
-	elevator.doorTimer = time.NewTimer(elevator.doorDur)
-	if !elevator.doorTimer.Stop() {
-		select {
-		case <-elevator.doorTimer.C:
-		default:
-		}
-	}
-}
-
-func (elevator *LocalSingleElevator) ResetDoorTimer() {
-	if elevator.doorTimer == nil {
-		elevator.InitDoorTimer()
-	}
-	if !elevator.doorTimer.Stop() {
-		select {
-		case <-elevator.doorTimer.C:
-		default:
-		}
-	}
-	elevator.doorTimer.Reset(elevator.doorDur)
-}
-
-
+// func PrintElevator(elevator LocalSingleElevator) {
+// 	fmt.Printf("  +--------------------+\n")
+// 	fmt.Printf(
+// 		"  |floor = %-2d          |\n"+
+// 			"  |direction  = %-12.12s|\n"+
+// 			"  |behav = %-12.12s|\n",
+// 		elevator.state.floor,
+// 		DirectionToString(elevator.state.direction),
+// 		ElevatorBehaviourToString(elevator.state.behaviour),
+// 	)
+// 	fmt.Printf("  +--------------------+\n")
+// 	fmt.Printf("  |  | up  | dn  | cab |\n")
+// 	for f := N_FLOORS - 1; f >= 0; f-- {
+// 		fmt.Printf("  | %d", f)
+// 		for btn := 0; btn < N_BUTTONS; btn++ {
+// 			if (f == N_FLOORS-1 && btn == int(elevio.BT_HallUp)) ||
+// 				(f == 0 && btn == int(elevio.BT_HallDown)) {
+// 				fmt.Printf("|     ")
+// 			} else {
+// 				if elevator.requests[f][btn] != false {
+// 					fmt.Print("|  #  ")
+// 				} else {
+// 					fmt.Print("|  -  ")
+// 				}
+// 			}
+// 		}
+// 		fmt.Printf("|\n")
+// 	}
+// 	fmt.Printf("  +--------------------+\n")
+// }

@@ -14,17 +14,24 @@ func main() {
 	elevio.Init(*serverAddr, 4)
 
 	cmdCh := make(chan elevio.DriverCmd)
+	buttonCh := make(chan elevio.ButtonEvent, 16)
+    floorCh := make(chan int, 16)
+    obstructionCh := make(chan bool, 16)
+    clearedCh := make(chan []localsingle.Order, 16)
+    stateOutCh := make(chan localsingle.LocalSingleElevator, 1)
 	
 	go elevio.RunDriver(cmdCh)
-
-	
-	buttonCh := make(chan elevio.ButtonEvent)
-	floorCh := make(chan int)
+	go elevio.PollButtons(buttonCh)
+    go elevio.PollFloorSensor(floorCh)
+    go elevio.PollObstructionSwitch(obstructionCh)
 
 	go elevio.PollButtons(buttonCh)	// Her vil vi Polle fra OrderSync også
 	go elevio.PollFloorSensor(floorCh)
 
-	go localsingle.Run(buttonCh, floorCh)
+	go func() { for range clearedCh {} }()
+    go func() { for range stateOutCh {} }()
 
-	select {}
+	localsingle.Run(buttonCh, floorCh, obstructionCh, cmdCh, clearedCh, stateOutCh)
+
+	// select {}
 }

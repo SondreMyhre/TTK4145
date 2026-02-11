@@ -3,18 +3,18 @@ package elevio
 type DriverCmdType int
 
 const (
-	CmdSetMotor DriverCmdType = iota
+	CmdSetMotorDirection DriverCmdType = iota
 	CmdSetButtonLamp
 	CmdSetFloorIndicator
 	CmdSetDoorLamp
 )
 
 type DriverCmd struct {
-	_type DriverCmdType
-	MotorDir MotorDirection
-	Button ButtonType
-	Floor int
-	Value bool
+	Type    DriverCmdType
+	MotorDirection MotorDirection
+	Button   ButtonType
+	Floor    int
+	Value    bool
 }
 
 // type DriverCmd struct {
@@ -24,9 +24,9 @@ type DriverCmd struct {
 
 func RunDriver(cmdCh <-chan DriverCmd) {
 	for cmd := range cmdCh {
-		switch cmd._type {
-		case CmdSetMotor:
-			SetMotorDirection(cmd.MotorDir)
+		switch cmd.Type {
+		case CmdSetMotorDirection:
+			SetMotorDirection(cmd.MotorDirection)
 		case CmdSetButtonLamp:
 			SetButtonLamp(cmd.Button, cmd.Floor, cmd.Value)
 		case CmdSetFloorIndicator:
@@ -34,5 +34,5 @@ func RunDriver(cmdCh <-chan DriverCmd) {
 		case CmdSetDoorLamp:
 			SetDoorOpenLamp(cmd.Value)
 		}
-}
+	}
 }
