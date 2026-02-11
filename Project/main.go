@@ -1,7 +1,7 @@
 package main
 
 import (
-	localsingle "TTK4145/LocalSingleElevator"
+	localsingle "Project/LocalSingleElevator"
 )
 
 func main() {

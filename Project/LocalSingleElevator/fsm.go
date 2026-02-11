@@ -1,7 +1,7 @@
 package localsingle
 
 import (
-	elevio "TTK4145/ElevIO"
+	elevio "Project/ElevIO"
 )
 
 func setAllLights(elevator LocalSingleElevator) {	// Bør endres til setCabLights hvis kun Cab eies av localsingle

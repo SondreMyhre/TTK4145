@@ -1,7 +1,7 @@
 package localsingle
 
 import (
-	elevio "TTK4145/ElevIO"
+	elevio "Project/ElevIO"
 )
 
 type DirectionBehaviourPair struct {

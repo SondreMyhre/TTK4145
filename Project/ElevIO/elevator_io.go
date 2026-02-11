@@ -29,7 +29,7 @@ const (
 	BT_HallDown            = 1
 	BT_Cab                 = 2
 )
-🟢 Alternativ 1 — Du bryr deg 
+
 type ButtonEvent struct {
 	Floor  int
 	Button ButtonType

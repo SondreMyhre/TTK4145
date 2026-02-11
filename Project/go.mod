@@ -1,3 +1,3 @@
-module TTK4145
+module Project
 
 go 1.25.6
