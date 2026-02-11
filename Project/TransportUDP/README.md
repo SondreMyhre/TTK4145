@@ -1,5 +1,3 @@
-# transportudp/README.md
-
 ## TransportUDP
 
 ### Responsibility
@@ -10,32 +8,24 @@
 
 TransportUDP contains **no domain logic** (no assignments, no scheduling).
 
----
-
 ### Owns (mutable state)
 - UDP socket/conn
 - peer/broadcast configuration
 - IO buffers
 
----
-
 ### Run() interface
 
 #### Inputs (receive-only)
 - `Tx <-chan NetMsg`  
-  Outgoing network messages from OrderSync.
-- `Peers <-chan []PeerAddr` *(optional)*  
+  Outgoing network messages from OrderSync (maybe not PeerMonitor?).
+- `Peers <-chan []PeerAddr` *(optional)* This will most likely come internally in TransportUDP and not via channel 
   If peers are updated dynamically.
-- `Enable <-chan bool` *(optional)*  
-  If network can be enabled/disabled.
 
 #### Outputs (send-only)
 - `Rx chan<- NetMsg`  
-  Incoming messages to OrderSync.
-- `Err chan<- error` *(recommended)*  
-  Network/codec errors as events.
-
----
+  Incoming messages to OrderSync and PeerMonitor.
+<!-- - `Err chan<- error` *(recommended)*  
+  Network/codec errors as events. -->
 
 ### Functional core vs Imperative shell
 
@@ -46,7 +36,3 @@ TransportUDP contains **no domain logic** (no assignments, no scheduling).
 #### Shell
 - socket recv loop -> decode -> `Rx`
 - socket send loop <- `Tx` -> encode -> send
-
----
-
-### Suggested files

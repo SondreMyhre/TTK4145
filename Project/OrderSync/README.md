@@ -1,53 +1,43 @@
-# ordersync/README.md
-
 ## OrderSync
 
 ### Responsibility
 - Distributed synchronization and assignment of **hall orders** across all elevators.
 - Maintains global hall-order state and who is assigned to what.
-- Receives:
-  - local hall button presses
-  - local elevator state updates
-  - cleared orders
-  - network messages
-  - dead peer notifications
-- Produces:
+- Receives via channels from ElevIO, PeerMonitor, TransportUDP and LocalSingle:
+  - local hall button presses (from ElevIO)
+  - local elevator state updates (from LocalSingle)
+  - cleared orders (from LocalSingle)
+  - network messages (from TransportUDP)
+  - dead peer notifications (from PeerMonitor)
+- Produces sends via channels to TransportUDP and LocalSingle:
   - assignments to the local elevator
   - outbound network messages (heartbeat/claim/assign/done)
 
 OrderSync does **not** control motors/lamps directly.
 
----
-
 ### Owns (mutable state)
 - Hall order state:
-  - `hallOrderMatrix [N_FLOORS][N_HALL_BTNS]HallOrderState` *(or equivalent)*
-  - `assignedTo map[HallOrder]ElevID`
+  - `hallOrderMatrix [N_FLOORS][N_HALL_BTNS]HallOrderState` *(or equivalent)* with version, {assigned, unassigned, pendig}, assignedElevator ElevID
+  - `assignedTo map[HallOrder]ElevID` this could be encapsulated in hallOrderMatrix, but may be nice to have??
 - World view:
-  - `lastKnownStates map[ElevID]ElevatorState`
-- Protocol/bookkeeping:
-  - `seq counters`, dedup cache *(recommended)*
+  - `lastKnownStates map[ElevID]ElevatorState` perhaps a Peer-list instead? Or worldview through the hallOrderMatrix
 
----
 
 ### Run() interface
 
 #### Inputs (receive-only)
-- `HallButton <-chan HallOrder`
+- `Buttons chan<- ButtonEvent`
+- `Floor chan<- int`
 - `LocalState <-chan ElevatorState`
 - `Cleared <-chan ClearedOrders`
 - `NetRx <-chan NetMsg`
 - `DeadPeers <-chan []ElevID`
-- `Tick <-chan time.Time` *(optional, or internal ticker)*
+<!-- - `Tick <-chan time.Time` *(optional, or internal ticker)* -->
 
 #### Outputs (send-only)
 - `AssignToLocal chan<- HallAssignment`
 - `NetTx chan<- NetMsg`
-
-Optional:
-- `Err chan<- error` (if you want OrderSync to surface issues upward)
-
----
+- `Cmd <-chan DriverCmd`  (For lights)
 
 ### Functional core vs Imperative shell
 
@@ -67,14 +57,6 @@ Effects are value objects such as:
 - select-loop consuming all inputs
 - periodic tick to generate heartbeats / recompute
 - `apply(effects)` by sending on channels
-
----
-
-### Suggested files
-
-
-
-
 
 
 

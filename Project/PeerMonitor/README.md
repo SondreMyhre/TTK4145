@@ -1,5 +1,3 @@
-# peermonitor/README.md
-
 ## PeerMonitor
 
 ### Responsibility
@@ -9,13 +7,10 @@
 
 PeerMonitor is purely about **presence**; it does not assign orders.
 
----
-
 ### Owns (mutable state)
 - `lastSeen map[ElevID]time.Time`
 - `timeout time.Duration`
-
----
+- `peers []Peer` liste med informasjon over peers??
 
 ### Run() interface
 
@@ -25,11 +20,10 @@ PeerMonitor is purely about **presence**; it does not assign orders.
   If ticks are provided externally; otherwise PeerMonitor runs its own ticker.
 
 #### Outputs (send-only)
-- `Dead chan<- []ElevID`
-- `PeerUp chan<- ElevID` *(optional)*
-- `PeerList chan<- []ElevID` *(optional)*
+- `Dead chan<- []Peer`
+- `PeerUp chan<- Peer` *(optional)*
+- `PeerList chan<- []Peer` *(optional)*
 
----
 
 ### Functional core vs Imperative shell
 
@@ -40,7 +34,3 @@ PeerMonitor is purely about **presence**; it does not assign orders.
 #### Shell
 - select-loop consuming heartbeats
 - periodic tick to run detection
-
----
-
-### Suggested files
