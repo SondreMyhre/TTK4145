@@ -25,14 +25,8 @@ func main() {
 	go elevio.PollFloorSensor(floorChan)
 	go elevio.PollObstructionSwitch(obstructionChan)
 
-	go func() {
-		for range clearedOrdersChan {
-		}
-	}() // OrderSync not implemented
-	go func() {
-		for range localStateChan {
-		}
-	}() // OrderSync not implemented
+	go func() { for range clearedOrdersChan {} }()	// OrderSync ikke implementert
+    go func() { for range localStateChan {} }()		// OrderSync ikke implementert
 
 	go localsingle.Run(buttonChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan) // localOrderChan = buttonChan
 
