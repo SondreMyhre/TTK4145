@@ -18,8 +18,8 @@ TransportUDP contains **no domain logic** (no assignments, no scheduling).
 #### Inputs (receive-only)
 - `Tx <-chan NetMsg`  
   Outgoing network messages from OrderSync (maybe not PeerMonitor?).
-- `Peers <-chan []PeerAddr` *(optional)* This will most likely come internally in TransportUDP and not via channel 
-  If peers are updated dynamically.
+<!-- - `Peers <-chan []PeerAddr` *(optional)* This will most likely come trengs internally in TransportUDP and not via channel 
+  If peers are updated dynamically. -->
 
 #### Outputs (send-only)
 - `Rx chan<- NetMsg`  

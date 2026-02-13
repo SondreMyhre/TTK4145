@@ -60,20 +60,6 @@ func ElevatorBehaviourToString(eb ElevatorBehaviour) string {
 	}
 }
 
-func DirectionToString(direction Direction) string {
-	switch direction {
-	case DirUp:
-		return "DirUp"
-	case DirDown:
-		return "DirDown"
-	case DirStop:
-		return "DirStop"
-	default:
-		return "DirUndefined"
-
-	}
-}
-
 func MakeUninitializedElevator() LocalSingleElevator {
 	elevator := LocalSingleElevator{
 		state: ElevatorState{floor: -1,

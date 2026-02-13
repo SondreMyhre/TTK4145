@@ -12,9 +12,9 @@ func (elevator *LocalSingleElevator) FSM_OnRequestButtonPress(buttonFloor int, b
 
 	switch elevator.state.behaviour {
 	case BehaviourDoorOpen:
-		if elevator.ShouldClearImmediately(buttonFloor, buttonType) {
+		if elevator.shouldClearImmediately(buttonFloor, buttonType) {
 			commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
-			cleared := elevator.ClearAtCurrentFloor()
+			cleared := elevator.clearAtCurrentFloor()
 			if len(cleared) > 0 {
 				commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
 			}
@@ -25,25 +25,25 @@ func (elevator *LocalSingleElevator) FSM_OnRequestButtonPress(buttonFloor int, b
 		commands = append(commands, elevator.generateLightCommands()...)
 		return commands
 	case BehaviourIdle:
-		pair := elevator.ChooseDirection()
+		pair := elevator.chooseDirection()
 		elevator.state.direction = pair.direction
 		elevator.state.behaviour = pair.behaviour
 		switch pair.behaviour {
 		case BehaviourDoorOpen:
 			commands = append(commands, Command{_type: setDoorOpenLamp, value: true})
 			commands = append(commands, Command{_type: ResetDoorTimer, value: true})
-			cleared := elevator.ClearAtCurrentFloor()
+			cleared := elevator.clearAtCurrentFloor()
 			if len(cleared) > 0 {
 				commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
 			}
 		case BehaviourMoving:
 			commands = append(commands, Command{_type: setMotorDirection, value: elevator.state.direction})
-			
+
 		}
 		commands = append(commands, elevator.generateLightCommands()...)
 		return commands
 	}
-	
+
 	return nil
 }
 
@@ -56,20 +56,19 @@ func (elevator *LocalSingleElevator) FSM_OnFloorArrival(newFloor int) []Command 
 		return commands
 	}
 
+	if elevator.shouldStop() {
+		commands = append(commands, Command{_type: setMotorDirection, value: DirStop})
+		commands = append(commands, Command{_type: setDoorOpenLamp, value: true})
+		cleared := elevator.clearAtCurrentFloor()
+		if len(cleared) > 0 {
+			commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
+		}
+		commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
 
-	if elevator.ShouldStop() {
-			commands = append(commands, Command{_type: setMotorDirection, value: DirStop})
-			commands = append(commands, Command{_type: setDoorOpenLamp, value: true})
-			cleared := elevator.ClearAtCurrentFloor()
-			if len(cleared) > 0 {
-				commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
-			}
-			commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
-
-			commands = append(commands, elevator.generateLightCommands()...)
-			elevator.state.behaviour = BehaviourDoorOpen
+		commands = append(commands, elevator.generateLightCommands()...)
+		elevator.state.behaviour = BehaviourDoorOpen
 	}
-	
+
 	return commands
 }
 
@@ -77,24 +76,24 @@ func (elevator *LocalSingleElevator) FSM_OnDoorTimeout() []Command {
 	var commands []Command
 
 	if elevator.state.behaviour != BehaviourDoorOpen {
-        return nil
-    }
-	
+		return nil
+	}
+
 	if elevator.obstructed {
 		commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
 		return commands
 	}
-	
+
 	switch elevator.state.behaviour {
 	case BehaviourDoorOpen:
-		pair := elevator.ChooseDirection()
+		pair := elevator.chooseDirection()
 		elevator.state.direction = pair.direction
 		elevator.state.behaviour = pair.behaviour
 
 		switch elevator.state.behaviour {
 		case BehaviourDoorOpen:
 			commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
-			cleared := elevator.ClearAtCurrentFloor()
+			cleared := elevator.clearAtCurrentFloor()
 			if len(cleared) > 0 {
 				commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
 			}

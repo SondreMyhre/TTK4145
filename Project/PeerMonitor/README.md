@@ -15,7 +15,7 @@ PeerMonitor is purely about **presence**; it does not assign orders.
 ### Run() interface
 
 #### Inputs (receive-only)
-- `Heartbeat <-chan HeartbeatMsg`
+- `Rx <-chan NetMsg`
 - `Tick <-chan time.Time` *(optional)*  
   If ticks are provided externally; otherwise PeerMonitor runs its own ticker.
 
