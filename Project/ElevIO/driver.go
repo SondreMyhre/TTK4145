@@ -17,11 +17,6 @@ type DriverCmd struct {
 	Value    bool
 }
 
-// type DriverCmd struct {
-// 	_type DriverCmdType
-// 	value any
-// }
-
 func RunDriver(cmdCh <-chan DriverCmd) {
 	for cmd := range cmdCh {
 		switch cmd.Type {

@@ -17,7 +17,7 @@ PeerMonitor is purely about **presence**; it does not assign orders.
 #### Inputs (receive-only)
 - `Rx <-chan NetMsg`
 - `Tick <-chan time.Time` *(optional)*  
-  If ticks are provided externally; otherwise PeerMonitor runs its own ticker.
+  If ticks are provided externally; otherwise PeerMonitor runs its own ticker. (Mest sannsynlig egen)
 
 #### Outputs (send-only)
 - `Dead chan<- []Peer`

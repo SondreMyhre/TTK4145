@@ -11,81 +11,86 @@ const (
 )
 
 // type Input struct {
-// 	buttonCh <-chan elevio.ButtonEvent
-// 	osv. Samme for output
+// 	buttonChan <-chan elevio.ButtonEvent
+// 	floorChan <-chan int
+// 	obstructionChan <-chan bool
+// }
+
+// type Output struct {
+// 	driverCmdChan chan<- elevio.DriverCmd
+// 	clearedChan chan<- []Order
+// 	stateOutChan chan<- LocalSingleElevator
 // }
 
 func Run(
-	buttonCh <-chan elevio.ButtonEvent,
-	floorCh <-chan int,
-	obstructionCh <-chan bool, 
-	
-	driverCmdCh chan<- elevio.DriverCmd,
-	clearedCh chan<- []Order,
-	stateOutCh chan <- LocalSingleElevator,
+	buttonChan <-chan elevio.ButtonEvent,
+	floorChan <-chan int,
+	obstructionChan <-chan bool,
+
+	driverCmdChan chan<- elevio.DriverCmd,
+	clearedOrdersChan chan<- []Order,
+	stateOutChan chan<- LocalSingleElevator, // Muligens kun sende state og ikke hele elevator
 ) {
 	fmt.Println("LocalSingleElevator started")
-	elevator := MakeUninitializedElevator()
+	elevator := makeUninitializedElevator()
 
 	doorTimer := time.NewTimer(doorOpenDuration)
-    doorTimer.Stop()
+	doorTimer.Stop()
 
 	var commands []Command
 
 	if elevio.GetFloor() == -1 {
-		commands = append(commands, elevator.FSM_OnInitBetweenFloors())
-		executeCommands(commands, driverCmdCh, clearedCh, doorTimer)
+		commands = append(commands, elevator.onInitBetweenFloors())
+		executeCommands(commands, driverCmdChan, clearedOrdersChan, doorTimer)
 	}
 
 	for {
 		select {
-		case evt := <-buttonCh:
-			btn := elevioToButtonType(evt.Button)
-			commands = elevator.FSM_OnRequestButtonPress(evt.Floor, btn)
+		case buttonEvent := <-buttonChan:
+			btn := elevioToButtonType(buttonEvent.Button)
+			commands = elevator.onRequestButtonPress(buttonEvent.Floor, btn)
 
-		case floor := <-floorCh:
-			commands = elevator.FSM_OnFloorArrival(floor)
-		
-		case obstructed := <-obstructionCh:
-			
-			commands = elevator.onObstruction(obstructed)			
+		case floor := <-floorChan:
+			commands = elevator.onFloorArrival(floor)
+
+		case obstructed := <-obstructionChan:
+
+			commands = elevator.onObstruction(obstructed)
 
 		case <-doorTimer.C:
-            commands = elevator.FSM_OnDoorTimeout()
-            
-        // default:
-		// 	time.Sleep(10 * time.Millisecond)	// Muligens vi ikke trenger
+			commands = elevator.onDoorTimeout()
+
 		}
 
-		executeCommands(commands, driverCmdCh, clearedCh, doorTimer)
-		stateOutCh <- elevator	// Sender state til OrderSync
+		executeCommands(commands, driverCmdChan, clearedOrdersChan, doorTimer)
+		stateOutChan <- elevator // Sender state til OrderSync
 	}
 }
 
-func executeCommands(
+func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjøres som en egen goroutine, og heller eksplisitt execute commands i hver case i Run()?
 	commands []Command,
-	driverCmdCh chan<- elevio.DriverCmd,
-	clearedCh chan<- []Order,
+	driverCmdChan chan<- elevio.DriverCmd,
+	clearedChan chan<- []Order,
 	doorTimer *time.Timer,
 ) {
 	for _, command := range commands {
 		switch command._type {
 		case setMotorDirection:
 			dir := command.value.(Direction)
-			driverCmdCh <- elevio.DriverCmd{Type: elevio.CmdSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
+			driverCmdChan <- elevio.DriverCmd{Type: elevio.CmdSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
 		case setDoorOpenLamp:
 			value := command.value.(bool)
-			driverCmdCh <- elevio.DriverCmd{Type: elevio.CmdSetDoorLamp, Value: value}
+			driverCmdChan <- elevio.DriverCmd{Type: elevio.CmdSetDoorLamp, Value: value}
 		case setButtonLamp:
 			args := command.value.(ButtonLampArgs)
-			driverCmdCh <- elevio.DriverCmd{Type: elevio.CmdSetButtonLamp, Button: buttonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
-		case ResetDoorTimer:
+			driverCmdChan <- elevio.DriverCmd{Type: elevio.CmdSetButtonLamp, Button: buttonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
+		case resetDoorTimer:
 			doorTimer.Reset(doorOpenDuration)
 		case sendClearedOrders:
 			cleared := command.value.([]Order)
-			clearedCh <- cleared
+			clearedChan <- cleared
 		}
-			
+
 	}
 }
 
@@ -103,23 +108,23 @@ func directionToMotorDirection(direction Direction) elevio.MotorDirection {
 }
 
 func buttonTypeToElevio(b ButtonType) elevio.ButtonType {
-    switch b {
-    case BtnHallUp:
-        return elevio.BT_HallUp
-    case BtnHallDown:
-        return elevio.BT_HallDown
-    default:
-        return elevio.BT_Cab
-    }
+	switch b {
+	case BtnHallUp:
+		return elevio.BT_HallUp
+	case BtnHallDown:
+		return elevio.BT_HallDown
+	default:
+		return elevio.BT_Cab
+	}
 }
 
 func elevioToButtonType(b elevio.ButtonType) ButtonType {
-    switch b {
-    case elevio.BT_HallUp:
-        return BtnHallUp
-    case elevio.BT_HallDown:
-        return BtnHallDown
-    default:
-        return BtnCab
-    }
+	switch b {
+	case elevio.BT_HallUp:
+		return BtnHallUp
+	case elevio.BT_HallDown:
+		return BtnHallDown
+	default:
+		return BtnCab
+	}
 }
