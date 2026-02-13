@@ -17,19 +17,19 @@ const (
 // }
 
 // type Output struct {
-// 	driverCmdChan chan<- elevio.DriverCmd
+// 	driverCommandChan chan<- elevio.DriverCommand
 // 	clearedChan chan<- []Order
-// 	stateOutChan chan<- LocalSingleElevator
+// 	localStateChan chan<- LocalSingleElevator
 // }
 
 func Run(
-	buttonChan <-chan elevio.ButtonEvent,
+	localOrderChan <-chan elevio.ButtonEvent,
 	floorChan <-chan int,
 	obstructionChan <-chan bool,
 
-	driverCmdChan chan<- elevio.DriverCmd,
+	driverCommandChan chan<- elevio.DriverCommand,
 	clearedOrdersChan chan<- []Order,
-	stateOutChan chan<- LocalSingleElevator, // Muligens kun sende state og ikke hele elevator
+	localStateChan chan<- LocalSingleElevator, // Muligens kun sende state og ikke hele elevator
 ) {
 	fmt.Println("LocalSingleElevator started")
 	elevator := makeUninitializedElevator()
@@ -41,12 +41,12 @@ func Run(
 
 	if elevio.GetFloor() == -1 {
 		commands = append(commands, elevator.onInitBetweenFloors())
-		executeCommands(commands, driverCmdChan, clearedOrdersChan, doorTimer)
+		executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
 	}
 
 	for {
 		select {
-		case buttonEvent := <-buttonChan:
+		case buttonEvent := <-localOrderChan:
 			btn := elevioToButtonType(buttonEvent.Button)
 			commands = elevator.onRequestButtonPress(buttonEvent.Floor, btn)
 
@@ -62,14 +62,14 @@ func Run(
 
 		}
 
-		executeCommands(commands, driverCmdChan, clearedOrdersChan, doorTimer)
-		stateOutChan <- elevator // Sender state til OrderSync
+		executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
+		localStateChan <- elevator // Sender state til OrderSync
 	}
 }
 
 func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjøres som en egen goroutine, og heller eksplisitt execute commands i hver case i Run()?
 	commands []Command,
-	driverCmdChan chan<- elevio.DriverCmd,
+	driverCommandChan chan<- elevio.DriverCommand,
 	clearedChan chan<- []Order,
 	doorTimer *time.Timer,
 ) {
@@ -77,13 +77,13 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 		switch command._type {
 		case setMotorDirection:
 			dir := command.value.(Direction)
-			driverCmdChan <- elevio.DriverCmd{Type: elevio.CmdSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
+			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
 		case setDoorOpenLamp:
 			value := command.value.(bool)
-			driverCmdChan <- elevio.DriverCmd{Type: elevio.CmdSetDoorLamp, Value: value}
+			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetDoorLamp, Value: value}
 		case setButtonLamp:
 			args := command.value.(ButtonLampArgs)
-			driverCmdChan <- elevio.DriverCmd{Type: elevio.CmdSetButtonLamp, Button: buttonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
+			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: buttonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
 		case resetDoorTimer:
 			doorTimer.Reset(doorOpenDuration)
 		case sendClearedOrders:

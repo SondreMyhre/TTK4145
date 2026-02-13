@@ -26,18 +26,18 @@ OrderSync does **not** control motors/lamps directly.
 ### Run() interface
 
 #### Inputs (receive-only)
-- `Buttons <-chan ButtonEvent`
-- `Floor <-chan int`
-- `LocalState <-chan ElevatorState`
-- `Cleared <-chan ClearedOrders`
-- `NetRx <-chan NetMsg`
-- `DeadPeers <-chan []ElevID`
+- `buttonChan <-chan elevio.ButtonEvent`
+- `floorChan <-chan int`
+- `localStateChan <-chan LocalSingleElevator`
+- `clearedOrdersChan <-chan ClearedOrders`
+- `rx <-chan NetMsg`
+- `deadPeers <-chan []ElevID`
 <!-- - `Tick <-chan time.Time` *(optional, or internal ticker)* -->
 
 #### Outputs (send-only)
-- `AssignToLocal chan<- HallAssignment`
-- `NetTx chan<- NetMsg`
-- `Cmd <-chan DriverCmd`  (For lights)
+- `localOrderChan chan<- elevio.ButtonEvent`
+- `tx chan<- NetMsg`
+- `driverCommandChan <-chan DriverCommand`  (For lights)
 
 ### Functional core vs Imperative shell
 

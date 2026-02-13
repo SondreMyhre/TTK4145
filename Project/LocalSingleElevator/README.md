@@ -3,7 +3,7 @@
 ### Responsibility
 - Owns and runs the **local elevator** logic for one node.
 - Executes the **FSM** (Idle / DoorOpen / Moving) and local request handling.
-- Converts button, floor and obstruction events into **DriverCmd** outputs (motor/lamps/indicator) via channels.
+- Converts button, floor and obstruction events into **DriverCommand** outputs (motor/lamps/indicator) via channels.
 - Outputs to OrderSync via channels:
   - `ElevatorState` (for heartbeats / OrderSync)
   - `ClearedOrders` (when orders are served/cleared)
@@ -21,40 +21,17 @@ No other module is allowed to mutate these structures directly, only via channel
 ### Run()
 
 #### Inputs (receive-only channels)
-- `buttonCh <-chan elevio.ButtonEvent`
+- `localOrderChan <-chan elevio.ButtonEvent`
   Button events from OrderSync
-- `floorCh <-chan int`  
+- `floorChan <-chan int`  
   Floor sensor events from ElevIO.
-- `obstructionCh <-chan bool`
+- `obstructionChan <-chan bool`
   Obstruction switch events from ElevIO
 
 #### Outputs (send-only channels)
-- `driverCmdch chan<- DriverCmd`  
+- `driverCommandChan chan<- DriverCommand`  
   Commands to be executed by the ElevIO boundary driver.
-- `clearedOrdersCh chan<- ClearedOrders`  
+- `clearedOrdersChan chan<- ClearedOrders`  
   Notifies OrderSync about which orders were cleared via channel.
-- `stateOutCh chan<- ElevatorState`  
+- `localStateChan chan<- ElevatorState`  
   Used by OrderSync to build heartbeats and compute assignments.
-
-### Functional core vs Imperative shell
-
-#### Functional core (testable)
-- Pure-ish transition function(s):
-  - `Step(state, requests, event) -> (newState, newRequests, effects)` (effects is commands and other output)
-- No IO, no `elevio.*`, no `timer.C`, no `time.Now()`.
-
-Effects are value objects such as:
-- `SetMotor(dir)`
-- `SetDoorLamp(on)`
-- `SetFloorIndicator(floor)`
-- `SetButtonLamp(floor, btn, on)`
-- `StartDoorTimer(duration)`
-- `PublishState(state)`
-- `EmitCleared(clearedOrders)`
-
-#### Imperative shell (Run loop)
-- `for { select { ... } }` event loop
-- Owns door timer + converts timer expiry into `DoorTimeout` event
-- Applies effects by sending:
-  - DriverCmd to ElevIO
-  - ClearedOrders + State to OrderSync

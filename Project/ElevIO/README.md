@@ -7,7 +7,7 @@
   - floor sensor
   - stop button
   - obstruction switch
-- Executes actuator commands (listens on cmd channel for actuator commands):
+- Executes actuator commands (listens on driverCommandChan channel for actuator commands):
   - motor direction
   - door lamp
   - button lamps
@@ -20,7 +20,7 @@
 - internal buffers required for IO
 
 #### Inputs
-- `Cmd <-chan DriverCmd`  
+- `driverCommandChan <-chan DriverCommand`  
   Commands produced by LocalSingleElevator (and possibly OrderSync).
 
 #### Outputs
@@ -31,5 +31,5 @@
 ### Functional core vs Imperative shell
 - **Shell-only in practice.**
 - Optional pure helpers:
-  - mapping from `DriverCmd` to concrete `elevio.SetX(...)` calls
+  - mapping from `DriverCommand` to concrete `elevio.SetX(...)` calls
 

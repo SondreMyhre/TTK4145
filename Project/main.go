@@ -1,8 +1,8 @@
 package main
 
 import (
-	localsingle "Project/LocalSingleElevator"
 	elevio "Project/ElevIO"
+	localsingle "Project/LocalSingleElevator"
 	"flag"
 )
 
@@ -13,22 +13,28 @@ func main() {
 
 	elevio.Init(*serverAddr, 4)
 
-	driverCmdChan := make(chan elevio.DriverCmd)
+	driverCommandChan := make(chan elevio.DriverCommand)
 	buttonChan := make(chan elevio.ButtonEvent)
-    floorChan := make(chan int)
-    obstructionChan := make(chan bool)
-    clearedOrdersChan := make(chan []localsingle.Order)
-    stateOutChan := make(chan localsingle.LocalSingleElevator)
-	
-	go elevio.RunDriver(driverCmdChan)
+	floorChan := make(chan int)
+	obstructionChan := make(chan bool)
+	clearedOrdersChan := make(chan []localsingle.Order)
+	localStateChan := make(chan localsingle.LocalSingleElevator)
+
+	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)
-    go elevio.PollFloorSensor(floorChan)
-    go elevio.PollObstructionSwitch(obstructionChan)
+	go elevio.PollFloorSensor(floorChan)
+	go elevio.PollObstructionSwitch(obstructionChan)
 
-	go func() { for range clearedOrdersChan {} }()	// OrderSync not implemented
-    go func() { for range stateOutChan {} }()			// OrderSync not implemented
+	go func() {
+		for range clearedOrdersChan {
+		}
+	}() // OrderSync not implemented
+	go func() {
+		for range localStateChan {
+		}
+	}() // OrderSync not implemented
 
-	go localsingle.Run(buttonChan, floorChan, obstructionChan, driverCmdChan, clearedOrdersChan, stateOutChan)
+	go localsingle.Run(buttonChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan) // localOrderChan = buttonChan
 
 	select {}
 }
