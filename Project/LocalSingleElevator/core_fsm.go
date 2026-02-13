@@ -1,19 +1,19 @@
 package localsingle
 
-func (elevator *LocalSingleElevator) FSM_OnInitBetweenFloors() Command {
+func (elevator *LocalSingleElevator) onInitBetweenFloors() Command {
 	elevator.state.direction = DirDown
 	elevator.state.behaviour = BehaviourMoving
 	return Command{_type: setMotorDirection, value: DirDown}
 }
 
-func (elevator *LocalSingleElevator) FSM_OnRequestButtonPress(buttonFloor int, buttonType ButtonType) []Command {
+func (elevator *LocalSingleElevator) onRequestButtonPress(buttonFloor int, buttonType ButtonType) []Command {
 	elevator.requests[buttonFloor][buttonType] = true
 	var commands []Command
 
 	switch elevator.state.behaviour {
 	case BehaviourDoorOpen:
 		if elevator.shouldClearImmediately(buttonFloor, buttonType) {
-			commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
+			commands = append(commands, Command{_type: resetDoorTimer, value: nil})
 			cleared := elevator.clearAtCurrentFloor()
 			if len(cleared) > 0 {
 				commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
@@ -31,7 +31,7 @@ func (elevator *LocalSingleElevator) FSM_OnRequestButtonPress(buttonFloor int, b
 		switch pair.behaviour {
 		case BehaviourDoorOpen:
 			commands = append(commands, Command{_type: setDoorOpenLamp, value: true})
-			commands = append(commands, Command{_type: ResetDoorTimer, value: true})
+			commands = append(commands, Command{_type: resetDoorTimer, value: true})
 			cleared := elevator.clearAtCurrentFloor()
 			if len(cleared) > 0 {
 				commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
@@ -47,7 +47,7 @@ func (elevator *LocalSingleElevator) FSM_OnRequestButtonPress(buttonFloor int, b
 	return nil
 }
 
-func (elevator *LocalSingleElevator) FSM_OnFloorArrival(newFloor int) []Command {
+func (elevator *LocalSingleElevator) onFloorArrival(newFloor int) []Command {
 	elevator.state.floor = newFloor
 	var commands []Command
 	commands = append(commands, Command{_type: setFloorIndicator, value: elevator.state.floor})
@@ -63,7 +63,7 @@ func (elevator *LocalSingleElevator) FSM_OnFloorArrival(newFloor int) []Command 
 		if len(cleared) > 0 {
 			commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
 		}
-		commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
+		commands = append(commands, Command{_type: resetDoorTimer, value: nil})
 
 		commands = append(commands, elevator.generateLightCommands()...)
 		elevator.state.behaviour = BehaviourDoorOpen
@@ -72,7 +72,7 @@ func (elevator *LocalSingleElevator) FSM_OnFloorArrival(newFloor int) []Command 
 	return commands
 }
 
-func (elevator *LocalSingleElevator) FSM_OnDoorTimeout() []Command {
+func (elevator *LocalSingleElevator) onDoorTimeout() []Command {
 	var commands []Command
 
 	if elevator.state.behaviour != BehaviourDoorOpen {
@@ -80,7 +80,7 @@ func (elevator *LocalSingleElevator) FSM_OnDoorTimeout() []Command {
 	}
 
 	if elevator.obstructed {
-		commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
+		commands = append(commands, Command{_type: resetDoorTimer, value: nil})
 		return commands
 	}
 
@@ -92,7 +92,7 @@ func (elevator *LocalSingleElevator) FSM_OnDoorTimeout() []Command {
 
 		switch elevator.state.behaviour {
 		case BehaviourDoorOpen:
-			commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
+			commands = append(commands, Command{_type: resetDoorTimer, value: nil})
 			cleared := elevator.clearAtCurrentFloor()
 			if len(cleared) > 0 {
 				commands = append(commands, Command{_type: sendClearedOrders, value: cleared})
@@ -114,7 +114,7 @@ func (elevator *LocalSingleElevator) onObstruction(obstructed bool) []Command {
 	elevator.obstructed = obstructed
 	if elevator.state.behaviour == BehaviourDoorOpen {
 		var commands []Command
-		commands = append(commands, Command{_type: ResetDoorTimer, value: nil})
+		commands = append(commands, Command{_type: resetDoorTimer, value: nil})
 		return commands
 	}
 	return nil

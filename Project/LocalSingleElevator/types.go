@@ -1,7 +1,7 @@
 package localsingle
 
 const (
-	N_FLOORS  = 4 // TODO: gjøre dette mulig å sette med flags
+	N_FLOORS  = 4
 	N_BUTTONS = 3
 )
 
@@ -36,8 +36,8 @@ type ElevatorState struct {
 }
 
 type LocalSingleElevator struct {
-	state     ElevatorState
-	requests  [N_FLOORS][N_BUTTONS]bool
+	state      ElevatorState
+	requests   [N_FLOORS][N_BUTTONS]bool
 	obstructed bool
 }
 
@@ -46,7 +46,7 @@ type DirectionBehaviourPair struct {
 	behaviour ElevatorBehaviour
 }
 
-func ElevatorBehaviourToString(eb ElevatorBehaviour) string {
+func elevatorBehaviourToString(eb ElevatorBehaviour) string {
 	switch eb {
 	case BehaviourIdle:
 		return "BehaviourIdle"
@@ -60,7 +60,7 @@ func ElevatorBehaviourToString(eb ElevatorBehaviour) string {
 	}
 }
 
-func MakeUninitializedElevator() LocalSingleElevator {
+func makeUninitializedElevator() LocalSingleElevator {
 	elevator := LocalSingleElevator{
 		state: ElevatorState{floor: -1,
 			direction: DirStop,
@@ -77,7 +77,7 @@ const (
 	setDoorOpenLamp
 	setFloorIndicator
 	setButtonLamp
-	ResetDoorTimer
+	resetDoorTimer
 	sendClearedOrders
 )
 
@@ -96,7 +96,6 @@ type Order struct {
 	Floor  int
 	Button ButtonType
 }
-
 
 // func PrintElevator(elevator LocalSingleElevator) {
 // 	fmt.Printf("  +--------------------+\n")
