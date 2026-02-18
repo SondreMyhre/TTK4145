@@ -1,6 +1,7 @@
 package TransportUDP
 
 import (
+	"Project/TransportUDP/bcast"
 	"flag"
 	"fmt"
 	"os"
@@ -10,17 +11,31 @@ import (
 // find out what information NetMsg should carry
 // has to contain all information to be sent over the network
 // needs the orderMatrix from orderSync and a peer-message from peerMonitor
-type NetMsg struct {
+// NOTE: all members we want to broadcast has to be public!!!
+type PeerMonitorMsg struct {
 	Message string
 	Iter int
 }
 
-// this is what will run in main.go
-func Run(tx <-chan NetMsg, rx chan<- NetMsg) {
-	
-	// Reads messages from tx chan and broadcast them over the network
-	// go broadcastMessages(tx <- chan NetMsg)
+type OrderSyncMsg struct {
+	Message string
+	Iter int
+}
+
+// Run is called in main.go
+// TO-DO: create channels beneath in main.go
+func Run(PeerMonitorTx <-chan PeerMonitorMsg, 
+		OrderSyncTx <-chan OrderSyncMsg, 
+
+		PeerMonitorRx chan<- PeerMonitorMsg,
+		OrderSyncRx chan<- OrderSyncMsg,
+
+		port int,
+	) {
+
+	// Reads messages from the channels, decodes them, and broadcasts
+	go bcast.Transmitter(port, PeerMonitorTx, OrderSyncTx)
 
 	// Reads messages from the network, decodes them and, send over respective channels
-	// go recieveMessages(rx chan<- NetMsg)
+	go bcast.Receiver(port, PeerMonitorRx, OrderSyncRx)
 }

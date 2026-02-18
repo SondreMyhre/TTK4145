@@ -29,7 +29,7 @@ const (
 	BtnCab
 )
 
-type ElevatorState struct {
+type elevatorState struct {
 	floor     int
 	direction Direction
 	behaviour ElevatorBehaviour

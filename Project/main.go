@@ -3,10 +3,13 @@ package main
 import (
 	elevio "Project/ElevIO"
 	localsingle "Project/LocalSingleElevator"
+	transportUDP "Project/TransportUDP"
 	"flag"
 )
 
 func main() {
+	// TO-DO: add port int and id string as flags
+	// maybe only id string is necessary, then port id can be calculated with the id
 
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
@@ -19,6 +22,13 @@ func main() {
 	obstructionChan := make(chan bool)
 	clearedOrdersChan := make(chan []localsingle.Order)
 	localStateChan := make(chan localsingle.LocalSingleElevator)
+
+	// Channels for networking
+	PeerMonitorTx := make(chan transportUDP.PeerMonitorMsg)
+	PeerMonitorRx := make(chan transportUDP.PeerMonitorMsg)
+
+	OrderSyncTx := make(chan transportUDP.OrderSyncMsg)
+	OrderSyncRx := make(chan transportUDP.OrderSyncMsg)
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)
