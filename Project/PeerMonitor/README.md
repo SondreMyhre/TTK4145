@@ -8,9 +8,11 @@
 PeerMonitor is purely about **presence**; it does not assign orders.
 
 ### Owns (mutable state)
-- `lastSeen map[ElevID]time.Time`
-- `timeout time.Duration`
-- `peers []Peer` liste med informasjon over peers??
+- `Peer-> struct wih ID and Status`
+- `Peerupdate -> Peers`
+- `PeerConfig-> Timeout time.Duration, TickPeriod time.Duration`
+- `PeerInputs-> Heartbeat(recieves Rx from TrUDP), Tick`
+-`PeerOutpus(sends updated PeerUpdate to Ordersync)`
 
 ### Run() interface
 
@@ -20,9 +22,7 @@ PeerMonitor is purely about **presence**; it does not assign orders.
   If ticks are provided externally; otherwise PeerMonitor runs its own ticker. (Mest sannsynlig egen)
 
 #### Outputs (send-only)
-- `deadPeers chan<- []Peer`
-- `peerUp chan<- Peer` *(optional)*
-- `peerList chan<- []Peer` *(optional)*
+- `PeerUpdate(Peer list)`
 
 
 ### Functional core vs Imperative shell
