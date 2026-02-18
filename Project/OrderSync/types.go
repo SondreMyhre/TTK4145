@@ -39,10 +39,12 @@ type command struct {
 	value any
 }
 
+type localCabCalls [N_FLOORS]bool
+
 type NetMsg struct {
 	elevID          ElevID
 	hallOrderMatrix HallOrderMatrix
-	backupCabCalls  [N_FLOORS]bool
+	cabCalls  map[ElevID]localCabCalls
 }
 
 type HallOrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
@@ -63,4 +65,15 @@ const (
 	DoorOpen
 )
 
-type PeerList []int
+type Status int
+
+const (
+	Dead Status = iota
+	Alive
+)
+
+
+type peer struct {
+	ID ElevID
+	Status Status
+}

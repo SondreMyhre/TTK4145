@@ -31,7 +31,7 @@ func (state *localState) updateLocalState(e localsingle.LocalSingleElevator) {
 
 }
 
-func findOrder(m HallOrderMatrix, pl PeerList) orderMatrixEntry {
+func findOrder(m HallOrderMatrix, pl []peer) orderMatrixEntry {
 	return orderMatrixEntry{}
 }
 
@@ -51,8 +51,8 @@ func (h *HallOrderMatrix) onNetMsg(msg NetMsg) {
 
 }
 
-func onPeerEvent(h HallOrderMatrix, pl PeerList, peerEvent []peermonitor.Peer) (ha HallOrderMatrix, pla PeerList) {
-	return HallOrderMatrix{}, PeerList{}
+func onPeerEvent(h HallOrderMatrix, pl []peer, peerEvent []peermonitor.Peer) (ha HallOrderMatrix, pla []peer) {
+	return HallOrderMatrix{}, []peer{}
 }
 
 func buildHeartbeat(h HallOrderMatrix, l localState) NetMsg {

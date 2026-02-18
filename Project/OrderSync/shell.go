@@ -12,7 +12,6 @@ import (
 
 func Run(
 	buttonChan <-chan elevio.ButtonEvent,
-	floorChan <-chan int,	// Trenger nok ikke
 	localStateChan <-chan localsingle.LocalSingleElevator,
 	clearedOrdersChan <-chan []localsingle.Order,
 	rx <-chan NetMsg,
@@ -24,9 +23,9 @@ func Run(
 ) {
 	var hallOrderMatrix HallOrderMatrix
 	var localState localState
-	// var cabCalls [N_FLOORS]bool
+	// var cabCalls map[ElevID]localCabCalls
 	var commands []command
-	var peerList PeerList
+	var peerList []peer
  
 	heartbeatTicker := time.NewTicker(100 * time.Millisecond)
 
