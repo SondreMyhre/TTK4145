@@ -2,15 +2,16 @@ package TransportUDP
 
 import (
 	"Project/TransportUDP/bcast"
-	"Project/PeerMonitor" //will only be using the types in peermonitor and ordersync
-	"Project/OrderSync"
+	// "Project/PeerMonitor" //will only be using the types in peermonitor and ordersync
+	// "Project/OrderSync"
 	// "flag"
 	// "fmt"
 	// "os"
 	// "time"
 )
 
-// TO-DO: Set up Msg-members as OrderSync and PeerMonitor needs
+const portOffset = 60000
+
 // NOTE: all members we want to broadcast has to be public!!!
 type PeerMonitorMsg struct {
 	Message string
@@ -23,14 +24,17 @@ type OrderSyncMsg struct {
 }
 
 // Run is called in main.go
-func Run(PeerMonitorTx <-chan PeerMonitorMsg, 
+func Run(pID int,
+		PeerMonitorTx <-chan PeerMonitorMsg, 
 		OrderSyncTx <-chan OrderSyncMsg, 
 
 		PeerMonitorRx chan<- PeerMonitorMsg,
 		OrderSyncRx chan<- OrderSyncMsg,
-
-		port int,
 	) {
+	// Declaring variables
+	peerID := pID
+	port := peerID + portOffset
+
 	// Reads messages from the channels, decodes them, and broadcasts
 	go bcast.Transmitter(port, PeerMonitorTx, OrderSyncTx)
 

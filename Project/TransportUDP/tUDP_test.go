@@ -8,7 +8,7 @@ import (
 )
 
 func TestMainLike(t *testing.T) {
-	const port = 60000
+	const peerID = 1
 
 	// Channels for networking
 	PeerMonitorTx := make(chan PeerMonitorMsg)
@@ -17,7 +17,7 @@ func TestMainLike(t *testing.T) {
 	OrderSyncTx := make(chan OrderSyncMsg)
 	OrderSyncRx := make(chan OrderSyncMsg)
 
-	go Run(PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx, port)
+	go Run(peerID, PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx)
 
 	go func() {
 		helloMsg := OrderSyncMsg{"Hello from ordersync", 0}
