@@ -31,40 +31,40 @@ func (elevator *LocalSingleElevator) requestsHere() bool {
 	return false
 }
 
-func (elevator *LocalSingleElevator) chooseDirection() DirectionBehaviourPair {
+func (elevator *LocalSingleElevator) chooseDirection() directionBehaviourPair {
 	switch elevator.state.direction {
 	case DirUp:
 		if elevator.requestsAbove() {
-			return DirectionBehaviourPair{DirUp, BehaviourMoving}
+			return directionBehaviourPair{DirUp, BehaviourMoving}
 		} else if elevator.requestsHere() {
-			return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
+			return directionBehaviourPair{DirStop, BehaviourDoorOpen}
 		} else if elevator.requestsBelow() {
-			return DirectionBehaviourPair{DirDown, BehaviourMoving}
+			return directionBehaviourPair{DirDown, BehaviourMoving}
 		} else {
-			return DirectionBehaviourPair{DirStop, BehaviourIdle}
+			return directionBehaviourPair{DirStop, BehaviourIdle}
 		}
 	case DirDown:
 		if elevator.requestsBelow() {
-			return DirectionBehaviourPair{DirDown, BehaviourMoving}
+			return directionBehaviourPair{DirDown, BehaviourMoving}
 		} else if elevator.requestsHere() {
-			return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
+			return directionBehaviourPair{DirStop, BehaviourDoorOpen}
 		} else if elevator.requestsAbove() {
-			return DirectionBehaviourPair{DirUp, BehaviourMoving}
+			return directionBehaviourPair{DirUp, BehaviourMoving}
 		} else {
-			return DirectionBehaviourPair{DirStop, BehaviourIdle}
+			return directionBehaviourPair{DirStop, BehaviourIdle}
 		}
 	case DirStop:
 		if elevator.requestsHere() {
-			return DirectionBehaviourPair{DirStop, BehaviourDoorOpen}
+			return directionBehaviourPair{DirStop, BehaviourDoorOpen}
 		} else if elevator.requestsAbove() {
-			return DirectionBehaviourPair{DirUp, BehaviourMoving}
+			return directionBehaviourPair{DirUp, BehaviourMoving}
 		} else if elevator.requestsBelow() {
-			return DirectionBehaviourPair{DirDown, BehaviourMoving}
+			return directionBehaviourPair{DirDown, BehaviourMoving}
 		} else {
-			return DirectionBehaviourPair{DirStop, BehaviourIdle}
+			return directionBehaviourPair{DirStop, BehaviourIdle}
 		}
 	default:
-		return DirectionBehaviourPair{DirStop, BehaviourIdle}
+		return directionBehaviourPair{DirStop, BehaviourIdle}
 	}
 }
 
@@ -83,7 +83,7 @@ func (elevator *LocalSingleElevator) shouldStop() bool {
 	}
 }
 
-func (elevator *LocalSingleElevator) shouldClearImmediately(buttonFloor int, buttonType ButtonType) bool {
+func (elevator *LocalSingleElevator) shouldClearImmediately(buttonFloor int, buttonType buttonType) bool {
 	return elevator.state.floor == buttonFloor &&
 		((elevator.state.direction == DirUp && buttonType == BtnHallUp) ||
 			(elevator.state.direction == DirDown && buttonType == BtnHallDown) ||
@@ -138,11 +138,11 @@ func (elevator *LocalSingleElevator) clearAtCurrentFloor() []Order {
 	return clearedOrders
 }
 
-func (elevator *LocalSingleElevator) generateLightCommands() []Command {
-	commands := make([]Command, 0, N_FLOORS*N_BUTTONS)
+func (elevator *LocalSingleElevator) generateLightCommands() []command {
+	commands := make([]command, 0, N_FLOORS*N_BUTTONS)
 	for f := range N_FLOORS {
 		for btn := range N_BUTTONS {
-			commands = append(commands, Command{_type: setButtonLamp, value: ButtonLampArgs{f, ButtonType(btn), elevator.requests[f][btn]}})
+			commands = append(commands, command{_type: setButtonLamp, value: buttonLampArgs{f, buttonType(btn), elevator.requests[f][btn]}})
 		}
 	}
 
