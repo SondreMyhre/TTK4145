@@ -40,17 +40,15 @@ type command struct {
 }
 
 type NetMsg struct {
-	elevID         ElevID
-	orderMatrix    OrderMatrix
-	backupCabCalls [N_FLOORS]bool
+	elevID          ElevID
+	hallOrderMatrix HallOrderMatrix
+	backupCabCalls  [N_FLOORS]bool
 }
 
-type OrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
+type HallOrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
 
 type orderMatrixEntry struct {
-	orderStatus 		orderStatus
-	assignedElevator 	ElevID
-	version     		int
+	orderStatus      orderStatus
+	assignedElevator ElevID
+	version          int
 }
-
-

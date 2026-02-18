@@ -22,7 +22,7 @@ func Run(
 	tx chan<- []NetMsg,
 	lightCommandChan chan<- elevio.DriverCommand  // Muligens kun sende state og ikke hele elevator
 ) {
-	var hallOrderMatrix OrderMatrix
+	var hallOrderMatrix HallOrderMatrix
 	var localState LocalState
 	var cabCalls [N_FLOORS]bool
  
