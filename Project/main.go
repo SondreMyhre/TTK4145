@@ -23,12 +23,15 @@ func main() {
 	clearedOrdersChan := make(chan []localsingle.Order)
 	localStateChan := make(chan localsingle.LocalSingleElevator)
 
-	// Channels for networking
+	// Channels and goroutines for networking
 	PeerMonitorTx := make(chan transportUDP.PeerMonitorMsg)
 	PeerMonitorRx := make(chan transportUDP.PeerMonitorMsg)
 
 	OrderSyncTx := make(chan transportUDP.OrderSyncMsg)
 	OrderSyncRx := make(chan transportUDP.OrderSyncMsg)
+		// TO-DO: maybe run transportUDP.init() function to set port-number
+	go transportUDP.Run(PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx, port)
+
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)

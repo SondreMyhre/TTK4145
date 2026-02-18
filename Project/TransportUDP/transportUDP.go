@@ -8,9 +8,7 @@ import (
 	// "time"
 )
 
-// find out what information NetMsg should carry
-// has to contain all information to be sent over the network
-// needs the orderMatrix from orderSync and a peer-message from peerMonitor
+// TO-DO: Set up Msg-members as OrderSync and PeerMonitor needs
 // NOTE: all members we want to broadcast has to be public!!!
 type PeerMonitorMsg struct {
 	Message string
