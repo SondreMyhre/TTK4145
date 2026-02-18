@@ -3,7 +3,7 @@ package ordersync
 import (
 	elevio "Project/ElevIO"
 	localsingle "Project/LocalSingleElevator"
-	"fmt"
+	peermonitor "Project/PeerMonitor"
 	"time"
 )
 
@@ -20,11 +20,13 @@ func Run(
 
 	localOrderChan chan<- elevio.ButtonEvent,
 	tx chan<- []NetMsg,
-	lightCommandChan chan<- elevio.DriverCommand  // Muligens kun sende state og ikke hele elevator
+	lightCommandChan chan<- elevio.DriverCommand,  // Muligens kun sende state og ikke hele elevator
 ) {
 	var hallOrderMatrix HallOrderMatrix
-	var localState LocalState
-	var cabCalls [N_FLOORS]bool
+	var localState localState
+	// var cabCalls [N_FLOORS]bool
+	var commands []command
+	var peerList PeerList
  
 	heartbeatTicker := time.NewTicker(100 * time.Millisecond)
 
@@ -32,47 +34,47 @@ func Run(
 	for {
 		select {
 		case buttonEvent := <-buttonChan:
-			btn := elevioToButtonType(buttonEvent.Button)
+			// btn := elevioToButtonType(buttonEvent.Button)
 
-			switch(buttonEvent) {
+			switch(buttonEvent.Button) {
 			case elevio.BT_Cab:
 				commands = onCabButtonEvent(buttonEvent)
 				
 				
-			case elevio.BT_HallUp || elevio.BT_HallDown:
-				newOrderMatrix, commands = onHallButtonEvent(buttonEvent)
-				hallOrderMatrix = newOrderMatrix
+			case elevio.BT_HallUp, elevio.BT_HallDown:
+				commands = onHallButtonEvent(buttonEvent)
+				hallOrderMatrix.onHallButtonEvent(buttonEvent)
 			}
 
 		case newLocalState := <-localStateChan:
 			commands = onNewLocalState(newLocalState)
-			localState = newLocalState
+			localState.updateLocalState(newLocalState)
 
-			switch(newLocalState.behaviour) {
+			switch(localState) { // newLocalState.state.behaviour
 			case Idle:
-				orderMatrixEntry = findOrder(hallOrderMatrix, peerList)
-				if orderMatrixEntry != nil {
+				orderMatrixEntry := findOrder(hallOrderMatrix, peerList)
+				if orderMatrixEntry.orderStatus != inactive {
 					commands = claimOrder(orderMatrixEntry)
 					localOrderChan <- orderToElevioButtonEvent(orderMatrixEntry)
 				}
 
 			case DoorOpen:
-				orderMatrixEntry = findOrder(hallOrderMatrix, peerList)
-				if orderMatrixEntry != nil {
+				orderMatrixEntry := findOrder(hallOrderMatrix, peerList)
+				if orderMatrixEntry.orderStatus != inactive {
 					commands = claimOrder(orderMatrixEntry)
 					localOrderChan <- orderToElevioButtonEvent(orderMatrixEntry)
 				}
 			}
 
 		case netMsg := <-rx:
-			newOrderMatrix, commands = onNetMsg(hallOrderMatrix, netMsg)
-			hallOrderMatrix = newOrderMatrix
+			hallOrderMatrix.onNetMsg(netMsg)
+			commands = onNetMsg(hallOrderMatrix, netMsg)
 
 		case peerEvent := <-peerEventChan:
 			newOrderMatrix, newPeerList := onPeerEvent(hallOrderMatrix, peerList, peerEvent)
 			hallOrderMatrix, peerList = newOrderMatrix, newPeerList
 
-		case <-heartBeatTicker.C:
+		case <-heartbeatTicker.C:
 			netMsg := buildHeartbeat(hallOrderMatrix, localState) // Perhaps peerList also
 			commands = sendHeartbeat(netMsg)
 		}
@@ -92,28 +94,12 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 		case sendOrderToLocal:
 			localOrderChan <- command.value.(elevio.ButtonEvent)
 		case sendNetMsg:
-			tx <- command.value.(NetMsg)
+			// tx <- command.value.(NetMsg)
 		case setButtonLamp:
-			args := command.value.(buttonLampArgs)
-			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: buttonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
+			// args := command.value.(buttonLampArgs)
+			// lightCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: buttonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
 		}
 
-	}
-}
-
-
-
-
-func directionToMotorDirection(direction direction) elevio.MotorDirection {
-	switch direction {
-	case DirUp:
-		return elevio.MD_Up
-	case DirDown:
-		return elevio.MD_Down
-	case DirStop:
-		return elevio.MD_Stop
-	default:
-		return elevio.MD_Stop
 	}
 }
 

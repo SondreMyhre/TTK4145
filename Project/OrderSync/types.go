@@ -52,3 +52,15 @@ type orderMatrixEntry struct {
 	assignedElevator ElevID
 	version          int
 }
+
+type localState int;
+
+type buttonLampArgs int
+
+const (
+	Idle localState = iota
+	Moving
+	DoorOpen
+)
+
+type PeerList []int
