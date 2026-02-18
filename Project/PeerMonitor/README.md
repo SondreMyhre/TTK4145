@@ -22,9 +22,7 @@ PeerMonitor is purely about **presence**; it does not assign orders.
   If ticks are provided externally; otherwise PeerMonitor runs its own ticker.
 
 #### Outputs (send-only)
-- `Dead chan<- []Peer`
-- `PeerUp chan<- Peer` *(optional)*
-- `PeerList chan<- []Peer` *(optional)*
+- `PeerUpdate(ElevID lists),New, Lost, All`
 
 
 ### Functional core vs Imperative shell
