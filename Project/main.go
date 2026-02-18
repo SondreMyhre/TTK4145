@@ -10,7 +10,7 @@ import (
 func main() {
 	// TO-DO: add port int and id string as flags
 	// maybe only id string is necessary, then port id can be calculated with the id
-
+	// peerID := flag.Int("peerID", "")
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
 

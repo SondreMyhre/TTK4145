@@ -2,6 +2,8 @@ package TransportUDP
 
 import (
 	"Project/TransportUDP/bcast"
+	"Project/PeerMonitor" //will only be using the types in peermonitor and ordersync
+	"Project/OrderSync"
 	// "flag"
 	// "fmt"
 	// "os"
@@ -29,7 +31,6 @@ func Run(PeerMonitorTx <-chan PeerMonitorMsg,
 
 		port int,
 	) {
-
 	// Reads messages from the channels, decodes them, and broadcasts
 	go bcast.Transmitter(port, PeerMonitorTx, OrderSyncTx)
 
