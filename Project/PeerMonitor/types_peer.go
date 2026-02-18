@@ -6,25 +6,30 @@ const N_Floors = 4
 
 // types
 
-type ElevID string  //Elev ID uniquely identifies a Peer
+type ElevID string //Elev ID uniquely identifies a Peer
 
 type Status int
 
-const (   // Status is Dead/Alive
+const ( // Status is Dead/Alive
 	Dead Status = iota
 	Alive
 )
 
 
 type Peer struct { //Peer representsa network peer
-	ID ElevID // elevator ID is based on the port i comes from since each IP is the same
-	Status Status //Dead or alive
-	BackupCapCalls [N_Floors]bool //each elevatpr keeps
+	ID             ElevID         // elevator ID is based on the port i comes from since each IP is the same
+	Status         Status         //Dead or alive
+	BackupCabCalls [N_Floors]bool //each elevator keeps backup of others' cab calls
+	LastSeen       time.Time      // When we last received a heartbeat from this peer
 }
 
-type HeartbeatMsg struct{ //HeartbeatMsg is recieved from other alive Peers
-	SenderID ElevID
+type PeerState struct {  // Internal state for core functions
+	Peers map[ElevID]*Peer
+}
 
+type HeartbeatMsg struct { //HeartbeatMsg is recieved from other alive Peers
+	SenderID ElevID
+	CabCalls [N_Floors]bool // Current cab calls to be backed up by others
 }
 
 type PeerUpdate struct {
@@ -42,11 +47,7 @@ type PeerInputs struct {
 }
 
 type PeerOutputs struct {
-	Update chan<- PeerUpdate // Sends updated list to OrderSync
+	Update              chan<- PeerUpdate // Sends updated list to OrderSync
+	TransmitBackupCalls chan<- Peer       // Sends backup cab calls
 }
-
-
-// myID := ElevID -> PORT
-
-
 
