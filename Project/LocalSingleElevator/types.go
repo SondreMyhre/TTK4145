@@ -79,6 +79,7 @@ const (
 	setButtonLamp
 	resetDoorTimer
 	sendClearedOrders
+	sendLocalState
 )
 
 type command struct {
