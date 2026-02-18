@@ -15,7 +15,7 @@ const (   // Status is Dead/Alive
 
 
 type Peer struct { //Peer representsa network peer
-	ID ElevID
+	ID ElevID //
 	Status Status
 }
 
@@ -25,9 +25,7 @@ type HeartbeatMsg struct{ //HeartbeatMsg is recieved from other alive Peers
 }
 
 type PeerUpdate struct {
-	New []ElevID //Peers that just appeared
-	Lost []ElevID//Peers that have been lost/timed out
-	All []ElevID //current list of Alive peers
+	Peers []Peer // Current list of all peers with their status
 }
 
 type PeerConfig struct {
