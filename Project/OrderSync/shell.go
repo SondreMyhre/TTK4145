@@ -19,7 +19,7 @@ func Run(
 	peerEventChan <-chan []peermonitor.Peer,
 
 	localOrderChan chan<- elevio.ButtonEvent,
-	tx chan<- []NetMsg,
+	tx chan<- NetMsg,
 	lightCommandChan chan<- elevio.DriverCommand,  // Muligens kun sende state og ikke hele elevator
 ) {
 	var hallOrderMatrix HallOrderMatrix
@@ -86,7 +86,7 @@ func Run(
 func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjøres som en egen goroutine, og heller eksplisitt execute commands i hver case i Run()?
 	commands []command,
 	localOrderChan chan<- elevio.ButtonEvent,
-	tx chan<- []NetMsg,
+	tx chan<- NetMsg,
 	lightCommandChan chan<- elevio.DriverCommand,
 ) {
 	for _, command := range commands {

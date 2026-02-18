@@ -4,8 +4,6 @@ import (
 	elevio "Project/ElevIO"
 	localsingle "Project/LocalSingleElevator"
 	peermonitor "Project/PeerMonitor"
-
-	"golang.org/x/tools/go/analysis/passes/nilfunc"
 )
 
 func onCabButtonEvent(buttonEvent elevio.ButtonEvent) []command {
