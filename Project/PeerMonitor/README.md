@@ -8,7 +8,8 @@
 PeerMonitor is purely about **presence**; it does not assign orders.
 
 ### Owns (mutable state)
-- `Peer-> struct wih ID and Status`
+- `Peer-> struct wih ID, Status, CabcallBackups and Lastseen `
+- `PeerStates-> Peers, map`
 - `Peerupdate -> Peers`
 - `PeerConfig-> Timeout time.Duration, TickPeriod time.Duration`
 - `PeerInputs-> Heartbeat(recieves Rx from TrUDP), Tick`
