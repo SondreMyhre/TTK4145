@@ -5,14 +5,16 @@ import (
 	localsingle "Project/LocalSingleElevator"
 	transportUDP "Project/TransportUDP"
 	"flag"
+	"log"
 )
 
 func main() {
-	// TO-DO: add port int and id string as flags
-	// maybe only id string is necessary, then port id can be calculated with the id
-	// peerID := flag.Int("peerID", "")
+	peerID := flag.Int("peerID", 0, "peerID of the elevator to be created")
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
+	if *peerID == 0 {
+		log.Fatal("Not valid peerID.")
+	}
 
 	elevio.Init(*serverAddr, 4)
 
@@ -29,9 +31,8 @@ func main() {
 
 	OrderSyncTx := make(chan transportUDP.OrderSyncMsg)
 	OrderSyncRx := make(chan transportUDP.OrderSyncMsg)
-		// TO-DO: maybe run transportUDP.init() function to set port-number
-	go transportUDP.Run(PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx, port)
 
+	go transportUDP.Run(*peerID, PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx)
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)

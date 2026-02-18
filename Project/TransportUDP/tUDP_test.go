@@ -3,7 +3,9 @@ package TransportUDP
 import (
 	"testing"
 	"fmt"
-	"time"
+	// "time"
+	// peermonitor "Project/PeerMonitor" //will only be using the types in peermonitor...
+	// ordersync "Project/OrderSync" //...and ordersync
 	// "reflect"
 )
 
@@ -11,16 +13,21 @@ func TestMainLike(t *testing.T) {
 	const peerID = 1
 
 	// Channels for networking
-	PeerMonitorTx := make(chan PeerMonitorMsg)
-	PeerMonitorRx := make(chan PeerMonitorMsg)
+	// eId := ordersync.ElevID(peerID)
+	// fmt.Print("elevatorID: ", eId)
+	recTx := make(chan peermonitor.RecoveryMsg)
+	recRx := make(chan peermonitor.RecoveryMsg)
 
-	OrderSyncTx := make(chan OrderSyncMsg)
-	OrderSyncRx := make(chan OrderSyncMsg)
+	osNetMsgTx := make(chan ordersync.NetMsg)
+	osNetMsgRx := make(chan ordersync.NetMsg)
 
-	go Run(peerID, PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx)
+	pmNetMsgRx := make(chan ordersync.NetMsg)
+
+	go Run(peerID, recTx, recRx, osNetMsgTx, osNetMsgRx, pmNetMsgRx)
 
 	go func() {
-		helloMsg := OrderSyncMsg{"Hello from ordersync", 0}
+		homatrix := HallOrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
+		netMsg := ordersync.NetMsg{ordersync.ElevID(peerID), }
 		for {
 			helloMsg.Iter++
 			OrderSyncTx <- helloMsg
