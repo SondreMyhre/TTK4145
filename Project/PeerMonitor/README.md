@@ -8,8 +8,8 @@
 PeerMonitor is purely about **presence**; it does not assign orders.
 
 ### Owns (mutable state)
-- `Peer-> struckt wih ID and Status`
-- `Peerupdate -> New Peers, Lost Peers, All Peers`
+- `Peer-> struct wih ID and Status`
+- `Peerupdate -> Peers`
 - `PeerConfig-> Timeout time.Duration, TickPeriod time.Duration`
 - `PeerInputs-> Heartbeat(recieves Rx from TrUDP), Tick`
 -`PeerOutpus(sends updated PeerUpdate to Ordersync)`
@@ -22,7 +22,7 @@ PeerMonitor is purely about **presence**; it does not assign orders.
   If ticks are provided externally; otherwise PeerMonitor runs its own ticker.
 
 #### Outputs (send-only)
-- `PeerUpdate(ElevID lists),New, Lost, All`
+- `PeerUpdate(Peer list)`
 
 
 ### Functional core vs Imperative shell

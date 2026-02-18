@@ -2,6 +2,8 @@ package peermonitor
 
 import "time"
 
+const N_Floors = 4
+
 // types
 
 type ElevID string  //Elev ID uniquely identifies a Peer
@@ -15,8 +17,9 @@ const (   // Status is Dead/Alive
 
 
 type Peer struct { //Peer representsa network peer
-	ID ElevID //
-	Status Status
+	ID ElevID // elevator ID is based on the port i comes from since each IP is the same
+	Status Status //Dead or alive
+	BackupCapCalls [N_Floors]bool //each elevatpr keeps
 }
 
 type HeartbeatMsg struct{ //HeartbeatMsg is recieved from other alive Peers
@@ -41,3 +44,9 @@ type PeerInputs struct {
 type PeerOutputs struct {
 	Update chan<- PeerUpdate // Sends updated list to OrderSync
 }
+
+
+// myID := ElevID -> PORT
+
+
+
