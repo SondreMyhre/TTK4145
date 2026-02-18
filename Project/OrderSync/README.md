@@ -31,13 +31,13 @@ OrderSync does **not** control motors/lamps directly.
 - `localStateChan <-chan LocalSingleElevator`
 - `clearedOrdersChan <-chan ClearedOrders`
 - `rx <-chan NetMsg`
-- `deadPeers <-chan []ElevID`
+- `peerListChan <-chan []Peer`
 <!-- - `Tick <-chan time.Time` *(optional, or internal ticker)* -->
 
 #### Outputs (send-only)
 - `localOrderChan chan<- elevio.ButtonEvent`
 - `tx chan<- NetMsg`
-- `driverCommandChan <-chan DriverCommand`  (For lights)
+- `lightCommandChan <-chan DriverCommand`  (For lights)
 
 ### Functional core vs Imperative shell
 

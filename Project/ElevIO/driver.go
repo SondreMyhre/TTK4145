@@ -17,7 +17,7 @@ type DriverCommand struct {
 	Value          bool
 }
 
-func RunDriver(driverCommandChan <-chan DriverCommand) {
+func RunDriver(driverCommandChan <-chan DriverCommand, ) {
 	for command := range driverCommandChan {
 		switch command.Type {
 		case CommandSetMotorDirection:

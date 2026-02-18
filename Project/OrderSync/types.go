@@ -1,0 +1,56 @@
+package ordersync
+
+const (
+	N_FLOORS  = 4
+	N_BUTTONS = 3
+	N_HALL    = 2
+	N_CAB     = 1
+)
+
+type buttonType int
+
+const (
+	BtnHallUp buttonType = iota
+	BtnHallDown
+	BtnCab
+)
+
+type orderStatus int
+
+const (
+	inactive = iota
+	local
+	pending
+	assigned
+)
+
+type ElevID int
+
+type commandType int
+
+const (
+	sendOrderToLocal commandType = iota
+	sendNetMsg
+	setButtonLamp
+)
+
+type command struct {
+	_type commandType
+	value any
+}
+
+type NetMsg struct {
+	elevID         ElevID
+	orderMatrix    OrderMatrix
+	backupCabCalls [N_FLOORS]bool
+}
+
+type OrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
+
+type orderMatrixEntry struct {
+	orderStatus 		orderStatus
+	assignedElevator 	ElevID
+	version     		int
+}
+
+
