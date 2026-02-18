@@ -8,9 +8,11 @@
 PeerMonitor is purely about **presence**; it does not assign orders.
 
 ### Owns (mutable state)
-- `lastSeen map[ElevID]time.Time`
-- `timeout time.Duration`
-- `peers []Peer` liste med informasjon over peers??
+- `Peer-> struckt wih ID and Status`
+- `Peerupdate -> New Peers, Lost Peers, All Peers`
+- `PeerConfig-> Timeout time.Duration, TickPeriod time.Duration`
+- `PeerInputs-> Heartbeat(recieves Rx from TrUDP), Tick`
+-`PeerOutpus(sends updated PeerUpdate to Ordersync)`
 
 ### Run() interface
 
