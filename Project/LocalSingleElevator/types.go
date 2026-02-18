@@ -1,52 +1,52 @@
 package localsingle
 
 const (
-	N_FLOORS  = 4 // TODO: gjøre dette mulig å sette med flags
+	N_FLOORS  = 4
 	N_BUTTONS = 3
 )
 
-type ElevatorBehaviour int
+type elevatorBehaviour int
 
 const (
-	BehaviourIdle ElevatorBehaviour = iota
+	BehaviourIdle elevatorBehaviour = iota
 	BehaviourDoorOpen
 	BehaviourMoving
 )
 
-type Direction int
+type direction int
 
 const (
-	DirDown Direction = -1
-	DirStop Direction = 0
-	DirUp   Direction = 1
+	DirDown direction = -1
+	DirStop direction = 0
+	DirUp   direction = 1
 )
 
-type ButtonType int
+type buttonType int
 
 const (
-	BtnHallUp ButtonType = iota
+	BtnHallUp buttonType = iota
 	BtnHallDown
 	BtnCab
 )
 
-type ElevatorState struct {
+type elevatorState struct {
 	floor     int
-	direction Direction
-	behaviour ElevatorBehaviour
+	direction direction
+	behaviour elevatorBehaviour
 }
 
 type LocalSingleElevator struct {
-	state     ElevatorState
-	requests  [N_FLOORS][N_BUTTONS]bool
+	state      elevatorState
+	requests   [N_FLOORS][N_BUTTONS]bool
 	obstructed bool
 }
 
-type DirectionBehaviourPair struct {
-	direction Direction
-	behaviour ElevatorBehaviour
+type directionBehaviourPair struct {
+	direction direction
+	behaviour elevatorBehaviour
 }
 
-func ElevatorBehaviourToString(eb ElevatorBehaviour) string {
+func elevatorBehaviourToString(eb elevatorBehaviour) string {
 	switch eb {
 	case BehaviourIdle:
 		return "BehaviourIdle"
@@ -60,23 +60,9 @@ func ElevatorBehaviourToString(eb ElevatorBehaviour) string {
 	}
 }
 
-func DirectionToString(direction Direction) string {
-	switch direction {
-	case DirUp:
-		return "DirUp"
-	case DirDown:
-		return "DirDown"
-	case DirStop:
-		return "DirStop"
-	default:
-		return "DirUndefined"
-
-	}
-}
-
-func MakeUninitializedElevator() LocalSingleElevator {
+func makeUninitializedElevator() LocalSingleElevator {
 	elevator := LocalSingleElevator{
-		state: ElevatorState{floor: -1,
+		state: elevatorState{floor: -1,
 			direction: DirStop,
 			behaviour: BehaviourIdle,
 		},
@@ -84,33 +70,32 @@ func MakeUninitializedElevator() LocalSingleElevator {
 	return elevator
 }
 
-type CommandType int
+type commandType int
 
 const (
-	setMotorDirection CommandType = iota
+	setMotorDirection commandType = iota
 	setDoorOpenLamp
 	setFloorIndicator
 	setButtonLamp
-	ResetDoorTimer
+	resetDoorTimer
 	sendClearedOrders
 )
 
-type Command struct {
-	_type CommandType
+type command struct {
+	_type commandType
 	value any
 }
 
-type ButtonLampArgs struct {
+type buttonLampArgs struct {
 	Floor int
-	Btn   ButtonType
+	Btn   buttonType
 	Value bool
 }
 
 type Order struct {
 	Floor  int
-	Button ButtonType
+	Button buttonType
 }
-
 
 // func PrintElevator(elevator LocalSingleElevator) {
 // 	fmt.Printf("  +--------------------+\n")

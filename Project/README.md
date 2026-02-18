@@ -16,12 +16,11 @@
 ### Suggested wiring (high-level)
 - ElevIO -> OrderSync
 - ElevIO -> LocalSingleElevator (Floor/Obstruction)
-- LocalSingleElevator -> ElevIO (DriverCmd)
-- LocalSingleElevator -> OrderSync (StateOut, Cleared)
-- OrderSync <-> TransportUDP (NetTx, NetRx)
-- OrderSync -> LocalSingleElevator (AssignedHall)
-- PeerMonitor -> OrderSync (DeadPeers)
-- OrderSync -> TransportUDP (Heartbeat NetMsg)
+- LocalSingleElevator -> ElevIO (driverCommandChan)
+- LocalSingleElevator -> OrderSync (localStateChan, clearedOrdersChan)
+- OrderSync <-> TransportUDP (tx, rx)	// Kan vurdere egen heartbeatChan
+- OrderSync -> LocalSingleElevator (localOrderChan)
+- PeerMonitor -> OrderSync (deadPeersChan)
 
 ### Supervision policy
 - A **supervisor** restarts a child goroutine if it panics or returns unexpectedly.

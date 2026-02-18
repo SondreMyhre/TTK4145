@@ -3,62 +3,35 @@
 ### Responsibility
 - Owns and runs the **local elevator** logic for one node.
 - Executes the **FSM** (Idle / DoorOpen / Moving) and local request handling.
-- Converts local events into **DriverCmd** outputs (motor/lamps/indicator) via channels.
+- Converts button, floor and obstruction events into **DriverCommand** outputs (motor/lamps/indicator) via channels.
 - Outputs to OrderSync via channels:
   - `ElevatorState` (for heartbeats / OrderSync)
   - `ClearedOrders` (when orders are served/cleared)
-- Receives `HallAssignment (OrderMatrix?)` from `OrderSync` via channel, describing which hall orders this elevator should serve.
+- Receives `Orders (OrderMatrix?)` from `OrderSync` via channel, describing which hall orders this elevator should serve, and also all cab orders.
 
 ### Owns (mutable state)
 This module is the **only** writer of:
-- `ElevatorState` (floor, direction, behaviour)
-<!-- - Cab orders: `cabOrders [N_FLOORS]bool` SKAL HÅNDTERES AV ORDERSYNC -->
-- Local request matrix
-- Door timer resource (timer lives in the **shell**)???
+- `LocalSingleElevator` which holds:
+  - `ElevatorState` (floor, direction, behaviour)
+  - Local request matrix
+- Door timer resource (timer lives in the **shell**)
 
 No other module is allowed to mutate these structures directly, only via channels
 
-### Run() interface
+### Run()
 
 #### Inputs (receive-only channels)
-- `CabButton <-chan CabOrder`  
-  Cab button presses routed from OrderSync.
-- `AssignedHall <-chan HallAssignment`  
-  Hall orders assigned to this elevator by OrderSync.
-- `Floor <-chan int`  
+- `localOrderChan <-chan elevio.ButtonEvent`
+  Button events from OrderSync
+- `floorChan <-chan int`  
   Floor sensor events from ElevIO.
-- `Obstruction <-chan bool`
-  Obstruction switch events.
-- `DoorTimeout <-chan struct{}` *(optional)*  
-  If door timer is hosted outside this module.
+- `obstructionChan <-chan bool`
+  Obstruction switch events from ElevIO
 
 #### Outputs (send-only channels)
-- `DriverCmd chan<- DriverCmd`  
+- `driverCommandChan chan<- DriverCommand`  
   Commands to be executed by the ElevIO boundary driver.
-- `Cleared chan<- ClearedOrders`  
+- `clearedOrdersChan chan<- ClearedOrders`  
   Notifies OrderSync about which orders were cleared via channel.
-- `StateOut chan<- ElevatorState`  
+- `localStateChan chan<- ElevatorState`  
   Used by OrderSync to build heartbeats and compute assignments.
-
-### Functional core vs Imperative shell
-
-#### Functional core (testable)
-- Pure-ish transition function(s):
-  - `Step(state, requests, event) -> (newState, newRequests, effects)` (effects is commands and other output)
-- No IO, no `elevio.*`, no `timer.C`, no `time.Now()`.
-
-Effects are value objects such as:
-- `SetMotor(dir)`
-- `SetDoorLamp(on)`
-- `SetFloorIndicator(floor)`
-- `SetButtonLamp(floor, btn, on)`
-- `StartDoorTimer(duration)`
-- `PublishState(state)`
-- `EmitCleared(clearedOrders)`
-
-#### Imperative shell (Run loop)
-- `for { select { ... } }` event loop
-- Owns door timer + converts timer expiry into `DoorTimeout` event
-- Applies effects by sending:
-  - DriverCmd to ElevIO
-  - ClearedOrders + State to OrderSync

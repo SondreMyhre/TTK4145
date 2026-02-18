@@ -1,34 +1,47 @@
 package main
 
 import (
-	localsingle "Project/LocalSingleElevator"
 	elevio "Project/ElevIO"
+	localsingle "Project/LocalSingleElevator"
+	transportUDP "Project/TransportUDP"
 	"flag"
 )
 
 func main() {
+	// TO-DO: add port int and id string as flags
+	// maybe only id string is necessary, then port id can be calculated with the id
 
-	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the server")
+	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
 
 	elevio.Init(*serverAddr, 4)
 
-	cmdCh := make(chan elevio.DriverCmd)
-	buttonCh := make(chan elevio.ButtonEvent, 16)
-    floorCh := make(chan int, 16)
-    obstructionCh := make(chan bool, 16)
-    clearedCh := make(chan []localsingle.Order, 16)
-    stateOutCh := make(chan localsingle.LocalSingleElevator, 1)
-	
-	go elevio.RunDriver(cmdCh)
-	go elevio.PollButtons(buttonCh)
-    go elevio.PollFloorSensor(floorCh)
-    go elevio.PollObstructionSwitch(obstructionCh)
+	driverCommandChan := make(chan elevio.DriverCommand)
+	buttonChan := make(chan elevio.ButtonEvent)
+	floorChan := make(chan int)
+	obstructionChan := make(chan bool)
+	clearedOrdersChan := make(chan []localsingle.Order)
+	localStateChan := make(chan localsingle.LocalSingleElevator)
 
-	go func() { for range clearedCh {} }()
-    go func() { for range stateOutCh {} }()
+	// Channels and goroutines for networking
+	PeerMonitorTx := make(chan transportUDP.PeerMonitorMsg)
+	PeerMonitorRx := make(chan transportUDP.PeerMonitorMsg)
 
-	go localsingle.Run(buttonCh, floorCh, obstructionCh, cmdCh, clearedCh, stateOutCh)
+	OrderSyncTx := make(chan transportUDP.OrderSyncMsg)
+	OrderSyncRx := make(chan transportUDP.OrderSyncMsg)
+		// TO-DO: maybe run transportUDP.init() function to set port-number
+	go transportUDP.Run(PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx, port)
+
+
+	go elevio.RunDriver(driverCommandChan)
+	go elevio.PollButtons(buttonChan)
+	go elevio.PollFloorSensor(floorChan)
+	go elevio.PollObstructionSwitch(obstructionChan)
+
+	go func() { for range clearedOrdersChan {} }()	// OrderSync ikke implementert
+    go func() { for range localStateChan {} }()		// OrderSync ikke implementert
+
+	go localsingle.Run(buttonChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan) // localOrderChan = buttonChan
 
 	select {}
 }
