@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
 

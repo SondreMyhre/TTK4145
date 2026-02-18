@@ -37,7 +37,7 @@ func Run(
 	doorTimer := time.NewTimer(doorOpenDuration)
 	doorTimer.Stop()
 
-	var commands []Command
+	var commands []command
 
 	if elevio.GetFloor() == -1 {
 		commands = append(commands, elevator.onInitBetweenFloors())
@@ -68,7 +68,7 @@ func Run(
 }
 
 func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjøres som en egen goroutine, og heller eksplisitt execute commands i hver case i Run()?
-	commands []Command,
+	commands []command,
 	driverCommandChan chan<- elevio.DriverCommand,
 	clearedChan chan<- []Order,
 	doorTimer *time.Timer,
@@ -76,13 +76,13 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 	for _, command := range commands {
 		switch command._type {
 		case setMotorDirection:
-			dir := command.value.(Direction)
+			dir := command.value.(direction)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
 		case setDoorOpenLamp:
 			value := command.value.(bool)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetDoorLamp, Value: value}
 		case setButtonLamp:
-			args := command.value.(ButtonLampArgs)
+			args := command.value.(buttonLampArgs)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: buttonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
 		case resetDoorTimer:
 			doorTimer.Reset(doorOpenDuration)
@@ -94,7 +94,7 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 	}
 }
 
-func directionToMotorDirection(direction Direction) elevio.MotorDirection {
+func directionToMotorDirection(direction direction) elevio.MotorDirection {
 	switch direction {
 	case DirUp:
 		return elevio.MD_Up
@@ -107,7 +107,7 @@ func directionToMotorDirection(direction Direction) elevio.MotorDirection {
 	}
 }
 
-func buttonTypeToElevio(b ButtonType) elevio.ButtonType {
+func buttonTypeToElevio(b buttonType) elevio.ButtonType {
 	switch b {
 	case BtnHallUp:
 		return elevio.BT_HallUp
@@ -118,7 +118,7 @@ func buttonTypeToElevio(b ButtonType) elevio.ButtonType {
 	}
 }
 
-func elevioToButtonType(b elevio.ButtonType) ButtonType {
+func elevioToButtonType(b elevio.ButtonType) buttonType {
 	switch b {
 	case elevio.BT_HallUp:
 		return BtnHallUp
