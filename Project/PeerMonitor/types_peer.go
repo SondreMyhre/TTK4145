@@ -33,15 +33,5 @@ type PeerUpdate struct {
 
 type PeerConfig struct {
 	Timeout    time.Duration // How long before a peer is declared dead
-	TickPeriod time.Duration // 0 => expects external tick when testing, >0 => creates internal ticker in production
+	
 }
-
-// type PeerInputs struct {
-// 	Heartbeat <-chan HeartbeatMsg // Received from TransportUDP Rx
-// 	Tick      <-chan time.Time    // External tick, checks for dead peers //For Testing
-// }
-
-// type PeerOutputs struct {
-// 	Update              chan<- PeerUpdate // Sends updated list to OrderSync
-// 	TransmitBackupCalls chan<- HeartbeatMsg     // Sends backup cab calls
-// }
