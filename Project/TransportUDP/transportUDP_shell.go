@@ -2,10 +2,10 @@ package TransportUDP
 
 import (
 	"Project/TransportUDP/bcast"
-	"flag"
-	"fmt"
-	"os"
-	"time"
+	// "flag"
+	// "fmt"
+	// "os"
+	// "time"
 )
 
 // find out what information NetMsg should carry
@@ -23,7 +23,6 @@ type OrderSyncMsg struct {
 }
 
 // Run is called in main.go
-// TO-DO: create channels beneath in main.go
 func Run(PeerMonitorTx <-chan PeerMonitorMsg, 
 		OrderSyncTx <-chan OrderSyncMsg, 
 
