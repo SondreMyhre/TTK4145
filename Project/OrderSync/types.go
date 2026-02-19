@@ -42,9 +42,9 @@ type command struct {
 type localCabCalls [N_FLOORS]bool
 
 type NetMsg struct {
-	elevID          ElevID
-	hallOrderMatrix HallOrderMatrix
-	cabCalls  map[ElevID]localCabCalls
+	ElevID          ElevID
+	HallOrderMatrix HallOrderMatrix
+	CabCalls  map[ElevID]localCabCalls
 }
 
 type HallOrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
