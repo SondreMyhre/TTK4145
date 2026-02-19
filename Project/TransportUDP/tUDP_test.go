@@ -3,9 +3,9 @@ package TransportUDP
 import (
 	"testing"
 	"fmt"
-	// "time"
-	// peermonitor "Project/PeerMonitor" //will only be using the types in peermonitor...
-	// ordersync "Project/OrderSync" //...and ordersync
+	"time"
+	peermonitor "Project/PeerMonitor/peerMonitor_types" //will only be using the types in peermonitor...
+	ordersync "Project/OrderSync/ordersync_types" //...and ordersync
 	// "reflect"
 )
 
@@ -26,20 +26,17 @@ func TestMainLike(t *testing.T) {
 	go Run(peerID, recTx, recRx, osNetMsgTx, osNetMsgRx, pmNetMsgRx)
 
 	go func() {
-		homatrix := HallOrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
-		netMsg := ordersync.NetMsg{ordersync.ElevID(peerID), }
+		var netMsg = ordersync.NetMsg{}
 		for {
-			helloMsg.Iter++
-			OrderSyncTx <- helloMsg
+			osNetMsgTx <- netMsg
 			time.Sleep(1 * time.Second)
 		}
 	}()
 
 	go func() {
-		helloMsg := PeerMonitorMsg{"Hello from ordersync", 0}
+		var recMsg = peermonitor.RecoveryMsg{}
 		for {
-			helloMsg.Iter++
-			PeerMonitorTx <- helloMsg
+			recTx <- recMsg
 			time.Sleep(1 * time.Second)
 		}
 	}()
@@ -47,21 +44,17 @@ func TestMainLike(t *testing.T) {
 	fmt.Println("Started")
 	for {
 		select {
-		case o := <-OrderSyncRx:
-			fmt.Printf("Ordersync message:\n")
-			fmt.Printf("  msg:            %v\n", o.Message)
-			fmt.Printf("  iteration:      %v\n", o.Iter)
+		case <-recRx:
+			fmt.Printf("Recovery message recieved\n")
 			fmt.Println()
 
-		case p := <-PeerMonitorRx:
-			fmt.Printf("PeerMonitor message:\n")
-			fmt.Printf("  msg:            %v\n", p.Message)
-			fmt.Printf("  iteration:      %v\n", p.Iter)
+		case <-osNetMsgRx:
+			fmt.Printf("Net-msg recieved on order-sync chan\n")
+			fmt.Println()
+
+		case <-pmNetMsgRx:
+			fmt.Printf("Net-msg recieved on peermonitor chan\n")
 			fmt.Println()
 		}
 	}
-
-	// select{}
-
-	// t.Log("transportUDP-test ran.")
 }
