@@ -1,26 +1,24 @@
 package peermonitor
 
 import (
-	ordersync "Project/OrderSync"
+	shared "Project/sharedtypes"
 	"time"
 )
 
 // core PeerMonitor
 
-func HandleHeartbeats(peerList []Peer, msg ordersync.NetMsg, now time.Time) ([]Peer, bool) {
+func HandleHeartbeats(peerList []Peer, msg shared.NetMsg, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive, update cab calls, set LastSeen
 	changed := false
 
 	PeerID := msg.ElevID
-	NewCab := msg.CabCalls
 
 	i := findPeerIndex(peerList, PeerID)
-	if i == -1{ //-1 if peer not in Peerlist
+	if i == -1 { //-1 if peer not in Peerlist
 		peerList = append(peerList, Peer{
-			ID: 	PeerID,
-			Status: Alive,
-			BackupCabCalls:	NewCab,
-			LastSeen:	now,
+			ID:             PeerID,
+			Status:         Alive,
+			LastSeen:       now,
 		})
 		return peerList, true
 	}
@@ -31,10 +29,6 @@ func HandleHeartbeats(peerList []Peer, msg ordersync.NetMsg, now time.Time) ([]P
 		changed = true
 	}
 
-	if !cabCallsEqual(peerList[i].BackupCabCalls, NewCab) { //checsks if cabcalls are equal
-		peerList[i].BackupCabCalls = NewCab
-		changed = true
-	}
 	peerList[i].LastSeen = now
 
 	return peerList, changed
@@ -45,8 +39,8 @@ func CheckTimeouts(peerList []Peer, now time.Time, timeout time.Duration) ([]Pee
 	// Mark peers as Dead if LastSeen + timeout < now
 	changed := false
 
-	for i := range peerList{
-		if peerList[i].Status == Alive && now.Sub(peerList[i].LastSeen) > timeout{
+	for i := range peerList {
+		if peerList[i].Status == Alive && now.Sub(peerList[i].LastSeen) > timeout {
 			peerList[i].Status = Dead
 			changed = true
 		}
@@ -60,32 +54,12 @@ func ToPeerUpdate(peerList []Peer) PeerUpdate {
 	return PeerUpdate{Peers: out}
 }
 
-
-func findPeerIndex(peers []Peer, id ordersync.ElevID) int{ //finds ID
-	for i := range peers{
-		if peers[i].ID == id{
+func findPeerIndex(peers []Peer, id shared.ElevID) int { //finds ID
+	for i := range peers {
+		if peers[i].ID == id {
 			return i
 		}
 	}
 	return -1
 }
-
-func cabCallsEqual(a,b map[ordersync.ElevID]ordersync.LocalCabCalls) bool{ //checks for changes in backupCabcalls
-	if len(a) != len(b){
-		return false
-	}
-
-	for floor, aVal := range a{
-		bVal, exists := b[floor]
-		if !exists {
-			return false
-		}
-		if bVal != aVal{
-			return false
-		}
-	}
-	return true
-}
-
-
 

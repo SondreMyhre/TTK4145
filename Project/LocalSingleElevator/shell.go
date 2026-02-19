@@ -1,7 +1,7 @@
 package localsingle
 
 import (
-	elevio "Project/ElevIO"
+	elevio "Project/elevio"
 	"fmt"
 	"time"
 )
