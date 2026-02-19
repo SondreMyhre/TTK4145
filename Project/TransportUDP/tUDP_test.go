@@ -4,8 +4,8 @@ import (
 	"testing"
 	"fmt"
 	"time"
-	peermonitor "Project/PeerMonitor/peerMonitor_types" //will only be using the types in peermonitor...
-	ordersync "Project/OrderSync/ordersync_types" //...and ordersync
+	peermonitor "Project/peermonitor" //will only be using the types in peermonitor...
+	ordersync "Project/ordersync" //...and ordersync
 	// "reflect"
 )
 

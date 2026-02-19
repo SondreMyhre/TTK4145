@@ -1,9 +1,9 @@
 package ordersync
 
 import (
-	elevio "Project/ElevIO"
-	localsingle "Project/LocalSingleElevator"
-	peermonitor "Project/PeerMonitor"
+	elevio "Project/elevio"
+	localsingle "Project/localsingleelevator"
+	peermonitor "Project/peermonitor"
 	"time"
 )
 

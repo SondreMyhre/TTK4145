@@ -1,11 +1,11 @@
 package main
 
 import (
-	elevio "Project/ElevIO"
-	localsingle "Project/LocalSingleElevator"
-	transportUDP "Project/TransportUDP"
-	peermonitor "Project/PeerMonitor" 
-	ordersync "Project/OrderSync" 
+	elevio "Project/elevio"
+	localsingle "Project/localsingleelevator"
+	transportUDP "Project/transportudp"
+	peermonitor "Project/peermonitor" 
+	ordersync "Project/ordersync" 
 	"flag"
 	"log"
 )
