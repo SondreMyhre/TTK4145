@@ -16,7 +16,7 @@ func Run(cfg PeerConfig, hbRx <-chan shared.NetMsg, chanOS chan<- PeerUpdate) {
 	for {
 		select {
 		case msg,ok := <-hbRx:
-			if !ok { // se om kanal er åpen, lukker dersom kanal er lukket??
+			if !ok { // se om kanal er åpen, stopper dersom kanal er lukket
 				return
 			}
 			var changed bool
@@ -25,7 +25,8 @@ func Run(cfg PeerConfig, hbRx <-chan shared.NetMsg, chanOS chan<- PeerUpdate) {
 			if changed {
 				chanOS <- ToPeerUpdate(peerList)
 			}
-		case <-ticker.C: //C is channel if ticker
+		case <-ticker.C: //C is channel if ticker 
+		// Periodically check for peers that have timed out (Alive -> Dead)
 			var timeoutChanged bool
 			peerList, timeoutChanged = CheckTimeouts(peerList, time.Now(), cfg.Timeout) //looks for updates and sets changed to true/false
 			if timeoutChanged {
