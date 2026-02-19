@@ -4,15 +4,19 @@ import (
 	elevio "Project/ElevIO"
 	localsingle "Project/LocalSingleElevator"
 	transportUDP "Project/TransportUDP"
+	peermonitor "Project/PeerMonitor" 
+	ordersync "Project/OrderSync" 
 	"flag"
+	"log"
 )
 
 func main() {
-	// TO-DO: add port int and id string as flags
-	// maybe only id string is necessary, then port id can be calculated with the id
-
+	peerID := flag.Int("peerID", 0, "peerID of the elevator to be created")
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
+	if *peerID == 0 {
+		log.Fatal("Not valid peerID.")
+	}
 
 	elevio.Init(*serverAddr, 4)
 
@@ -24,14 +28,14 @@ func main() {
 	localStateChan := make(chan localsingle.LocalSingleElevator)
 
 	// Channels and goroutines for networking
-	PeerMonitorTx := make(chan transportUDP.PeerMonitorMsg)
-	PeerMonitorRx := make(chan transportUDP.PeerMonitorMsg)
+	PeerMonitorTx := make(chan peermonitor.RecoveryMsg)
+	PeerMonitorRecMsgRx := make(chan peermonitor.RecoveryMsg)
+	PeerMonitorNetMsgRx := make(chan ordersync.NetMsg)
+	
+	OrderSyncTx := make(chan ordersync.NetMsg)
+	OrderSyncRx := make(chan ordersync.NetMsg)
 
-	OrderSyncTx := make(chan transportUDP.OrderSyncMsg)
-	OrderSyncRx := make(chan transportUDP.OrderSyncMsg)
-		// TO-DO: maybe run transportUDP.init() function to set port-number
-	go transportUDP.Run(PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx, port)
-
+	go transportUDP.Run(*peerID, PeerMonitorTx, PeerMonitorRecMsgRx, PeerMonitorNetMsgRx, OrderSyncTx, OrderSyncRx)
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)

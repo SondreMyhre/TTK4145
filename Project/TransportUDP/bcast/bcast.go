@@ -55,11 +55,13 @@ func Transmitter(port int, chans ...interface{}) {
 // Matches type-tagged JSON received on `port` to element types of `chans`, then
 // sends the decoded value on the corresponding channel
 func Receiver(port int, chans ...interface{}) {
-	checkArgs(chans...)
-	chansMap := make(map[string]interface{})
+	checkArgs(chans...) //checking that all chans-arguments are channels
+
+	chansMap := make(map[string]interface{}) //making an empty map with string-key and generic_interface-value
 	for _, ch := range chans {
 		chansMap[reflect.TypeOf(ch).Elem().String()] = ch
 	}
+	fmt.Println(chansMap)
 
 	var buf [bufSize]byte
 	conn := conn.DialBroadcastUDP(port)
