@@ -39,10 +39,12 @@ type command struct {
 	value any
 }
 
+type localCabCalls [N_FLOORS]bool
+
 type NetMsg struct {
-	elevID          ElevID
-	hallOrderMatrix HallOrderMatrix
-	backupCabCalls  [N_FLOORS]bool
+	ElevID          ElevID
+	HallOrderMatrix HallOrderMatrix
+	CabCalls  map[ElevID]localCabCalls
 }
 
 type HallOrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
@@ -51,4 +53,27 @@ type orderMatrixEntry struct {
 	orderStatus      orderStatus
 	assignedElevator ElevID
 	version          int
+}
+
+type localState int;
+
+type buttonLampArgs int
+
+const (
+	Idle localState = iota
+	Moving
+	DoorOpen
+)
+
+type Status int
+
+const (
+	Dead Status = iota
+	Alive
+)
+
+
+type peer struct {
+	ID ElevID
+	Status Status
 }
