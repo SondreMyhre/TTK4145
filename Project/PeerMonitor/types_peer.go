@@ -20,7 +20,7 @@ const ( // Status is Dead/Alive
 type Peer struct { //Peer representsa network peer
 	ID             ordersync.ElevID         // elevator ID is based on the port i comes from since each IP is the same
 	Status         Status         			//Dead or alive
-	BackupCabCalls ordersync.CabCallArray //each elevator keeps backup of others' cab calls
+	BackupCabCalls  map[ordersync.ElevID]ordersync.LocalCabCalls //each elevator keeps backup of others' cab calls
 	LastSeen       time.Time      			// When we last received a heartbeat from this peer
 }
 
@@ -33,9 +33,3 @@ type PeerConfig struct {
 	
 }
 
-
-// type NetMsg struct {
-// 	elevID          ElevID
-// 	hallOrderMatrix HallOrderMatrix
-// 	backupCabCalls  [N_FLOORS]bool
-// }

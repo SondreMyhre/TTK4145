@@ -11,9 +11,8 @@ func HandleHeartbeats(peerList []Peer, msg ordersync.NetMsg, now time.Time) ([]P
 	// Update or create peer, set Alive, update cab calls, set LastSeen
 	changed := false
 
-	//TODO: Tilpass disse to linjene til NetMsg
 	PeerID := msg.ElevID
-	NewCab := msg.BackupCabCalls
+	NewCab := msg.CabCalls
 
 	i := findPeerIndex(peerList, PeerID)
 	if i == -1{ //-1 if peer not in Peerlist
@@ -71,7 +70,7 @@ func findPeerIndex(peers []Peer, id ordersync.ElevID) int{ //finds ID
 	return -1
 }
 
-func cabCallsEqual(a,b ordersync.CabCallArray) bool{ //checks for changes in backupCabcalls
+func cabCallsEqual(a,b map[ordersync.ElevID]ordersync.LocalCabCalls) bool{ //checks for changes in backupCabcalls
 	if len(a) != len(b){
 		return false
 	}

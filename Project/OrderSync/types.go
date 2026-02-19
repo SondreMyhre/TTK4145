@@ -26,7 +26,6 @@ const (
 
 type ElevID int
 
-
 type commandType int
 
 const (
@@ -40,12 +39,12 @@ type command struct {
 	value any
 }
 
-type localCabCalls [N_FLOORS]bool
+type LocalCabCalls [N_FLOORS]bool
 
 type NetMsg struct {
 	ElevID          ElevID
 	HallOrderMatrix HallOrderMatrix
-	CabCalls  map[ElevID]localCabCalls
+	CabCalls  map[ElevID]LocalCabCalls
 }
 
 type HallOrderMatrix [N_FLOORS][N_HALL]orderMatrixEntry
