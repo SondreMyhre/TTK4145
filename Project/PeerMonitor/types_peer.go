@@ -1,12 +1,14 @@
 package peermonitor
 
-import "time"
-
-const N_Floors = 4
+import (
+	"time"
+	ordersync "Project/OrderSync"
+)
+//const N_Floors = 4
 
 // types
 
-type ElevID string //Elev ID uniquely identifies a Peer
+//type ElevID int //Elev ID uniquely identifies a Peer
 
 type Status int
 
@@ -16,15 +18,10 @@ const ( // Status is Dead/Alive
 )
 
 type Peer struct { //Peer representsa network peer
-	ID             ElevID         // elevator ID is based on the port i comes from since each IP is the same
-	Status         Status         //Dead or alive
-	BackupCabCalls [N_Floors]bool //each elevator keeps backup of others' cab calls
-	LastSeen       time.Time      // When we last received a heartbeat from this peer
-}
-
-type RecoveryMsg struct { //HeartbeatMsg is recieved from other alive Peers
-	SenderID ElevID
-	CabCalls [N_Floors]bool // Current cab calls to be backed up by others
+	ID             ordersync.ElevID         // elevator ID is based on the port i comes from since each IP is the same
+	Status         Status         			//Dead or alive
+	BackupCabCalls ordersync.CabCallArray //each elevator keeps backup of others' cab calls
+	LastSeen       time.Time      			// When we last received a heartbeat from this peer
 }
 
 type PeerUpdate struct {
@@ -35,3 +32,10 @@ type PeerConfig struct {
 	Timeout    time.Duration // How long before a peer is declared dead
 	
 }
+
+
+// type NetMsg struct {
+// 	elevID          ElevID
+// 	hallOrderMatrix HallOrderMatrix
+// 	backupCabCalls  [N_FLOORS]bool
+// }
