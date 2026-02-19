@@ -1,38 +1,38 @@
 package peermonitor
 
-import(
-	"time"
+import (
 	ordersync "Project/OrderSync"
-
-) 
+	"time"
+)
 
 // Shell PeerMonitor
 
+func Run(cfg PeerConfig, hbRx <-chan ordersync.NetMsg, chanOS chan<- PeerUpdate) {
+	var peerList []Peer
 
+	ticker := time.NewTicker(50 * time.Millisecond) //creates ticker* struct, ticker.C is channel
+	defer ticker.Stop() //runs ticker while function is running
 
-
-
-func Run(cfg PeerConfig, hbRx <-chan ordersync.NetMsg, chanOS chan<- PeerUpdate, RecoveryTx chan<- RecoveryMsg) {
-	var peerList []Peer  
-
-	
-    for {
-        select {
-        case hb := <-hbRx:
+	for {
+		select {
+		case hb := <-hbRx:
+			// if ok != nil{ // se om kanal er åpen??
+			// 	return 
+			// }
 			var changed bool
-			now := time.Now()
 
-
-            peerList, changed = HandleHeartbeats(peerList, hb, now)
-			if changed{
+			peerList, changed = HandleHeartbeats(peerList, hb, time.Now()) //looks for updates and sets changed to true/false
+			if changed {
 				chanOS <- ToPeerUpdate(peerList)
 			}
+		case <-ticker.C: //C is channel if ticker
 			var timeoutChanged bool
-			peerList, timeoutChanged = CheckTimeouts(peerList, now, cfg.Timeout)
-			if timeoutChanged{
+			peerList, timeoutChanged = CheckTimeouts(peerList,time.Now() , cfg.Timeout) //looks for updates and sets changed to true/false
+			if timeoutChanged {
 				chanOS <- ToPeerUpdate(peerList)
-        	}
+			}
 		}
-    }
+	}
 }
+
 
