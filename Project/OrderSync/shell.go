@@ -29,7 +29,6 @@ func Run(
  
 	heartbeatTicker := time.NewTicker(100 * time.Millisecond)
 
-
 	for {
 		select {
 		case buttonEvent := <-buttonChan:
@@ -63,6 +62,7 @@ func Run(
 					commands = claimOrder(orderMatrixEntry)
 					localOrderChan <- orderToElevioButtonEvent(orderMatrixEntry)
 				}
+				commands = nil	// 
 			}
 
 		case netMsg := <-rx:
