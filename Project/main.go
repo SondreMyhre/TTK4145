@@ -4,6 +4,8 @@ import (
 	elevio "Project/ElevIO"
 	localsingle "Project/LocalSingleElevator"
 	transportUDP "Project/TransportUDP"
+	peermonitor "Project/PeerMonitor" 
+	ordersync "Project/OrderSync" 
 	"flag"
 	"log"
 )
@@ -26,13 +28,14 @@ func main() {
 	localStateChan := make(chan localsingle.LocalSingleElevator)
 
 	// Channels and goroutines for networking
-	PeerMonitorTx := make(chan transportUDP.PeerMonitorMsg)
-	PeerMonitorRx := make(chan transportUDP.PeerMonitorMsg)
+	PeerMonitorTx := make(chan peermonitor.RecoveryMsg)
+	PeerMonitorRecMsgRx := make(chan peermonitor.RecoveryMsg)
+	PeerMonitorNetMsgRx := make(chan ordersync.NetMsg)
+	
+	OrderSyncTx := make(chan ordersync.NetMsg)
+	OrderSyncRx := make(chan ordersync.NetMsg)
 
-	OrderSyncTx := make(chan transportUDP.OrderSyncMsg)
-	OrderSyncRx := make(chan transportUDP.OrderSyncMsg)
-
-	go transportUDP.Run(*peerID, PeerMonitorTx, OrderSyncTx, PeerMonitorRx, OrderSyncRx)
+	go transportUDP.Run(*peerID, PeerMonitorTx, PeerMonitorRecMsgRx, PeerMonitorNetMsgRx, OrderSyncTx, OrderSyncRx)
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)
