@@ -1,13 +1,14 @@
 package main
 
 import (
-	elevio "project/elevio"
-	localsingle "project/localsingleelevator"
-	transportUDP "project/transportudp"
-	peermonitor "project/peermonitor" 
-	ordersync "project/ordersync" 
 	"flag"
 	"log"
+	elevio "project/elevio"
+	localsingle "project/localsingleelevator"
+	ordersync "project/ordersync"
+	// peermonitor "project/peermonitor"
+	transportUDP "project/transportudp"
+	"strconv"
 )
 
 func main() {
@@ -17,6 +18,8 @@ func main() {
 	if *peerID == "0" {
 		log.Fatal("Not valid peerID.")
 	}
+
+	peerIDInt, _ := strconv.Atoi(*peerID)
 
 	elevio.Init(*serverAddr, 4)
 
@@ -28,25 +31,21 @@ func main() {
 	localStateChan := make(chan localsingle.LocalSingleElevator)
 	peerEventChan := make(chan []ordersync.Peer)
 	localOrderChan := make(chan elevio.ButtonEvent)
-	
 
 	// Channels and goroutines for networking
-	PeerMonitorTx := make(chan peermonitor.RecoveryMsg)
-	PeerMonitorRecMsgRx := make(chan peermonitor.RecoveryMsg)
-	PeerMonitorNetMsgRx := make(chan ordersync.NetMsg)
-	
+	// PeerMonitorTx := make(chan peermonitor.RecoveryMsg)
+	// PeerMonitorRecMsgRx := make(chan peermonitor.RecoveryMsg)
+	// PeerMonitorNetMsgRx := make(chan ordersync.NetMsg)
+
 	OrderSyncTx := make(chan ordersync.NetMsg)
 	OrderSyncRx := make(chan ordersync.NetMsg)
 
-	go transportUDP.Run(*peerID, PeerMonitorTx, PeerMonitorRecMsgRx, PeerMonitorNetMsgRx, OrderSyncTx, OrderSyncRx)	// ElevID måtte være string
+	go transportUDP.Run(peerIDInt, OrderSyncTx, OrderSyncRx) // ElevID måtte være string
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)
 	go elevio.PollFloorSensor(floorChan)
 	go elevio.PollObstructionSwitch(obstructionChan)
-
-	go func() { for range clearedOrdersChan {} }()	// OrderSync ikke implementert
-    go func() { for range localStateChan {} }()		// OrderSync ikke implementert
 
 	go ordersync.Run(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, OrderSyncRx, peerEventChan, localOrderChan, OrderSyncTx, driverCommandChan)
 	go localsingle.Run(localOrderChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)

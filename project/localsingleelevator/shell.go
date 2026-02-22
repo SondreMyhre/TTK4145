@@ -88,6 +88,9 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 		case setDoorOpenLamp:
 			value := command.value.(bool)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetDoorLamp, Value: value}
+		case setFloorIndicator:
+            floor := command.value.(int)
+            driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetFloorIndicator, Floor: floor}
 		case setButtonLamp:
 			args := command.value.(buttonLampArgs)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: ButtonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}

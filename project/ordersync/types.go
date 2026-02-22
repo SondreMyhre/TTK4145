@@ -76,6 +76,7 @@ const (
 type Peer struct {
 	ID     ElevID
 	Status PeerStatus
+	State  LocalState
 }
 
 type OrderLocation struct {

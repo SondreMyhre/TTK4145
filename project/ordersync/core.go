@@ -3,6 +3,7 @@ package ordersync
 import (
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
+	"strconv"
 )
 
 func onCabButtonEvent(cabCalls CabCallsMap, pendingCabCalls LocalCabCalls, myID ElevID, buttonEvent elevio.ButtonEvent) (CabCallsMap, LocalCabCalls, []command) {
@@ -31,7 +32,7 @@ func onHallButtonEvent(hallOrderMatrix HallOrderMatrix, buttonEvent elevio.Butto
 	return hallOrderMatrix, []command{{_type: broadcastNetMessage}}
 }
 
-func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID ElevID, newLocalState localsingle.LocalSingleElevator) (HallOrderMatrix, LocalState, []command) {
+func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID ElevID, cabCalls CabCallsMap, newLocalState localsingle.LocalSingleElevator) (HallOrderMatrix, LocalState, []command) {
 
 	var commands []command
 	var localState LocalState
@@ -41,27 +42,32 @@ func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID Elev
 
 	switch localState.Behaviour {
 	case localsingle.BehaviourIdle:
-		order := findOrder(hallOrderMatrix, peerList)
+		order := findOrder(hallOrderMatrix, myID, localState, cabCalls, peerList)
 		if order.Entry.Status != Inactive {
 			hallOrderMatrix, commands = claimOrder(hallOrderMatrix, myID, order)
 		}
 
 	case localsingle.BehaviourDoorOpen:
-		order:= findOrder(hallOrderMatrix, peerList)
+		order := findOrder(hallOrderMatrix, myID, localState, cabCalls, peerList)
 		if order.Entry.Status != Inactive && order.Floor == localState.Floor {
 			if order.Button == elevio.BT_HallUp && (localState.Direction == localsingle.DirUp || localState.Direction == localsingle.DirStop) {
 				hallOrderMatrix, commands = claimOrder(hallOrderMatrix, myID, order)
 			} else if order.Button == elevio.BT_HallDown && (localState.Direction == localsingle.DirDown || localState.Direction == localsingle.DirStop) {
 				hallOrderMatrix, commands = claimOrder(hallOrderMatrix, myID, order)
-			} 
+			}
 		}
-	}	
+	}
 
 	return hallOrderMatrix, localState, commands
 }
 
 func onClearedOrders(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID, clearedOrders []localsingle.Order) (HallOrderMatrix, CabCallsMap, []command) {
 	var commands []command
+
+	if len(clearedOrders) == 0 {
+        return hallOrderMatrix, cabCalls, commands
+    }
+
 	for _, order := range clearedOrders {
 		floor := order.Floor
 		btn := localsingle.ButtonTypeToElevio(order.Button)
@@ -101,8 +107,46 @@ func onClearedOrders(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID
 	return hallOrderMatrix, cabCalls, commands
 }
 
-func findOrder(m HallOrderMatrix, pl []Peer) OrderLocation {
-	return OrderLocation{}
+func findOrder(hallOrderMatrix HallOrderMatrix, myID ElevID, localState LocalState, cabCalls CabCallsMap, peerList []Peer) OrderLocation {	// Må fikses
+    hasConfirmed := false
+    for floor := range N_FLOORS {
+        for btn := range N_HALL {
+            if hallOrderMatrix[floor][btn].Status == Confirmed {
+                hasConfirmed = true
+                break
+            }
+        }
+        if hasConfirmed {
+            break
+        }
+    }
+    if !hasConfirmed {
+        return OrderLocation{}
+    }
+
+    hraResult, err := callHRA(hallOrderMatrix, myID, localState, cabCalls, peerList)
+    if err != nil {
+        return OrderLocation{}
+    }
+
+    myAssignments, ok := hraResult[string(myID)]
+    if !ok {
+        return OrderLocation{}
+    }
+
+    for floor := range N_FLOORS {
+        for btn := range N_HALL {
+            if myAssignments[floor][btn] && hallOrderMatrix[floor][btn].Status == Confirmed {
+                return OrderLocation{
+                    Floor:  floor,
+                    Button: elevio.ButtonType(btn),
+                    Entry:  hallOrderMatrix[floor][btn],
+                }
+            }
+        }
+    }
+
+    return OrderLocation{}
 }
 
 func claimOrder(hallOrderMatrix HallOrderMatrix, myID ElevID, order OrderLocation) (HallOrderMatrix, []command) {
@@ -122,12 +166,19 @@ func claimOrder(hallOrderMatrix HallOrderMatrix, myID ElevID, order OrderLocatio
 	return hallOrderMatrix, commands
 }
 
-func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID, pendingCabCalls LocalCabCalls, msg NetMsg) (HallOrderMatrix, CabCallsMap, LocalCabCalls, []command) {
+func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID, pendingCabCalls LocalCabCalls, peerList []Peer, msg NetMsg) (HallOrderMatrix, CabCallsMap, LocalCabCalls, []command) {
 	var commands []command
 	senderID := msg.SenderID
 
 	if senderID == myID {
 		return hallOrderMatrix, cabCalls, pendingCabCalls, commands
+	}
+
+	for i := range peerList {
+		if peerList[i].ID == senderID {
+			peerList[i].State = msg.SenderState
+			break
+		}
 	}
 
 	for floor := range N_FLOORS {
@@ -151,7 +202,7 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 				case Pending:
 					local.Status = Confirmed
 					local.Version++
-					commands = append(commands, command{_type: broadcastNetMessage})
+					commands = append(commands, command{_type: broadcastNetMessage})	// BroadcastNeeded legg til
 					commands = append(commands, command{
 						_type: setButtonLamp,
 						value: buttonLampArgs{
@@ -165,9 +216,31 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 			} else if remote.Version == local.Version {
 				switch remote.Status {
 				case Pending:
-					local.Status = Confirmed
-					local.Version++
-					commands = append(commands, command{_type: broadcastNetMessage})
+					if local.Status == Pending {
+						local.Status = Confirmed
+						local.Version++
+						commands = append(commands, command{_type: broadcastNetMessage})
+						commands = append(commands, command{
+							_type: setButtonLamp,
+							value: buttonLampArgs{
+								Floor:  floor,
+								Button: elevio.ButtonType(btn),
+								Value:  true,
+							},
+						})
+					}
+
+				case Confirmed, Assigned:
+					if remote.Status > local.Status {
+                        *local = remote
+					}
+					if local.AssignedElevator != remote.AssignedElevator && local.AssignedElevator != "" {
+						remoteInt, _ := strconv.Atoi(string(remote.AssignedElevator))
+						localInt, _ := strconv.Atoi(string(local.AssignedElevator))
+						if remoteInt < localInt && remote.AssignedElevator != "" {
+							*local = remote
+                        }
+					}
 					commands = append(commands, command{
 						_type: setButtonLamp,
 						value: buttonLampArgs{
@@ -176,9 +249,6 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 							Value:  true,
 						},
 					})
-
-				case Confirmed, Assigned:
-					*local = remote
 				}
 
 			}
@@ -198,12 +268,12 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 				// 	},
 				// })
 				commands = append(commands, command{
-						_type: setButtonLamp,
-						value: buttonLampArgs{
-							Floor:  i,
-							Button: elevio.BT_Cab,
-							Value:  true,
-						},
+					_type: setButtonLamp,
+					value: buttonLampArgs{
+						Floor:  i,
+						Button: elevio.BT_Cab,
+						Value:  true,
+					},
 				})
 			}
 		}
@@ -232,12 +302,12 @@ func onPeerEvent(hallOrderMatrix HallOrderMatrix, oldPeerList []Peer, newPeerLis
 }
 
 func findPeerStatus(peerList []Peer, id ElevID) PeerStatus {
-	for _, p := range peerList {
-		if p.ID == id {
-			return p.Status
+	for _, peer := range peerList {
+		if peer.ID == id {
+			return peer.Status
 		}
 	}
-	return PeerStatus(-1) // not found
+	return PeerStatus(-1)
 }
 
 func releaseOrdersForPeer(h HallOrderMatrix, deadID ElevID) HallOrderMatrix {

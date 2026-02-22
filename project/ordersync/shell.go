@@ -1,10 +1,10 @@
 package ordersync
 
 import (
+	"maps"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
 	"time"
-	"maps"
 )
 
 func Run(
@@ -44,7 +44,7 @@ func Run(
 			}
 
 		case newLocalState := <-localStateChan:
-			hallOrderMatrix, localState, commands = onNewLocalState(hallOrderMatrix, peerList, myID, newLocalState)
+			hallOrderMatrix, localState, commands = onNewLocalState(hallOrderMatrix, peerList, myID, cabCalls, newLocalState)
 			executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
 
 		case cleared := <-clearedOrdersChan:
@@ -52,7 +52,7 @@ func Run(
 			executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
 
 		case netMsg := <-rx:
-			hallOrderMatrix, cabCalls, pendingCabCalls, commands = onNetMsg(hallOrderMatrix, cabCalls, myID, pendingCabCalls, netMsg)
+			hallOrderMatrix, cabCalls, pendingCabCalls, commands = onNetMsg(hallOrderMatrix, cabCalls, myID, pendingCabCalls, peerList, netMsg)
 			executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
 
 		case peerEvent := <-peerEventChan:
@@ -81,21 +81,21 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 		switch command._type {
 		case sendOrderToLocal:
 			localOrderChan <- command.value.(elevio.ButtonEvent)
-		case broadcastNetMessage:		// Vurder ifShouldBroadcast
+		case broadcastNetMessage: // Vurder ifShouldBroadcast
 			cabCallsCopy := maps.Clone(cabCalls)
 			tx <- NetMsg{
-				SenderID: myID,
+				SenderID:        myID,
 				HallOrderMatrix: hallOrderMatrix,
-				CabCalls: cabCallsCopy,
-				SenderState: localState,
+				CabCalls:        cabCallsCopy,
+				SenderState:     localState,
 			}
 		case setButtonLamp:
 			args := command.value.(buttonLampArgs)
 			lightCommandChan <- elevio.DriverCommand{
-				Type: elevio.CommandSetButtonLamp,
+				Type:   elevio.CommandSetButtonLamp,
 				Button: args.Button,
-				Floor: args.Floor,
-				Value: args.Value,
+				Floor:  args.Floor,
+				Value:  args.Value,
 			}
 		}
 
