@@ -1,7 +1,7 @@
 package peermonitor
 
 import (
-	shared "Project/sharedtypes" // ⚠️ bytt hvis go.mod har annet module-navn
+	shared "project/sharedtypes" // ⚠️ bytt hvis go.mod har annet module-navn
 	"testing"
 	"time"
 )

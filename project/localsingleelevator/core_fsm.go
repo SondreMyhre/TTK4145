@@ -1,16 +1,16 @@
 package localsingle
 
 func (elevator *LocalSingleElevator) onInitBetweenFloors() command {
-	elevator.state.direction = DirDown
-	elevator.state.behaviour = BehaviourMoving
+	elevator.State.Direction = DirDown
+	elevator.State.Behaviour = BehaviourMoving
 	return command{_type: setMotorDirection, value: DirDown}
 }
 
-func (elevator *LocalSingleElevator) onRequestButtonPress(buttonFloor int, buttonType buttonType) []command {
+func (elevator *LocalSingleElevator) onRequestButtonPress(buttonFloor int, buttonType ButtonType) []command {
 	elevator.requests[buttonFloor][buttonType] = true
 	var commands []command
 
-	switch elevator.state.behaviour {
+	switch elevator.State.Behaviour {
 	case BehaviourDoorOpen:
 		if elevator.shouldClearImmediately(buttonFloor, buttonType) {
 			commands = append(commands, command{_type: resetDoorTimer, value: nil})
@@ -26,8 +26,8 @@ func (elevator *LocalSingleElevator) onRequestButtonPress(buttonFloor int, butto
 		return commands
 	case BehaviourIdle:
 		pair := elevator.chooseDirection()
-		elevator.state.direction = pair.direction
-		elevator.state.behaviour = pair.behaviour
+		elevator.State.Direction = pair.direction
+		elevator.State.Behaviour = pair.behaviour
 		switch pair.behaviour {
 		case BehaviourDoorOpen:
 			commands = append(commands, command{_type: setDoorOpenLamp, value: true})
@@ -37,7 +37,7 @@ func (elevator *LocalSingleElevator) onRequestButtonPress(buttonFloor int, butto
 				commands = append(commands, command{_type: sendClearedOrders, value: cleared})
 			}
 		case BehaviourMoving:
-			commands = append(commands, command{_type: setMotorDirection, value: elevator.state.direction})
+			commands = append(commands, command{_type: setMotorDirection, value: elevator.State.Direction})
 
 		}
 		commands = append(commands, elevator.generateLightCommands()...)
@@ -48,11 +48,11 @@ func (elevator *LocalSingleElevator) onRequestButtonPress(buttonFloor int, butto
 }
 
 func (elevator *LocalSingleElevator) onFloorArrival(newFloor int) []command {
-	elevator.state.floor = newFloor
+	elevator.State.Floor = newFloor
 	var commands []command
-	commands = append(commands, command{_type: setFloorIndicator, value: elevator.state.floor})
+	commands = append(commands, command{_type: setFloorIndicator, value: elevator.State.Floor})
 
-	if elevator.state.behaviour != BehaviourMoving {
+	if elevator.State.Behaviour != BehaviourMoving {
 		return commands
 	}
 
@@ -66,7 +66,7 @@ func (elevator *LocalSingleElevator) onFloorArrival(newFloor int) []command {
 		commands = append(commands, command{_type: resetDoorTimer, value: nil})
 
 		commands = append(commands, elevator.generateLightCommands()...)
-		elevator.state.behaviour = BehaviourDoorOpen
+		elevator.State.Behaviour = BehaviourDoorOpen
 	}
 
 	return commands
@@ -75,7 +75,7 @@ func (elevator *LocalSingleElevator) onFloorArrival(newFloor int) []command {
 func (elevator *LocalSingleElevator) onDoorTimeout() []command {
 	var commands []command
 
-	if elevator.state.behaviour != BehaviourDoorOpen {
+	if elevator.State.Behaviour != BehaviourDoorOpen {
 		return nil
 	}
 
@@ -84,13 +84,13 @@ func (elevator *LocalSingleElevator) onDoorTimeout() []command {
 		return commands
 	}
 
-	switch elevator.state.behaviour {
+	switch elevator.State.Behaviour {
 	case BehaviourDoorOpen:
 		pair := elevator.chooseDirection()
-		elevator.state.direction = pair.direction
-		elevator.state.behaviour = pair.behaviour
+		elevator.State.Direction = pair.direction
+		elevator.State.Behaviour = pair.behaviour
 
-		switch elevator.state.behaviour {
+		switch elevator.State.Behaviour {
 		case BehaviourDoorOpen:
 			commands = append(commands, command{_type: resetDoorTimer, value: nil})
 			cleared := elevator.clearAtCurrentFloor()
@@ -100,10 +100,10 @@ func (elevator *LocalSingleElevator) onDoorTimeout() []command {
 			commands = append(commands, elevator.generateLightCommands()...)
 		case BehaviourMoving:
 			commands = append(commands, command{_type: setDoorOpenLamp, value: false})
-			commands = append(commands, command{_type: setMotorDirection, value: elevator.state.direction})
+			commands = append(commands, command{_type: setMotorDirection, value: elevator.State.Direction})
 		case BehaviourIdle:
 			commands = append(commands, command{_type: setDoorOpenLamp, value: false})
-			commands = append(commands, command{_type: setMotorDirection, value: elevator.state.direction})
+			commands = append(commands, command{_type: setMotorDirection, value: elevator.State.Direction})
 		}
 
 	}
@@ -112,7 +112,7 @@ func (elevator *LocalSingleElevator) onDoorTimeout() []command {
 
 func (elevator *LocalSingleElevator) onObstruction(obstructed bool) []command {
 	elevator.obstructed = obstructed
-	if elevator.state.behaviour == BehaviourDoorOpen {
+	if elevator.State.Behaviour == BehaviourDoorOpen {
 		var commands []command
 		commands = append(commands, command{_type: resetDoorTimer, value: nil})
 		return commands

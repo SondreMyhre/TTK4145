@@ -1,8 +1,8 @@
 package localsingle
 
 import (
-	elevio "Project/elevio"
 	"fmt"
+	elevio "project/elevio"
 	"time"
 )
 
@@ -37,6 +37,8 @@ func Run(
 	doorTimer := time.NewTimer(doorOpenDuration)
 	doorTimer.Stop()
 
+	localStateTicker := time.NewTicker(100*time.Millisecond)
+
 	var commands []command
 
 	if elevio.GetFloor() == -1 {
@@ -49,21 +51,26 @@ func Run(
 		case buttonEvent := <-localOrderChan:
 			btn := elevioToButtonType(buttonEvent.Button)
 			commands = elevator.onRequestButtonPress(buttonEvent.Floor, btn)
+			executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
 
 		case floor := <-floorChan:
 			commands = elevator.onFloorArrival(floor)
+			executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
 
 		case obstructed := <-obstructionChan:
-
 			commands = elevator.onObstruction(obstructed)
+			executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
 
 		case <-doorTimer.C:
 			commands = elevator.onDoorTimeout()
+			executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
 
+		case <-localStateTicker.C:
+			select {
+			case localStateChan <- elevator:
+			default:
+			}
 		}
-
-		executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
-		localStateChan <- elevator // Sender state til OrderSync
 	}
 }
 
@@ -76,14 +83,14 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 	for _, command := range commands {
 		switch command._type {
 		case setMotorDirection:
-			dir := command.value.(direction)
+			dir := command.value.(Direction)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
 		case setDoorOpenLamp:
 			value := command.value.(bool)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetDoorLamp, Value: value}
 		case setButtonLamp:
 			args := command.value.(buttonLampArgs)
-			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: buttonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
+			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: ButtonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
 		case resetDoorTimer:
 			doorTimer.Reset(doorOpenDuration)
 		case sendClearedOrders:
@@ -94,7 +101,7 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 	}
 }
 
-func directionToMotorDirection(direction direction) elevio.MotorDirection {
+func directionToMotorDirection(direction Direction) elevio.MotorDirection {
 	switch direction {
 	case DirUp:
 		return elevio.MD_Up
@@ -107,7 +114,7 @@ func directionToMotorDirection(direction direction) elevio.MotorDirection {
 	}
 }
 
-func buttonTypeToElevio(b buttonType) elevio.ButtonType {
+func ButtonTypeToElevio(b ButtonType) elevio.ButtonType {
 	switch b {
 	case BtnHallUp:
 		return elevio.BT_HallUp
@@ -118,7 +125,7 @@ func buttonTypeToElevio(b buttonType) elevio.ButtonType {
 	}
 }
 
-func elevioToButtonType(b elevio.ButtonType) buttonType {
+func elevioToButtonType(b elevio.ButtonType) ButtonType {
 	switch b {
 	case elevio.BT_HallUp:
 		return BtnHallUp

@@ -1,7 +1,7 @@
 package peermonitor
 
 import (
-	shared "Project/sharedtypes"
+	shared "project/sharedtypes"
 	"time"
 )
 

@@ -1,20 +1,20 @@
 package main
 
 import (
-	elevio "Project/elevio"
-	localsingle "Project/localsingleelevator"
-	transportUDP "Project/transportudp"
-	peermonitor "Project/peermonitor" 
-	ordersync "Project/ordersync" 
+	elevio "project/elevio"
+	localsingle "project/localsingleelevator"
+	transportUDP "project/transportudp"
+	peermonitor "project/peermonitor" 
+	ordersync "project/ordersync" 
 	"flag"
 	"log"
 )
 
 func main() {
-	peerID := flag.Int("peerID", 0, "peerID of the elevator to be created")
+	peerID := flag.String("peerID", "0", "peerID of the elevator to be created")
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
-	if *peerID == 0 {
+	if *peerID == "0" {
 		log.Fatal("Not valid peerID.")
 	}
 
@@ -26,6 +26,9 @@ func main() {
 	obstructionChan := make(chan bool)
 	clearedOrdersChan := make(chan []localsingle.Order)
 	localStateChan := make(chan localsingle.LocalSingleElevator)
+	peerEventChan := make(chan []ordersync.Peer)
+	localOrderChan := make(chan elevio.ButtonEvent)
+	
 
 	// Channels and goroutines for networking
 	PeerMonitorTx := make(chan peermonitor.RecoveryMsg)
@@ -35,7 +38,7 @@ func main() {
 	OrderSyncTx := make(chan ordersync.NetMsg)
 	OrderSyncRx := make(chan ordersync.NetMsg)
 
-	go transportUDP.Run(*peerID, PeerMonitorTx, PeerMonitorRecMsgRx, PeerMonitorNetMsgRx, OrderSyncTx, OrderSyncRx)
+	go transportUDP.Run(*peerID, PeerMonitorTx, PeerMonitorRecMsgRx, PeerMonitorNetMsgRx, OrderSyncTx, OrderSyncRx)	// ElevID måtte være string
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)
@@ -45,7 +48,8 @@ func main() {
 	go func() { for range clearedOrdersChan {} }()	// OrderSync ikke implementert
     go func() { for range localStateChan {} }()		// OrderSync ikke implementert
 
-	go localsingle.Run(buttonChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan) // localOrderChan = buttonChan
+	go ordersync.Run(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, OrderSyncRx, peerEventChan, localOrderChan, OrderSyncTx, driverCommandChan)
+	go localsingle.Run(localOrderChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 
 	select {}
 }

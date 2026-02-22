@@ -1,0 +1,103 @@
+package ordersync
+
+import (
+	elevio "project/elevio"
+	localsingle "project/localsingleelevator"
+	"time"
+	"maps"
+)
+
+func Run(
+	myID ElevID,
+
+	buttonChan <-chan elevio.ButtonEvent,
+	localStateChan <-chan localsingle.LocalSingleElevator,
+	clearedOrdersChan <-chan []localsingle.Order,
+	rx <-chan NetMsg,
+	peerEventChan <-chan []Peer,
+
+	localOrderChan chan<- elevio.ButtonEvent,
+	tx chan<- NetMsg,
+	lightCommandChan chan<- elevio.DriverCommand, // Muligens kun sende state og ikke hele elevator
+) {
+	var hallOrderMatrix HallOrderMatrix
+	var localState LocalState
+	cabCalls := make(CabCallsMap)
+	var pendingCabCalls LocalCabCalls
+	var peerList []Peer
+
+	heartbeatTicker := time.NewTicker(100 * time.Millisecond)
+
+	for {
+		var commands []command
+
+		select {
+		case buttonEvent := <-buttonChan:
+			switch buttonEvent.Button {
+			case elevio.BT_Cab:
+				cabCalls, pendingCabCalls, commands = onCabButtonEvent(cabCalls, pendingCabCalls, myID, buttonEvent)
+				executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
+
+			case elevio.BT_HallUp, elevio.BT_HallDown:
+				hallOrderMatrix, commands = onHallButtonEvent(hallOrderMatrix, buttonEvent)
+				executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
+			}
+
+		case newLocalState := <-localStateChan:
+			hallOrderMatrix, localState, commands = onNewLocalState(hallOrderMatrix, peerList, myID, newLocalState)
+			executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
+
+		case cleared := <-clearedOrdersChan:
+			hallOrderMatrix, cabCalls, commands = onClearedOrders(hallOrderMatrix, cabCalls, myID, cleared)
+			executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
+
+		case netMsg := <-rx:
+			hallOrderMatrix, cabCalls, pendingCabCalls, commands = onNetMsg(hallOrderMatrix, cabCalls, myID, pendingCabCalls, netMsg)
+			executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
+
+		case peerEvent := <-peerEventChan:
+			hallOrderMatrix, peerList, commands = onPeerEvent(hallOrderMatrix, peerList, peerEvent)
+			executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
+
+		case <-heartbeatTicker.C:
+			commands = onHeartbeatTick()
+			executeCommands(commands, localOrderChan, tx, lightCommandChan, hallOrderMatrix, cabCalls, myID, localState)
+		}
+	}
+}
+
+func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjøres som en egen goroutine, og heller eksplisitt execute commands i hver case i Run()?
+	commands []command,
+	localOrderChan chan<- elevio.ButtonEvent,
+	tx chan<- NetMsg,
+	lightCommandChan chan<- elevio.DriverCommand,
+
+	hallOrderMatrix HallOrderMatrix,
+	cabCalls CabCallsMap,
+	myID ElevID,
+	localState LocalState,
+) {
+	for _, command := range commands {
+		switch command._type {
+		case sendOrderToLocal:
+			localOrderChan <- command.value.(elevio.ButtonEvent)
+		case broadcastNetMessage:		// Vurder ifShouldBroadcast
+			cabCallsCopy := maps.Clone(cabCalls)
+			tx <- NetMsg{
+				SenderID: myID,
+				HallOrderMatrix: hallOrderMatrix,
+				CabCalls: cabCallsCopy,
+				SenderState: localState,
+			}
+		case setButtonLamp:
+			args := command.value.(buttonLampArgs)
+			lightCommandChan <- elevio.DriverCommand{
+				Type: elevio.CommandSetButtonLamp,
+				Button: args.Button,
+				Floor: args.Floor,
+				Value: args.Value,
+			}
+		}
+
+	}
+}

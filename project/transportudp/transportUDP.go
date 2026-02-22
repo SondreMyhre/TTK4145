@@ -6,9 +6,9 @@ package TransportUDP
 // 
 
 import (
-	"Project/transportudp/bcast"
-	peermonitor "Project/peermonitor" //will only be using the types in peermonitor...
-	ordersync "Project/ordersync" //...and ordersync
+	"project/transportudp/bcast"
+	peermonitor "project/peermonitor" //will only be using the types in peermonitor...
+	ordersync "project/ordersync" //...and ordersync
 )
 
 const portOffset = 60000
