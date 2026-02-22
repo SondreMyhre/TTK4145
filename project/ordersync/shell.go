@@ -11,14 +11,14 @@ func Run(
 	myID ElevID,
 
 	buttonChan <-chan elevio.ButtonEvent,
-	localStateChan <-chan localsingle.LocalSingleElevator,
+	localStateChan <-chan localsingle.ElevatorState,
 	clearedOrdersChan <-chan []localsingle.Order,
 	rx <-chan NetMsg,
 	peerEventChan <-chan []Peer,
 
 	localOrderChan chan<- elevio.ButtonEvent,
 	tx chan<- NetMsg,
-	lightCommandChan chan<- elevio.DriverCommand, // Muligens kun sende state og ikke hele elevator
+	lightCommandChan chan<- elevio.DriverCommand,
 ) {
 	var hallOrderMatrix HallOrderMatrix
 	var localState LocalState

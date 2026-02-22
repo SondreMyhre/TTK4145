@@ -10,14 +10,12 @@ import (
 // Helpers
 // ============================================================================
 
-func makeLocalState(floor int, dir localsingle.Direction, behav localsingle.ElevatorBehaviour) localsingle.LocalSingleElevator {
-    return localsingle.LocalSingleElevator{
-        State: localsingle.ElevatorState{
+func makeLocalState(floor int, dir localsingle.Direction, behav localsingle.ElevatorBehaviour) localsingle.ElevatorState {
+    return localsingle.ElevatorState{
             Floor:     floor,
             Direction: dir,
             Behaviour: behav,
-        },
-    }
+		}
 }
 
 func drainCommands(cmds []command) (broadcasts int, lamps int, localOrders int) {

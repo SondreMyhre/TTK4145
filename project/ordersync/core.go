@@ -32,13 +32,13 @@ func onHallButtonEvent(hallOrderMatrix HallOrderMatrix, buttonEvent elevio.Butto
 	return hallOrderMatrix, []command{{_type: broadcastNetMessage}}
 }
 
-func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID ElevID, cabCalls CabCallsMap, newLocalState localsingle.LocalSingleElevator) (HallOrderMatrix, LocalState, []command) {
+func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID ElevID, cabCalls CabCallsMap, newLocalState localsingle.ElevatorState) (HallOrderMatrix, LocalState, []command) {
 
 	var commands []command
 	var localState LocalState
-	localState.Floor = newLocalState.State.Floor
-	localState.Direction = newLocalState.State.Direction
-	localState.Behaviour = newLocalState.State.Behaviour
+	localState.Floor = newLocalState.Floor
+	localState.Direction = newLocalState.Direction
+	localState.Behaviour = newLocalState.Behaviour
 
 	switch localState.Behaviour {
 	case localsingle.BehaviourIdle:
@@ -202,7 +202,7 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 				case Pending:
 					local.Status = Confirmed
 					local.Version++
-					commands = append(commands, command{_type: broadcastNetMessage})	// BroadcastNeeded legg til
+					commands = append(commands, command{_type: broadcastNetMessage})	// BroadcastNeeded legg til kanskje
 					commands = append(commands, command{
 						_type: setButtonLamp,
 						value: buttonLampArgs{
@@ -260,13 +260,6 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 		for i := range pendingCabCalls {
 			if pendingCabCalls[i] && msg.CabCalls[myID][i] {
 				pendingCabCalls[i] = false
-				// commands = append(commands, command{
-				// 	_type: sendOrderToLocal,
-				// 	value: elevio.ButtonEvent{
-				// 		Floor:  i,
-				// 		Button: elevio.BT_Cab,
-				// 	},
-				// })
 				commands = append(commands, command{
 					_type: setButtonLamp,
 					value: buttonLampArgs{
