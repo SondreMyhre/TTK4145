@@ -1,16 +1,16 @@
 package peermonitor
 
 import (
-	shared "project/sharedtypes"
+	ordersync "project/ordersync"
 	"time"
 )
 
 // core PeerMonitor
 
-func HandleHeartbeats(peerList []Peer, msg shared.NetMsg, now time.Time) ([]Peer, bool) {
+func HandleHeartbeats(peerList []Peer, msg ordersync.NetMsg, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen
 	changed := false
-	PeerID := msg.ElevID
+	PeerID := msg.SenderID
 
 	i := findPeerIndex(peerList, PeerID)
 	if i == -1 { //-1 if peer not in Peerlist
@@ -47,13 +47,18 @@ func CheckTimeouts(peerList []Peer, now time.Time, timeout time.Duration) ([]Pee
 	return peerList, changed
 }
 
-func ToPeerUpdate(peerList []Peer) PeerUpdate { // makes a copy of peerList before sending to avoid sharing mutable state between goroutines
-	out := make([]Peer, len(peerList))
-	copy(out, peerList)
-	return PeerUpdate{Peers: out}
+func ToPeerUpdate(peerList []Peer) []ordersync.Peer { // makes a copy of peerList before sending to avoid sharing mutable state between goroutines
+	out := make([]ordersync.Peer, len(peerList))
+	for i, peer := range peerList {
+		out[i] = ordersync.Peer{
+			ID: peer.ID,
+			Status: ordersync.PeerStatus(peer.Status),
+		}
+	}
+	return out
 }
 
-func findPeerIndex(peers []Peer, id shared.ElevID) int { //finds ID of peer
+func findPeerIndex(peers []Peer, id ordersync.ElevID) int { //finds ID of peer
 	for i := range peers {
 		if peers[i].ID == id {
 			return i
