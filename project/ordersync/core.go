@@ -43,7 +43,7 @@ func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID Elev
 	localState.Obstructed = newLocalState.Obstructed
 
 	if localState.Obstructed {
-		hallOrderMatrix = releaseOrdersForPeer(hallOrderMatrix, myID)
+		hallOrderMatrix = releaseOrdersForElevID(hallOrderMatrix, myID)
 		broadcastNeeded = true
 	} else {
 		orders := detertmineMyOrders(hallOrderMatrix, myID, localState, cabCalls, peerList)
@@ -141,7 +141,7 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 	}
 
 	if msg.SenderState.Obstructed {
-		hallOrderMatrix = releaseOrdersForPeer(hallOrderMatrix, senderID)
+		hallOrderMatrix = releaseOrdersForElevID(hallOrderMatrix, senderID)
 		broadcastNeeded = true
 	}
 
@@ -254,7 +254,7 @@ func onPeerEvent(hallOrderMatrix HallOrderMatrix, oldPeerList []Peer, newPeerLis
 		oldStatus := findPeerStatus(oldPeerList, newPeer.ID)
 
 		if oldStatus == Alive && newPeer.Status == Dead {
-			hallOrderMatrix = releaseOrdersForPeer(hallOrderMatrix, newPeer.ID)
+			hallOrderMatrix = releaseOrdersForElevID(hallOrderMatrix, newPeer.ID)
 		}
 
 	}
@@ -271,11 +271,11 @@ func findPeerStatus(peerList []Peer, id ElevID) PeerStatus {
 	return PeerStatus(-1)
 }
 
-func releaseOrdersForPeer(hallOrderMatrix HallOrderMatrix, deadID ElevID) HallOrderMatrix {
+func releaseOrdersForElevID(hallOrderMatrix HallOrderMatrix, elevID ElevID) HallOrderMatrix {
 	for floor := range N_FLOORS {
 		for btn := range N_HALL {
 			entry := &hallOrderMatrix[floor][btn]
-			if entry.AssignedElevator == deadID && entry.Status == Assigned {
+			if entry.AssignedElevator == elevID && entry.Status == Assigned {
 				entry.Status = Pending
 				entry.AssignedElevator = ""
 				entry.Version++
