@@ -9,8 +9,12 @@ import (
 
 func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	// Huge timeout so ticker cannot mark peer dead during this test
-	cfg := PeerConfig{Timeout: 10 * time.Second}
+	const peerTick = 50 * time.Millisecond
 
+	cfg := PeerConfig{
+    	Timeout:      500 * time.Millisecond,
+    	TickInterval: peerTick,
+}
 	hbRx := make(chan shared.NetMsg, 10)
 	chanOS := make(chan PeerUpdate, 10)
 
@@ -60,7 +64,12 @@ Drain:
 
 func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	// Small timeout so peer becomes dead quickly
-	cfg := PeerConfig{Timeout: 120 * time.Millisecond}
+	const peerTick = 50 * time.Millisecond
+
+	cfg := PeerConfig{
+    	Timeout:      500 * time.Millisecond,
+    	TickInterval: peerTick,
+}
 
 	hbRx := make(chan shared.NetMsg, 10)
 	chanOS := make(chan PeerUpdate, 10)
@@ -90,8 +99,8 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 		for _, p := range upd.Peers {
 			if p.ID == 1 {
 				found = true
-				if p.Status != Dead {
-					t.Fatalf("expected peer 1 Dead after timeout, got %v", p.Status)
+				if p.PeerStatus != StatusDead {
+					t.Fatalf("expected peer 1 Dead after timeout, got %v", p.PeerStatus)
 				}
 			}
 		}
