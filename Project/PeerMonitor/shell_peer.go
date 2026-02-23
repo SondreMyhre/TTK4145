@@ -1,13 +1,12 @@
 package peermonitor
 
 import (
-	shared "Project/sharedtypes"
 	"time"
 )
 
 // Shell PeerMonitor
 
-func Run(cfg PeerConfig, hbRx <-chan shared.NetMsg, chanOS chan<- PeerUpdate) {
+func Run(cfg PeerConfig, hbRx <-chan NetMsgP, chanOS chan<- PeerUpdate) {
 	var peerList []Peer
 
 	ticker := time.NewTicker(50 * time.Millisecond) //creates ticker* struct, ticker.C is channel

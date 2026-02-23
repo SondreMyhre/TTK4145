@@ -11,13 +11,16 @@ import (
 
 type Status int
 
+type ElevatorID = shared.ElevID
+type NetMsgP = shared.NetMsg
+
 const ( // Status is Dead/Alive
 	Dead Status = iota
 	Alive
 )
 
 type Peer struct { //Peer representsa network peer
-	ID             shared.ElevID      // elevator ID is based on the port i comes from since each IP is the same
+	ID             ElevatorID      // elevator ID is based on the port i comes from since each IP is the same
 	Status         Status             //Dead or alive
 	LastSeen       time.Time          // When we last received a heartbeat from this peer
 }

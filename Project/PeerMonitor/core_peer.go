@@ -1,19 +1,18 @@
 package peermonitor
 
 import (
-	shared "Project/sharedtypes"
 	"time"
 )
 
 // core PeerMonitor
 
-func HandleHeartbeats(peerList []Peer, msg shared.NetMsg, now time.Time) ([]Peer, bool) {
+func HandleHeartbeats(peerList []Peer, msg NetMsgP, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen
 	changed := false
 	PeerID := msg.ElevID
 
-	i := findPeerIndex(peerList, PeerID)
-	if i == -1 { //-1 if peer not in Peerlist
+	index := findPeerIndex(peerList, PeerID)
+	if index == -1 { //-1 if peer not in Peerlist
 		peerList = append(peerList, Peer{
 			ID:             PeerID,
 			Status:         Alive,
@@ -23,12 +22,12 @@ func HandleHeartbeats(peerList []Peer, msg shared.NetMsg, now time.Time) ([]Peer
 	}
 
 	//Peer exists is Dead -> Alive,
-	if peerList[i].Status != Alive {
-		peerList[i].Status = Alive
+	if peerList[index].Status != Alive {
+		peerList[index].Status = Alive
 		changed = true
 	}
 
-	peerList[i].LastSeen = now 
+	peerList[index].LastSeen = now 
 
 	return peerList, changed
 
@@ -38,9 +37,9 @@ func CheckTimeouts(peerList []Peer, now time.Time, timeout time.Duration) ([]Pee
 	// Mark peers as Dead if LastSeen + timeout < now
 	changed := false
 
-	for i := range peerList {
-		if peerList[i].Status == Alive && now.Sub(peerList[i].LastSeen) > timeout { //check for timeout
-			peerList[i].Status = Dead
+	for index := range peerList {
+		if peerList[index].Status == Alive && now.Sub(peerList[index].LastSeen) > timeout { //check for timeout
+			peerList[index].Status = Dead
 			changed = true
 		}
 	}
@@ -53,10 +52,10 @@ func ToPeerUpdate(peerList []Peer) PeerUpdate { // makes a copy of peerList befo
 	return PeerUpdate{Peers: out}
 }
 
-func findPeerIndex(peers []Peer, id shared.ElevID) int { //finds ID of peer
-	for i := range peers {
-		if peers[i].ID == id {
-			return i
+func findPeerIndex(peers []Peer, id ElevatorID) int { //finds ID of peer
+	for index := range peers {
+		if peers[index].ID == id {
+			return index
 		}
 	}
 	return -1
