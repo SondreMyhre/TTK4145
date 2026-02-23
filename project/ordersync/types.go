@@ -6,8 +6,8 @@ import (
 )
 
 const (
-	N_FLOORS  = 4
-	N_HALL    = 2
+	N_FLOORS = 4
+	N_HALL   = 2
 )
 
 type OrderStatus int

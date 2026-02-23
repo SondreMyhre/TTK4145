@@ -145,7 +145,6 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 		broadcastNeeded = true
 	}
 
-	
 	for floor := range N_FLOORS {
 		for btn := range N_HALL {
 			remote := msg.HallOrderMatrix[floor][btn]

@@ -2,9 +2,9 @@ package ordersync
 
 import (
 	"maps"
-	"time"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
+	"time"
 )
 
 func Run(

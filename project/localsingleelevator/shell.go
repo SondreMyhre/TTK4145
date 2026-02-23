@@ -25,7 +25,7 @@ func Run(
 	doorTimer := time.NewTimer(doorOpenDuration)
 	doorTimer.Stop()
 
-	localStateTicker := time.NewTicker(100*time.Millisecond)
+	localStateTicker := time.NewTicker(100 * time.Millisecond)
 
 	var commands []command
 
@@ -77,8 +77,8 @@ func executeCommands(
 			value := command.value.(bool)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetDoorLamp, Value: value}
 		case setFloorIndicator:
-            floor := command.value.(int)
-            driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetFloorIndicator, Floor: floor}
+			floor := command.value.(int)
+			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetFloorIndicator, Floor: floor}
 		case setButtonLamp:
 			args := command.value.(buttonLampArgs)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: ButtonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}

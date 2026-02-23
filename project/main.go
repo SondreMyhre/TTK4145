@@ -3,13 +3,13 @@ package main
 import (
 	"flag"
 	"log"
-	"time"
-	"strconv"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
 	transportUDP "project/transportudp"
+	"strconv"
+	"time"
 )
 
 func main() {
@@ -24,7 +24,7 @@ func main() {
 
 	elevio.Init(*serverAddr, 4)
 
-	driverCommandChan := make(chan elevio.DriverCommand)	// Kan vurdere to separate channels inn??? Vet ikke hva som er best praksis
+	driverCommandChan := make(chan elevio.DriverCommand) // Kan vurdere to separate channels inn??? Vet ikke hva som er best praksis
 	buttonChan := make(chan elevio.ButtonEvent)
 	floorChan := make(chan int)
 	obstructionChan := make(chan bool)
@@ -48,7 +48,7 @@ func main() {
 	go elevio.PollFloorSensor(floorChan)
 	go elevio.PollObstructionSwitch(obstructionChan)
 
-	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second}	// Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
+	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
 
 	go peermonitor.Run(peermonitorConfig, PeerMonitorNetMsgRx, peerEventChan)
 
