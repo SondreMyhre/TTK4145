@@ -2,9 +2,9 @@ package ordersync
 
 import (
 	"maps"
+	"time"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
-	"time"
 )
 
 func Run(
@@ -23,7 +23,7 @@ func Run(
 	var hallOrderMatrix HallOrderMatrix
 	var localState LocalState
 	cabCalls := make(CabCallsMap)
-	var pendingCabCalls LocalCabCalls
+	var pendingCabCalls [N_FLOORS]bool
 	var peerList []Peer
 
 	heartbeatTicker := time.NewTicker(100 * time.Millisecond)
@@ -66,7 +66,7 @@ func Run(
 	}
 }
 
-func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjøres som en egen goroutine, og heller eksplisitt execute commands i hver case i Run()?
+func executeCommands(
 	commands []command,
 	localOrderChan chan<- elevio.ButtonEvent,
 	tx chan<- NetMsg,
@@ -81,7 +81,7 @@ func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjø
 		switch command._type {
 		case sendOrderToLocal:
 			localOrderChan <- command.value.(elevio.ButtonEvent)
-		case broadcastNetMessage: // Vurder ifShouldBroadcast
+		case broadcastNetMessage:
 			cabCallsCopy := maps.Clone(cabCalls)
 			tx <- NetMsg{
 				SenderID:        myID,

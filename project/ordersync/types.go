@@ -7,9 +7,7 @@ import (
 
 const (
 	N_FLOORS  = 4
-	N_BUTTONS = 3
 	N_HALL    = 2
-	N_CAB     = 1
 )
 
 type OrderStatus int
@@ -36,8 +34,7 @@ type command struct {
 	value any
 }
 
-type LocalCabCalls [N_FLOORS]bool
-type CabCallsMap map[ElevID]LocalCabCalls
+type CabCallsMap map[ElevID][N_FLOORS]bool
 
 type NetMsg struct {
 	SenderID        ElevID

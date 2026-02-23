@@ -1,4 +1,4 @@
-package ordersync
+package ordersync	// AI-generert
 
 import (
     elevio "project/elevio"
@@ -55,7 +55,7 @@ func TestTwoElevators_HallOrderBecomesConfirmed(t *testing.T) {
 
     var e2Hom HallOrderMatrix
     cabCalls := make(CabCallsMap)
-    var pending LocalCabCalls
+    var pending [N_FLOORS]bool
 
     msg := buildNetMsg("1", e1Hom, cabCalls, LocalState{Floor: 2})
     e2Hom, _, _, cmds := onNetMsg(e2Hom, cabCalls, "2", pending, nil, msg)
@@ -87,8 +87,8 @@ func TestTwoElevators_HallOrderBecomesConfirmed(t *testing.T) {
 
 func TestFullOrderLifecycle(t *testing.T) {
     cabCalls := make(CabCallsMap)
-    cabCalls["1"] = LocalCabCalls{}
-    var pending LocalCabCalls
+    cabCalls["1"] = [N_FLOORS]bool{}
+    var pending [N_FLOORS]bool
 
     var hom HallOrderMatrix
     hom, _ = onHallButtonEvent(hom, elevio.ButtonEvent{Floor: 1, Button: elevio.BT_HallUp})
@@ -155,8 +155,8 @@ func TestPeerDeath_ReleasesOrders(t *testing.T) {
 
 func TestCabOrderSync(t *testing.T) {
     cabCalls := make(CabCallsMap)
-    cabCalls["1"] = LocalCabCalls{}
-    var pending LocalCabCalls
+    cabCalls["1"] = [N_FLOORS]bool{}
+    var pending [N_FLOORS]bool
 
     cabCalls, pending, cmds := onCabButtonEvent(cabCalls, pending, "1",
         elevio.ButtonEvent{Floor: 3, Button: elevio.BT_Cab})
@@ -194,7 +194,7 @@ func TestTieBreak_LowestIDWins(t *testing.T) {
     hom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "5", Version: 4}
 
     cabCalls := make(CabCallsMap)
-    var pending LocalCabCalls
+    var pending [N_FLOORS]bool
 
     var remoteHom HallOrderMatrix
     remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "2", Version: 4}
@@ -212,7 +212,7 @@ func TestTieBreak_LocalAlreadyLowest(t *testing.T) {
     hom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "1", Version: 4}
 
     cabCalls := make(CabCallsMap)
-    var pending LocalCabCalls
+    var pending [N_FLOORS]bool
 
     var remoteHom HallOrderMatrix
     remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "3", Version: 4}
@@ -230,7 +230,7 @@ func TestTieBreak_EmptyLocalAdoptsRemote(t *testing.T) {
     hom[1][0] = OrderMatrixEntry{Status: Confirmed, AssignedElevator: "", Version: 4}
 
     cabCalls := make(CabCallsMap)
-    var pending LocalCabCalls
+    var pending [N_FLOORS]bool
 
     var remoteHom HallOrderMatrix
     remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "3", Version: 4}
@@ -248,7 +248,7 @@ func TestTieBreak_EmptyRemoteDoesNotWin(t *testing.T) {
     hom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "2", Version: 4}
 
     cabCalls := make(CabCallsMap)
-    var pending LocalCabCalls
+    var pending [N_FLOORS]bool
 
     var remoteHom HallOrderMatrix
     remoteHom[1][0] = OrderMatrixEntry{Status: Confirmed, AssignedElevator: "", Version: 4}
@@ -268,7 +268,7 @@ func TestTieBreak_EmptyRemoteDoesNotWin(t *testing.T) {
 func TestMultipleOrders_Converge(t *testing.T) {
     var hom HallOrderMatrix
     cabCalls := make(CabCallsMap)
-    var pending LocalCabCalls
+    var pending [N_FLOORS]bool
 
     hom, _ = onHallButtonEvent(hom, elevio.ButtonEvent{Floor: 0, Button: elevio.BT_HallUp})
     hom, _ = onHallButtonEvent(hom, elevio.ButtonEvent{Floor: 2, Button: elevio.BT_HallDown})
@@ -315,7 +315,7 @@ func TestClearedOrders_EmptyList(t *testing.T) {
     var hom HallOrderMatrix
     hom[0][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "1", Version: 3}
     cabCalls := make(CabCallsMap)
-    cabCalls["1"] = LocalCabCalls{}
+    cabCalls["1"] = [N_FLOORS]bool{}
 
     hom, _, cmds := onClearedOrders(hom, cabCalls, "1", []localsingle.Order{})
 
@@ -356,7 +356,7 @@ func TestOnNetMsg_IgnoresOwnMessage(t *testing.T) {
     var hom HallOrderMatrix
     hom[0][0] = OrderMatrixEntry{Status: Pending, Version: 1}
     cabCalls := make(CabCallsMap)
-    var pending LocalCabCalls
+    var pending [N_FLOORS]bool
 
     msg := buildNetMsg("1", HallOrderMatrix{}, cabCalls, LocalState{})
     hom, _, _, cmds := onNetMsg(hom, cabCalls, "1", pending, nil, msg)
@@ -405,7 +405,7 @@ func TestHRAHelpers(t *testing.T) {
     }
 
     cabCalls := make(CabCallsMap)
-    cabCalls["1"] = LocalCabCalls{true, false, false, true}
+    cabCalls["1"] = [N_FLOORS]bool{true, false, false, true}
     state := LocalState{Floor: 2, Direction: localsingle.DirUp, Behaviour: localsingle.BehaviourMoving}
     hra := localStateToHRA("1", state, cabCalls)
 
@@ -425,11 +425,11 @@ func TestMockMain_TwoElevators(t *testing.T) {
     var e1Hom, e2Hom HallOrderMatrix
     e1Cab := make(CabCallsMap)
     e2Cab := make(CabCallsMap)
-    e1Cab["1"] = LocalCabCalls{}
-    e1Cab["2"] = LocalCabCalls{}
-    e2Cab["1"] = LocalCabCalls{}
-    e2Cab["2"] = LocalCabCalls{}
-    var e1Pending, e2Pending LocalCabCalls
+    e1Cab["1"] = [N_FLOORS]bool{}
+    e1Cab["2"] = [N_FLOORS]bool{}
+    e2Cab["1"] = [N_FLOORS]bool{}
+    e2Cab["2"] = [N_FLOORS]bool{}
+    var e1Pending, e2Pending [N_FLOORS]bool
 
     e1State := LocalState{Floor: 0, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
     e2State := LocalState{Floor: 3, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}

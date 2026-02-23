@@ -10,18 +10,6 @@ const (
 	doorOpenDuration = 3 * time.Second
 )
 
-// type Input struct {
-// 	buttonChan <-chan elevio.ButtonEvent
-// 	floorChan <-chan int
-// 	obstructionChan <-chan bool
-// }
-
-// type Output struct {
-// 	driverCommandChan chan<- elevio.DriverCommand
-// 	clearedChan chan<- []Order
-// 	localStateChan chan<- LocalSingleElevator
-// }
-
 func Run(
 	localOrderChan <-chan elevio.ButtonEvent,
 	floorChan <-chan int,
@@ -29,7 +17,7 @@ func Run(
 
 	driverCommandChan chan<- elevio.DriverCommand,
 	clearedOrdersChan chan<- []Order,
-	localStateChan chan<- LocalSingleElevator, // Muligens kun sende state og ikke hele elevator
+	localStateChan chan<- ElevatorState,
 ) {
 	fmt.Println("LocalSingleElevator started")
 	elevator := makeUninitializedElevator()
@@ -67,14 +55,14 @@ func Run(
 
 		case <-localStateTicker.C:
 			select {
-			case localStateChan <- elevator:
+			case localStateChan <- elevator.State:
 			default:
 			}
 		}
 	}
 }
 
-func executeCommands( // Kanskje det er rotete å ha den slik når det ikke kjøres som en egen goroutine, og heller eksplisitt execute commands i hver case i Run()?
+func executeCommands(
 	commands []command,
 	driverCommandChan chan<- elevio.DriverCommand,
 	clearedChan chan<- []Order,

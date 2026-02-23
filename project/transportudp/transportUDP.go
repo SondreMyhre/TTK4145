@@ -21,7 +21,7 @@ func Run(pID int,
 
 		NetMsgTx <- chan ordersync.NetMsg, //broadcast netMsg from ordersync
 		osNetMsgRx chan<- ordersync.NetMsg, //send NetMsg to ordersync ...
-		// pmNetMsgRx chan<- ordersync.NetMsg, //... and peermonitor
+		pmNetMsgRx chan<- ordersync.NetMsg, //... and peermonitor
 	) {
 	// Declaring variables
 	// peerID := pID
@@ -37,8 +37,10 @@ func Run(pID int,
 
 	// Broadcasted net-msgs should be directed to both ordersync and peermonitor
 	// go mergeNetChans(NetMsgTx, osNetMsgRx, pmNetMsgRx)
+
 	for msg := range netMsgRx {
         osNetMsgRx <- msg
+		pmNetMsgRx <- msg
     }
 }
 

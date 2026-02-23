@@ -35,7 +35,7 @@ type ElevatorState struct {
 	Behaviour ElevatorBehaviour
 }
 
-type LocalSingleElevator struct {
+type elevator struct {
 	State      ElevatorState
 	requests   [N_FLOORS][N_BUTTONS]bool
 	obstructed bool
@@ -46,22 +46,8 @@ type directionBehaviourPair struct {
 	behaviour ElevatorBehaviour
 }
 
-func elevatorBehaviourToString(eb ElevatorBehaviour) string {
-	switch eb {
-	case BehaviourIdle:
-		return "BehaviourIdle"
-	case BehaviourDoorOpen:
-		return "BehaviourDoorOpen"
-	case BehaviourMoving:
-		return "BehaviourMoving"
-	default:
-		return "BehaviourUndefined"
-
-	}
-}
-
-func makeUninitializedElevator() LocalSingleElevator {
-	elevator := LocalSingleElevator{
+func makeUninitializedElevator() elevator {
+	elevator := elevator{
 		State: ElevatorState{Floor: -1,
 			Direction: DirStop,
 			Behaviour: BehaviourIdle,
