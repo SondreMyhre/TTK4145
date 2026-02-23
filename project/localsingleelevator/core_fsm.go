@@ -75,7 +75,7 @@ func (elevator *elevator) onDoorTimeout() []command {
 		return commands
 	}
 
-	if elevator.obstructed {
+	if elevator.State.Obstructed {
 		commands = append(commands, command{_type: resetDoorTimer})
 		return commands
 	}
@@ -107,9 +107,10 @@ func (elevator *elevator) onDoorTimeout() []command {
 
 func (elevator *elevator) onObstruction(obstructed bool) []command {
 	var commands []command
-	elevator.obstructed = obstructed
+	elevator.State.Obstructed = obstructed
 	if elevator.State.Behaviour == BehaviourDoorOpen {
 		commands = append(commands, command{_type: resetDoorTimer})
+		commands = append(commands, command{_type: sendLocalState})
 		return commands
 	}
 	return commands

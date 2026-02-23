@@ -44,7 +44,7 @@ func behaviourToString(behaviour localsingle.ElevatorBehaviour) string {
 	}
 }
 
-func localStateToHRA(id ElevID, state LocalState, cabCalls CabCallsMap) HRAElevState {
+func localStateToHRA(id ElevID, state localsingle.ElevatorState, cabCalls CabCallsMap) HRAElevState {
 	return HRAElevState{
 		Behavior:    behaviourToString(state.Behaviour),
 		Floor:       state.Floor,
@@ -53,7 +53,7 @@ func localStateToHRA(id ElevID, state LocalState, cabCalls CabCallsMap) HRAElevS
 	}
 }
 
-func callHRA(hallOrderMatrix HallOrderMatrix, myID ElevID, localState LocalState, cabCalls CabCallsMap, peerList []Peer) map[string][N_FLOORS][2]bool {
+func callHRA(hallOrderMatrix HallOrderMatrix, myID ElevID, localState localsingle.ElevatorState, cabCalls CabCallsMap, peerList []Peer) map[string][N_FLOORS][2]bool {
 	hraExecutable := ""
 	switch runtime.GOOS {
 	case "linux":
@@ -109,7 +109,7 @@ func callHRA(hallOrderMatrix HallOrderMatrix, myID ElevID, localState LocalState
 	return *output
 }
 
-func detertmineMyOrders(hallOrderMatrix HallOrderMatrix, myID ElevID, localState LocalState, cabCalls CabCallsMap, peerList []Peer) []OrderLocation {
+func detertmineMyOrders(hallOrderMatrix HallOrderMatrix, myID ElevID, localState localsingle.ElevatorState, cabCalls CabCallsMap, peerList []Peer) []OrderLocation {
 	hasConfirmed := false
 	for floor := range N_FLOORS {
 		for btn := range N_HALL {

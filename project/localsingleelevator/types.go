@@ -33,12 +33,12 @@ type ElevatorState struct {
 	Floor     int
 	Direction Direction
 	Behaviour ElevatorBehaviour
+	Obstructed bool
 }
 
 type elevator struct {
 	State      ElevatorState
 	requests   [N_FLOORS][N_BUTTONS]bool
-	obstructed bool
 }
 
 type directionBehaviourPair struct {

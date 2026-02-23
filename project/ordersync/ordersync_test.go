@@ -32,7 +32,7 @@ func drainCommands(cmds []command) (broadcasts int, lamps int, localOrders int) 
     return
 }
 
-func buildNetMsg(id ElevID, hom HallOrderMatrix, cabCalls CabCallsMap, state LocalState) NetMsg {
+func buildNetMsg(id ElevID, hom HallOrderMatrix, cabCalls CabCallsMap, state localsingle.ElevatorState) NetMsg {
     return NetMsg{
         SenderID:        id,
         HallOrderMatrix: hom,
@@ -57,7 +57,7 @@ func TestTwoElevators_HallOrderBecomesConfirmed(t *testing.T) {
     cabCalls := make(CabCallsMap)
     var pending [N_FLOORS]bool
 
-    msg := buildNetMsg("1", e1Hom, cabCalls, LocalState{Floor: 2})
+    msg := buildNetMsg("1", e1Hom, cabCalls, localsingle.ElevatorState{Floor: 2})
     e2Hom, _, _, cmds := onNetMsg(e2Hom, cabCalls, "2", pending, nil, msg)
 
     if e2Hom[2][0].Status != Confirmed {
@@ -69,7 +69,7 @@ func TestTwoElevators_HallOrderBecomesConfirmed(t *testing.T) {
         t.Fatal("e2 burde broadcaste etter bekreftelse")
     }
 
-    msg2 := buildNetMsg("2", e2Hom, cabCalls, LocalState{Floor: 0})
+    msg2 := buildNetMsg("2", e2Hom, cabCalls, localsingle.ElevatorState{Floor: 0})
     e1Hom, _, _, _ = onNetMsg(e1Hom, cabCalls, "1", pending, nil, msg2)
 
     if e1Hom[2][0].Status != Confirmed {
@@ -94,10 +94,10 @@ func TestFullOrderLifecycle(t *testing.T) {
     hom, _ = onHallButtonEvent(hom, elevio.ButtonEvent{Floor: 1, Button: elevio.BT_HallUp})
 
     var e2Hom HallOrderMatrix
-    msg := buildNetMsg("1", hom, cabCalls, LocalState{Floor: 0})
+    msg := buildNetMsg("1", hom, cabCalls, localsingle.ElevatorState{Floor: 0})
     e2Hom, _, _, _ = onNetMsg(e2Hom, cabCalls, "2", pending, nil, msg)
 
-    msg2 := buildNetMsg("2", e2Hom, cabCalls, LocalState{Floor: 3})
+    msg2 := buildNetMsg("2", e2Hom, cabCalls, localsingle.ElevatorState{Floor: 3})
     hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg2)
 
     if hom[1][0].Status != Confirmed {
@@ -175,7 +175,7 @@ func TestCabOrderSync(t *testing.T) {
         SenderID:        "2",
         HallOrderMatrix: hom,
         CabCalls:        CabCallsMap{"1": {false, false, false, true}, "2": {}},
-        SenderState:     LocalState{Floor: 0},
+        SenderState:     localsingle.ElevatorState{Floor: 0},
     }
 
     _, _, pending, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
@@ -199,7 +199,7 @@ func TestTieBreak_LowestIDWins(t *testing.T) {
     var remoteHom HallOrderMatrix
     remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "2", Version: 4}
 
-    msg := buildNetMsg("2", remoteHom, cabCalls, LocalState{})
+    msg := buildNetMsg("2", remoteHom, cabCalls, localsingle.ElevatorState{})
     hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
 
     if hom[1][0].AssignedElevator != "2" {
@@ -217,7 +217,7 @@ func TestTieBreak_LocalAlreadyLowest(t *testing.T) {
     var remoteHom HallOrderMatrix
     remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "3", Version: 4}
 
-    msg := buildNetMsg("3", remoteHom, cabCalls, LocalState{})
+    msg := buildNetMsg("3", remoteHom, cabCalls, localsingle.ElevatorState{})
     hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
 
     if hom[1][0].AssignedElevator != "1" {
@@ -235,7 +235,7 @@ func TestTieBreak_EmptyLocalAdoptsRemote(t *testing.T) {
     var remoteHom HallOrderMatrix
     remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "3", Version: 4}
 
-    msg := buildNetMsg("3", remoteHom, cabCalls, LocalState{})
+    msg := buildNetMsg("3", remoteHom, cabCalls, localsingle.ElevatorState{})
     hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
 
     if hom[1][0].AssignedElevator != "3" {
@@ -253,7 +253,7 @@ func TestTieBreak_EmptyRemoteDoesNotWin(t *testing.T) {
     var remoteHom HallOrderMatrix
     remoteHom[1][0] = OrderMatrixEntry{Status: Confirmed, AssignedElevator: "", Version: 4}
 
-    msg := buildNetMsg("3", remoteHom, cabCalls, LocalState{})
+    msg := buildNetMsg("3", remoteHom, cabCalls, localsingle.ElevatorState{})
     hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
 
     if hom[1][0].AssignedElevator != "2" {
@@ -275,10 +275,10 @@ func TestMultipleOrders_Converge(t *testing.T) {
     hom, _ = onHallButtonEvent(hom, elevio.ButtonEvent{Floor: 3, Button: elevio.BT_HallDown})
 
     var e2Hom HallOrderMatrix
-    msg := buildNetMsg("1", hom, cabCalls, LocalState{})
+    msg := buildNetMsg("1", hom, cabCalls, localsingle.ElevatorState{})
     e2Hom, _, _, _ = onNetMsg(e2Hom, cabCalls, "2", pending, nil, msg)
 
-    msg2 := buildNetMsg("2", e2Hom, cabCalls, LocalState{})
+    msg2 := buildNetMsg("2", e2Hom, cabCalls, localsingle.ElevatorState{})
     hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg2)
 
     for f := range N_FLOORS {
@@ -358,7 +358,7 @@ func TestOnNetMsg_IgnoresOwnMessage(t *testing.T) {
     cabCalls := make(CabCallsMap)
     var pending [N_FLOORS]bool
 
-    msg := buildNetMsg("1", HallOrderMatrix{}, cabCalls, LocalState{})
+    msg := buildNetMsg("1", HallOrderMatrix{}, cabCalls, localsingle.ElevatorState{})
     hom, _, _, cmds := onNetMsg(hom, cabCalls, "1", pending, nil, msg)
 
     if len(cmds) != 0 {
@@ -406,7 +406,7 @@ func TestHRAHelpers(t *testing.T) {
 
     cabCalls := make(CabCallsMap)
     cabCalls["1"] = [N_FLOORS]bool{true, false, false, true}
-    state := LocalState{Floor: 2, Direction: localsingle.DirUp, Behaviour: localsingle.BehaviourMoving}
+    state := localsingle.ElevatorState{Floor: 2, Direction: localsingle.DirUp, Behaviour: localsingle.BehaviourMoving}
     hra := localStateToHRA("1", state, cabCalls)
 
     if hra.Floor != 2 || hra.Direction != "up" || hra.Behavior != "moving" {
@@ -431,8 +431,8 @@ func TestMockMain_TwoElevators(t *testing.T) {
     e2Cab["2"] = [N_FLOORS]bool{}
     var e1Pending, e2Pending [N_FLOORS]bool
 
-    e1State := LocalState{Floor: 0, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
-    e2State := LocalState{Floor: 3, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
+    e1State := localsingle.ElevatorState{Floor: 0, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
+    e2State := localsingle.ElevatorState{Floor: 3, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
 
     e1Peers := []Peer{{ID: "2", Status: Alive, State: e2State}}
     e2Peers := []Peer{{ID: "1", Status: Alive, State: e1State}}

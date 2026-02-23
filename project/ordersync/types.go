@@ -40,7 +40,7 @@ type NetMsg struct {
 	SenderID        ElevID
 	HallOrderMatrix HallOrderMatrix
 	CabCalls        CabCallsMap
-	SenderState     LocalState
+	SenderState     localsingle.ElevatorState
 }
 
 type HallOrderMatrix [N_FLOORS][N_HALL]OrderMatrixEntry
@@ -49,12 +49,6 @@ type OrderMatrixEntry struct {
 	Status           OrderStatus
 	AssignedElevator ElevID
 	Version          int
-}
-
-type LocalState struct {
-	Floor     int
-	Direction localsingle.Direction
-	Behaviour localsingle.ElevatorBehaviour
 }
 
 type buttonLampArgs struct {
@@ -73,7 +67,7 @@ const (
 type Peer struct {
 	ID     ElevID
 	Status PeerStatus
-	State  LocalState
+	State  localsingle.ElevatorState
 }
 
 type OrderLocation struct {

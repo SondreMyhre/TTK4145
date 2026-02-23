@@ -21,7 +21,7 @@ func Run(
 	lightCommandChan chan<- elevio.DriverCommand,
 ) {
 	var hallOrderMatrix HallOrderMatrix
-	var localState LocalState
+	var localState localsingle.ElevatorState
 	cabCalls := make(CabCallsMap)
 	var pendingCabCalls [N_FLOORS]bool
 	var peerList []Peer
@@ -75,7 +75,7 @@ func executeCommands(
 	hallOrderMatrix HallOrderMatrix,
 	cabCalls CabCallsMap,
 	myID ElevID,
-	localState LocalState,
+	localState localsingle.ElevatorState,
 ) {
 	for _, command := range commands {
 		switch command._type {

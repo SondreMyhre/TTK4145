@@ -32,19 +32,31 @@ func onHallButtonEvent(hallOrderMatrix HallOrderMatrix, buttonEvent elevio.Butto
 	return hallOrderMatrix, []command{{_type: broadcastNetMessage}}
 }
 
-func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID ElevID, cabCalls CabCallsMap, newLocalState localsingle.ElevatorState) (HallOrderMatrix, LocalState, []command) {
+func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID ElevID, cabCalls CabCallsMap, newLocalState localsingle.ElevatorState) (HallOrderMatrix, localsingle.ElevatorState, []command) {
 
 	var commands []command
-	var localState LocalState
+	var localState localsingle.ElevatorState
+	broadcastNeeded := false
 	localState.Floor = newLocalState.Floor
 	localState.Direction = newLocalState.Direction
 	localState.Behaviour = newLocalState.Behaviour
+	localState.Obstructed = newLocalState.Obstructed
 
-	orders := detertmineMyOrders(hallOrderMatrix, myID, localState, cabCalls, peerList)
-	for _, order := range orders {
-		var claimCommands []command
-		hallOrderMatrix, claimCommands = claimOrder(hallOrderMatrix, myID, order)
-		commands = append(commands, claimCommands...)
+	if localState.Obstructed {
+		hallOrderMatrix = releaseOrdersForPeer(hallOrderMatrix, myID)
+		broadcastNeeded = true
+	} else {
+		orders := detertmineMyOrders(hallOrderMatrix, myID, localState, cabCalls, peerList)
+		for _, order := range orders {
+			var claimCommands []command
+			hallOrderMatrix, claimCommands = claimOrder(hallOrderMatrix, myID, order)
+			commands = append(commands, claimCommands...)
+			broadcastNeeded = true
+		}
+	}
+
+	if broadcastNeeded {
+		commands = append(commands, command{_type: broadcastNetMessage})
 	}
 
 	return hallOrderMatrix, localState, commands
@@ -114,6 +126,7 @@ func claimOrder(hallOrderMatrix HallOrderMatrix, myID ElevID, order OrderLocatio
 
 func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID, pendingCabCalls [N_FLOORS]bool, peerList []Peer, msg NetMsg) (HallOrderMatrix, CabCallsMap, [N_FLOORS]bool, []command) {
 	var commands []command
+	broadcastNeeded := false
 	senderID := msg.SenderID
 
 	if senderID == myID {
@@ -126,7 +139,13 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 			break
 		}
 	}
-	broadcastNeeded := false
+
+	if msg.SenderState.Obstructed {
+		hallOrderMatrix = releaseOrdersForPeer(hallOrderMatrix, senderID)
+		broadcastNeeded = true
+	}
+
+	
 	for floor := range N_FLOORS {
 		for btn := range N_HALL {
 			remote := msg.HallOrderMatrix[floor][btn]
@@ -253,10 +272,10 @@ func findPeerStatus(peerList []Peer, id ElevID) PeerStatus {
 	return PeerStatus(-1)
 }
 
-func releaseOrdersForPeer(h HallOrderMatrix, deadID ElevID) HallOrderMatrix {
+func releaseOrdersForPeer(hallOrderMatrix HallOrderMatrix, deadID ElevID) HallOrderMatrix {
 	for floor := range N_FLOORS {
 		for btn := range N_HALL {
-			entry := &h[floor][btn]
+			entry := &hallOrderMatrix[floor][btn]
 			if entry.AssignedElevator == deadID && entry.Status == Assigned {
 				entry.Status = Pending
 				entry.AssignedElevator = ""
@@ -264,5 +283,5 @@ func releaseOrdersForPeer(h HallOrderMatrix, deadID ElevID) HallOrderMatrix {
 			}
 		}
 	}
-	return h
+	return hallOrderMatrix
 }
