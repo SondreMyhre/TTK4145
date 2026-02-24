@@ -1,34 +1,36 @@
 package peermonitor
 
 import (
-	ordersync "project/ordersync"
 	"time"
 )
 
 // Shell PeerMonitor
 
-func Run(cfg PeerConfig, hbRx <-chan ordersync.NetMsg, chanOS chan<- []ordersync.Peer) {
-	var peerList []Peer
 
-	ticker := time.NewTicker(50 * time.Millisecond) //creates ticker* struct, ticker.C is channel
-	defer ticker.Stop()                             //runs ticker while function is running
+func Run(cfg PeerConfig, hbRx <-chan NetMsg, chanOS chan<- PeerUpdate) {
+
+	ticker := time.NewTicker(cfg.TickInterval)
+	defer ticker.Stop()   //runs ticker while function is running
+	
+	peerList := make([]Peer, 0)
 
 	for {
 		select {
-		case msg,ok := <-hbRx:
+		case msg, ok := <-hbRx:
 			if !ok { // se om kanal er åpen, stopper dersom kanal er lukket
 				return
 			}
 			var changed bool
-
-			peerList, changed = HandleHeartbeats(peerList, msg, time.Now()) //looks for updates and sets changed to true/false
+			now := time.Now()
+			peerList, changed = HandleHeartbeats(peerList, msg, now) //looks for updates and sets changed to true/false
 			if changed {
 				chanOS <- ToPeerUpdate(peerList)
 			}
-		case <-ticker.C: //C is channel if ticker 
+		case <-ticker.C: //C is channel for ticker 
 		// Periodically check for peers that have timed out (Alive -> Dead)
 			var timeoutChanged bool
-			peerList, timeoutChanged = CheckTimeouts(peerList, time.Now(), cfg.Timeout) //looks for updates and sets changed to true/false
+			now := time.Now()
+			peerList, timeoutChanged = CheckTimeouts(peerList, now, cfg.Timeout) //looks for updates and sets changed to true/false
 			if timeoutChanged {
 				chanOS <- ToPeerUpdate(peerList)
 			}

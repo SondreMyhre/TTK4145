@@ -48,7 +48,7 @@ func main() {
 	go elevio.PollFloorSensor(floorChan)
 	go elevio.PollObstructionSwitch(obstructionChan)
 
-	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
+	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50* time.Millisecond} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
 
 	go peermonitor.Run(peermonitorConfig, PeerMonitorNetMsgRx, peerEventChan)
 

@@ -136,8 +136,8 @@ func TestPeerDeath_ReleasesOrders(t *testing.T) {
 	hom[0][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "2", Version: 5}
 	hom[3][1] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "1", Version: 3}
 
-	oldPeers := []Peer{{ID: "2", Status: Alive}}
-	newPeers := []Peer{{ID: "2", Status: Dead}}
+	oldPeers := []Peer{{ID: "2", PeerStatus: StatusAlive}}
+	newPeers := []Peer{{ID: "2", PeerStatus: StatusDead}}
 
 	hom, _, _ = onPeerEvent(hom, oldPeers, newPeers)
 
@@ -434,8 +434,8 @@ func TestMockMain_TwoElevators(t *testing.T) {
 	e1State := localsingle.ElevatorState{Floor: 0, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
 	e2State := localsingle.ElevatorState{Floor: 3, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
 
-	e1Peers := []Peer{{ID: "2", Status: Alive, State: e2State}}
-	e2Peers := []Peer{{ID: "1", Status: Alive, State: e1State}}
+	e1Peers := []Peer{{ID: "2", PeerStatus: StatusAlive, State: e2State}}
+	e2Peers := []Peer{{ID: "1", PeerStatus: StatusAlive, State: e1State}}
 
 	// Knappetrykk
 	e1Hom, _ = onHallButtonEvent(e1Hom, elevio.ButtonEvent{Floor: 2, Button: elevio.BT_HallUp})

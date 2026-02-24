@@ -1,18 +1,20 @@
 package peermonitor
 
 import (
-	ordersync "project/ordersync" // ⚠️ bytt hvis go.mod har annet module-navn
 	"testing"
 	"time"
 )
 
-
 func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
-	// Huge timeout so ticker cannot mark peer dead during this test
-	cfg := PeerConfig{Timeout: 10 * time.Second}
+	const peerTick = 50 * time.Millisecond
 
-	hbRx := make(chan ordersync.NetMsg, 10)
-	chanOS := make(chan []ordersync.Peer, 10)
+	cfg := PeerConfig{
+		Timeout:      10 * time.Second, // large so timeout can't happen during test
+		TickInterval: peerTick,
+	}
+
+	hbRx := make(chan NetMsg, 10)
+	chanOS := make(chan PeerUpdate, 10)
 
 	done := make(chan struct{})
 	go func() {
@@ -21,7 +23,7 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	}()
 
 	// First heartbeat -> expect exactly one update (new peer)
-	hbRx <- ordersync.NetMsg{SenderID: "1"}
+	hbRx <- NetMsg{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -41,7 +43,7 @@ Drain:
 	}
 
 	// Second heartbeat soon after -> should not produce an update
-	hbRx <- ordersync.NetMsg{SenderID: "1"}
+	hbRx <- NetMsg{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -59,11 +61,15 @@ Drain:
 }
 
 func TestRun_TimeoutProducesUpdate(t *testing.T) {
-	// Small timeout so peer becomes dead quickly
-	cfg := PeerConfig{Timeout: 120 * time.Millisecond}
+	const peerTick = 50 * time.Millisecond
 
-	hbRx := make(chan ordersync.NetMsg, 10)
-	chanOS := make(chan []ordersync.Peer, 10)
+	cfg := PeerConfig{
+		Timeout:      500 * time.Millisecond,
+		TickInterval: peerTick,
+	}
+
+	hbRx := make(chan NetMsg, 10)
+	chanOS := make(chan PeerUpdate, 10)
 
 	done := make(chan struct{})
 	go func() {
@@ -72,7 +78,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	}()
 
 	// Create peer
-	hbRx <- ordersync.NetMsg{SenderID: "1"}
+	hbRx <- NetMsg{SenderID: "1"}
 
 	// Consume the "new peer" update
 	select {
@@ -81,24 +87,23 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 		t.Fatalf("expected an update after first heartbeat")
 	}
 
-	// Now don't send anything. Wait long enough for timeout + a couple ticker ticks.
-	// (Ticker is 50ms in Run, so 400ms is plenty even on Windows.)
+	// Now don't send anything. Wait long enough for timeout + ticker ticks.
 	select {
 	case upd := <-chanOS:
-		// Expect peer 1 to be Dead in some update after timeout
 		found := false
-		for _, p := range upd {
+		for _, p := range upd.Peers {
 			if p.ID == "1" {
 				found = true
-				if p.Status != ordersync.Dead {
-					t.Fatalf("expected peer 1 Dead after timeout, got %v", p.Status)
+				if p.PeerStatus != StatusDead {
+					t.Fatalf("expected peer 1 Dead after timeout, got %v", p.PeerStatus)
 				}
 			}
 		}
 		if !found {
-			t.Fatalf("expected peer 1 to exist in timeout update")
+			t.Fatalf("expected to find peer 1 in update after timeout")
 		}
-	case <-time.After(600 * time.Millisecond):
+
+	case <-time.After(900 * time.Millisecond):
 		t.Fatalf("expected an update after timeout (no heartbeat sent)")
 	}
 

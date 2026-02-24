@@ -3,6 +3,7 @@ package ordersync
 import (
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
+	"time"
 )
 
 const (
@@ -60,14 +61,15 @@ type buttonLampArgs struct {
 type PeerStatus int
 
 const (
-	Dead PeerStatus = iota
-	Alive
+	StatusDead PeerStatus = iota
+	StatusAlive
 )
 
 type Peer struct {
 	ID     ElevID
-	Status PeerStatus
+	PeerStatus PeerStatus
 	State  localsingle.ElevatorState
+	LastSeen time.Time
 }
 
 type OrderLocation struct {

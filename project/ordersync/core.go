@@ -253,7 +253,7 @@ func onPeerEvent(hallOrderMatrix HallOrderMatrix, oldPeerList []Peer, newPeerLis
 	for _, newPeer := range newPeerList {
 		oldStatus := findPeerStatus(oldPeerList, newPeer.ID)
 
-		if oldStatus == Alive && newPeer.Status == Dead {
+		if oldStatus == StatusAlive && newPeer.PeerStatus == StatusDead {
 			hallOrderMatrix = releaseOrdersForElevID(hallOrderMatrix, newPeer.ID)
 		}
 
@@ -265,7 +265,7 @@ func onPeerEvent(hallOrderMatrix HallOrderMatrix, oldPeerList []Peer, newPeerLis
 func findPeerStatus(peerList []Peer, id ElevID) PeerStatus {
 	for _, peer := range peerList {
 		if peer.ID == id {
-			return peer.Status
+			return peer.PeerStatus
 		}
 	}
 	return PeerStatus(-1)
