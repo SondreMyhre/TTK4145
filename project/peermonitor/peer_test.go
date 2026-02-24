@@ -6,13 +6,16 @@ import (
 	"time"
 )
 
-
 func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
-	// Huge timeout so ticker cannot mark peer dead during this test
 	const peerTick = 50 * time.Millisecond
 
+	cfg := PeerConfig{
+		Timeout:      10 * time.Second, // large so timeout can't happen during test
+		TickInterval: peerTick,
+	}
+
 	hbRx := make(chan ordersync.NetMsg, 10)
-	chanOS := make(chan []ordersync.Peer, 10)
+	chanOS := make(chan PeerUpdate, 10)
 
 	done := make(chan struct{})
 	go func() {
@@ -59,16 +62,15 @@ Drain:
 }
 
 func TestRun_TimeoutProducesUpdate(t *testing.T) {
-	// Small timeout so peer becomes dead quickly
 	const peerTick = 50 * time.Millisecond
 
 	cfg := PeerConfig{
-    	Timeout:      500 * time.Millisecond,
-    	TickInterval: peerTick,
+		Timeout:      500 * time.Millisecond,
+		TickInterval: peerTick,
 	}
 
 	hbRx := make(chan ordersync.NetMsg, 10)
-	chanOS := make(chan []ordersync.Peer, 10)
+	chanOS := make(chan PeerUpdate, 10)
 
 	done := make(chan struct{})
 	go func() {
@@ -86,28 +88,30 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 		t.Fatalf("expected an update after first heartbeat")
 	}
 
-	// Now don't send anything. Wait long enough for timeout + a couple ticker ticks.
-	// (Ticker is 50ms in Run, so 400ms is plenty even on Windows.)
+	// Now don't send anything. Wait long enough for timeout + ticker ticks.
 	select {
-		case upd := <-chanOS:
-			// Expect peer 1 to be Dead in some update after timeout
-			found := false
-			for _, p := range upd {
-				if p.ID == "1" {
-					found = true
-					if p.Status != StatusDead {
-						t.Fatalf("expected peer 1 Dead after timeout, got %v", p.Status)
-					}
+	case upd := <-chanOS:
+		found := false
+		for _, p := range upd.Peers {
+			if p.ID == "1" {
+				found = true
+				if p.PeerStatus != StatusDead {
+					t.Fatalf("expected peer 1 Dead after timeout, got %v", p.PeerStatus)
 				}
 			}
-		case <-time.After(600 * time.Millisecond):
-			t.Fatalf("expected an update after timeout (no heartbeat sent)")
-
-		close(hbRx)
-		select {
-		case <-done:
-		case <-time.After(500 * time.Millisecond):
-			t.Fatalf("expected Run to return after hbRx is closed")
 		}
+		if !found {
+			t.Fatalf("expected to find peer 1 in update after timeout")
+		}
+
+	case <-time.After(900 * time.Millisecond):
+		t.Fatalf("expected an update after timeout (no heartbeat sent)")
+	}
+
+	close(hbRx)
+	select {
+	case <-done:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatalf("expected Run to return after hbRx is closed")
 	}
 }

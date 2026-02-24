@@ -9,7 +9,7 @@ import (
 func HandleHeartbeats(peerList []Peer, msg NetMsg, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen
 	changed := false
-	PeerID := msg.ElevID
+	PeerID := msg.SenderID
 
 	index := findPeerIndex(peerList, PeerID)
 	if index == -1 { //-1 if peer not in Peerlist

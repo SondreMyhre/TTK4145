@@ -13,6 +13,12 @@ type NetMsg = ordersync.NetMsg
 type Peer = ordersync.Peer
 type PeerStatus = ordersync.PeerStatus
 
+const (
+	StatusAlive = ordersync.StatusAlive
+	StatusDead  = ordersync.StatusDead
+)
+
+
 type PeerUpdate struct {
 	Peers []Peer // Current list of all peers with their status
 }

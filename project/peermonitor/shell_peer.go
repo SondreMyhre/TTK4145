@@ -8,7 +8,11 @@ import (
 
 
 func Run(cfg PeerConfig, hbRx <-chan NetMsg, chanOS chan<- PeerUpdate) {
+
+	ticker := time.NewTicker(cfg.TickInterval)
 	defer ticker.Stop()   //runs ticker while function is running
+	
+	peerList := make([]Peer, 0)
 
 	for {
 		select {
