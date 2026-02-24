@@ -1,7 +1,6 @@
 package peermonitor
 
 import (
-	ordersync "project/ordersync" // ⚠️ bytt hvis go.mod har annet module-navn
 	"testing"
 	"time"
 )
@@ -14,7 +13,7 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 		TickInterval: peerTick,
 	}
 
-	hbRx := make(chan ordersync.NetMsg, 10)
+	hbRx := make(chan NetMsg, 10)
 	chanOS := make(chan PeerUpdate, 10)
 
 	done := make(chan struct{})
@@ -24,7 +23,7 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	}()
 
 	// First heartbeat -> expect exactly one update (new peer)
-	hbRx <- ordersync.NetMsg{SenderID: "1"}
+	hbRx <- NetMsg{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -44,7 +43,7 @@ Drain:
 	}
 
 	// Second heartbeat soon after -> should not produce an update
-	hbRx <- ordersync.NetMsg{SenderID: "1"}
+	hbRx <- NetMsg{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -69,7 +68,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 		TickInterval: peerTick,
 	}
 
-	hbRx := make(chan ordersync.NetMsg, 10)
+	hbRx := make(chan NetMsg, 10)
 	chanOS := make(chan PeerUpdate, 10)
 
 	done := make(chan struct{})
@@ -79,7 +78,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	}()
 
 	// Create peer
-	hbRx <- ordersync.NetMsg{SenderID: "1"}
+	hbRx <- NetMsg{SenderID: "1"}
 
 	// Consume the "new peer" update
 	select {
