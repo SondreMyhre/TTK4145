@@ -5,66 +5,52 @@ const (
 	N_BUTTONS = 3
 )
 
-type elevatorBehaviour int
+type ElevatorBehaviour int
 
 const (
-	BehaviourIdle elevatorBehaviour = iota
+	BehaviourIdle ElevatorBehaviour = iota
 	BehaviourDoorOpen
 	BehaviourMoving
 )
 
-type direction int
+type Direction int
 
 const (
-	DirDown direction = -1
-	DirStop direction = 0
-	DirUp   direction = 1
+	DirDown Direction = -1
+	DirStop Direction = 0
+	DirUp   Direction = 1
 )
 
-type buttonType int
+type ButtonType int
 
 const (
-	BtnHallUp buttonType = iota
+	BtnHallUp ButtonType = iota
 	BtnHallDown
 	BtnCab
 )
 
-type elevatorState struct {
-	floor     int
-	direction direction
-	behaviour elevatorBehaviour
+type ElevatorState struct {
+	Floor      int
+	Direction  Direction
+	Behaviour  ElevatorBehaviour
+	Obstructed bool
 }
 
-type LocalSingleElevator struct {
-	state      elevatorState
-	requests   [N_FLOORS][N_BUTTONS]bool
-	obstructed bool
+type elevator struct {
+	State    ElevatorState
+	requests [N_FLOORS][N_BUTTONS]bool
 }
 
 type directionBehaviourPair struct {
-	direction direction
-	behaviour elevatorBehaviour
+	direction Direction
+	behaviour ElevatorBehaviour
 }
 
-func elevatorBehaviourToString(eb elevatorBehaviour) string {
-	switch eb {
-	case BehaviourIdle:
-		return "BehaviourIdle"
-	case BehaviourDoorOpen:
-		return "BehaviourDoorOpen"
-	case BehaviourMoving:
-		return "BehaviourMoving"
-	default:
-		return "BehaviourUndefined"
-
-	}
-}
-
-func makeUninitializedElevator() LocalSingleElevator {
-	elevator := LocalSingleElevator{
-		state: elevatorState{floor: -1,
-			direction: DirStop,
-			behaviour: BehaviourIdle,
+func makeUninitializedElevator() elevator {
+	elevator := elevator{
+		State: ElevatorState{Floor: -1,
+			Direction: DirStop,
+			Behaviour: BehaviourIdle,
 		},
 	}
 	return elevator
@@ -89,13 +75,13 @@ type command struct {
 
 type buttonLampArgs struct {
 	Floor int
-	Btn   buttonType
+	Btn   ButtonType
 	Value bool
 }
 
 type Order struct {
 	Floor  int
-	Button buttonType
+	Button ButtonType
 }
 
 // func PrintElevator(elevator LocalSingleElevator) {

@@ -6,10 +6,8 @@ import (
 
 // Shell PeerMonitor
 
-func Run(cfg PeerConfig, hbRx <-chan NetMsg, chanOS chan<- PeerUpdate) {
-	var peerList []Peer
 
-	ticker := time.NewTicker(cfg.TickInterval)//creates ticker* struct, ticker.C is channel
+func Run(cfg PeerConfig, hbRx <-chan NetMsg, chanOS chan<- PeerUpdate) {
 	defer ticker.Stop()   //runs ticker while function is running
 
 	for {

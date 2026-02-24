@@ -1,7 +1,7 @@
 package peermonitor
 
 import (
-	shared "Project/sharedtypes" // ⚠️ bytt hvis go.mod har annet module-navn
+	ordersync "project/ordersync" // ⚠️ bytt hvis go.mod har annet module-navn
 	"testing"
 	"time"
 )
@@ -11,12 +11,17 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	// Huge timeout so ticker cannot mark peer dead during this test
 	const peerTick = 50 * time.Millisecond
 
+<<<<<<< HEAD:Project/PeerMonitor/peer_test.go
 	cfg := PeerConfig{
     	Timeout:      500 * time.Millisecond,
     	TickInterval: peerTick,
 }
 	hbRx := make(chan shared.NetMsg, 10)
 	chanOS := make(chan PeerUpdate, 10)
+=======
+	hbRx := make(chan ordersync.NetMsg, 10)
+	chanOS := make(chan []ordersync.Peer, 10)
+>>>>>>> c0ac4cfc61b971fec8d12f6737589e3e49274151:project/peermonitor/peer_test.go
 
 	done := make(chan struct{})
 	go func() {
@@ -25,7 +30,7 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	}()
 
 	// First heartbeat -> expect exactly one update (new peer)
-	hbRx <- shared.NetMsg{ElevID: 1}
+	hbRx <- ordersync.NetMsg{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -45,7 +50,7 @@ Drain:
 	}
 
 	// Second heartbeat soon after -> should not produce an update
-	hbRx <- shared.NetMsg{ElevID: 1}
+	hbRx <- ordersync.NetMsg{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -71,8 +76,8 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
     	TickInterval: peerTick,
 }
 
-	hbRx := make(chan shared.NetMsg, 10)
-	chanOS := make(chan PeerUpdate, 10)
+	hbRx := make(chan ordersync.NetMsg, 10)
+	chanOS := make(chan []ordersync.Peer, 10)
 
 	done := make(chan struct{})
 	go func() {
@@ -81,7 +86,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	}()
 
 	// Create peer
-	hbRx <- shared.NetMsg{ElevID: 1}
+	hbRx <- ordersync.NetMsg{SenderID: "1"}
 
 	// Consume the "new peer" update
 	select {
@@ -96,11 +101,16 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	case upd := <-chanOS:
 		// Expect peer 1 to be Dead in some update after timeout
 		found := false
-		for _, p := range upd.Peers {
-			if p.ID == 1 {
+		for _, p := range upd {
+			if p.ID == "1" {
 				found = true
+<<<<<<< HEAD:Project/PeerMonitor/peer_test.go
 				if p.PeerStatus != StatusDead {
 					t.Fatalf("expected peer 1 Dead after timeout, got %v", p.PeerStatus)
+=======
+				if p.Status != ordersync.Dead {
+					t.Fatalf("expected peer 1 Dead after timeout, got %v", p.Status)
+>>>>>>> c0ac4cfc61b971fec8d12f6737589e3e49274151:project/peermonitor/peer_test.go
 				}
 			}
 		}
