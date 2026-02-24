@@ -49,7 +49,7 @@ func TestTwoElevators_HallOrderBecomesConfirmed(t *testing.T) {
 	var e1Hom HallOrderMatrix
 	e1Hom, _ = onHallButtonEvent(e1Hom, elevio.ButtonEvent{Floor: 2, Button: elevio.BT_HallUp})
 
-	if e1Hom[2][0].PeerStatus != Pending {
+	if e1Hom[2][0].Status != Pending {
 		t.Fatal("e1: ordre burde være Pending etter knappetrykk")
 	}
 
@@ -60,8 +60,8 @@ func TestTwoElevators_HallOrderBecomesConfirmed(t *testing.T) {
 	msg := buildNetMsg("1", e1Hom, cabCalls, localsingle.ElevatorState{Floor: 2})
 	e2Hom, _, _, cmds := onNetMsg(e2Hom, cabCalls, "2", pending, nil, msg)
 
-	if e2Hom[2][0].PeerStatus != Confirmed {
-		t.Fatalf("e2: forventet Confirmed, fikk %d", e2Hom[2][0].PeerStatus)
+	if e2Hom[2][0].Status != Confirmed {
+		t.Fatalf("e2: forventet Confirmed, fikk %d", e2Hom[2][0].Status)
 	}
 
 	broadcasts, _, _ := drainCommands(cmds)
@@ -72,8 +72,8 @@ func TestTwoElevators_HallOrderBecomesConfirmed(t *testing.T) {
 	msg2 := buildNetMsg("2", e2Hom, cabCalls, localsingle.ElevatorState{Floor: 0})
 	e1Hom, _, _, _ = onNetMsg(e1Hom, cabCalls, "1", pending, nil, msg2)
 
-	if e1Hom[2][0].PeerStatus != Confirmed {
-		t.Fatalf("e1: forventet Confirmed etter synk, fikk %d", e1Hom[2][0].PeerStatus)
+	if e1Hom[2][0].Status != Confirmed {
+		t.Fatalf("e1: forventet Confirmed etter synk, fikk %d", e1Hom[2][0].Status)
 	}
 
 	if e1Hom[2][0].Version != e2Hom[2][0].Version {
@@ -100,14 +100,14 @@ func TestFullOrderLifecycle(t *testing.T) {
 	msg2 := buildNetMsg("2", e2Hom, cabCalls, localsingle.ElevatorState{Floor: 3})
 	hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg2)
 
-	if hom[1][0].PeerStatus != Confirmed {
-		t.Fatalf("forventet Confirmed, fikk %d", hom[1][0].PeerStatus)
+	if hom[1][0].Status != Confirmed {
+		t.Fatalf("forventet Confirmed, fikk %d", hom[1][0].Status)
 	}
 
 	order := OrderLocation{Floor: 1, Button: elevio.BT_HallUp, Entry: hom[1][0]}
 	hom, cmds := claimOrder(hom, "1", order)
 
-	if hom[1][0].PeerStatus != Assigned || hom[1][0].AssignedElevator != "1" {
+	if hom[1][0].Status != Assigned || hom[1][0].AssignedElevator != "1" {
 		t.Fatal("ordren burde være Assigned til 1")
 	}
 
@@ -119,7 +119,7 @@ func TestFullOrderLifecycle(t *testing.T) {
 	cleared := []localsingle.Order{{Floor: 1, Button: localsingle.BtnHallUp}}
 	hom, cabCalls, _ = onClearedOrders(hom, cabCalls, "1", cleared)
 
-	if hom[1][0].PeerStatus != Inactive {
+	if hom[1][0].Status != Inactive {
 		t.Fatal("ordren burde være Inactive etter clearing")
 	}
 	if hom[1][0].AssignedElevator != "" {
@@ -133,18 +133,18 @@ func TestFullOrderLifecycle(t *testing.T) {
 
 func TestPeerDeath_ReleasesOrders(t *testing.T) {
 	var hom HallOrderMatrix
-	hom[0][0] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "2", Version: 5}
-	hom[3][1] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "1", Version: 3}
+	hom[0][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "2", Version: 5}
+	hom[3][1] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "1", Version: 3}
 
 	oldPeers := []Peer{{ID: "2", PeerStatus: StatusAlive}}
 	newPeers := []Peer{{ID: "2", PeerStatus: StatusDead}}
 
 	hom, _, _ = onPeerEvent(hom, oldPeers, newPeers)
 
-	if hom[0][0].PeerStatus != Pending || hom[0][0].AssignedElevator != "" {
+	if hom[0][0].Status != Pending || hom[0][0].AssignedElevator != "" {
 		t.Fatal("peer 2 sin ordre burde frigjøres")
 	}
-	if hom[3][1].PeerStatus != Assigned || hom[3][1].AssignedElevator != "1" {
+	if hom[3][1].Status != Assigned || hom[3][1].AssignedElevator != "1" {
 		t.Fatal("peer 1 sin ordre burde være uberørt")
 	}
 }
@@ -191,13 +191,13 @@ func TestCabOrderSync(t *testing.T) {
 
 func TestTieBreak_LowestIDWins(t *testing.T) {
 	var hom HallOrderMatrix
-	hom[1][0] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "5", Version: 4}
+	hom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "5", Version: 4}
 
 	cabCalls := make(CabCallsMap)
 	var pending [N_FLOORS]bool
 
 	var remoteHom HallOrderMatrix
-	remoteHom[1][0] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "2", Version: 4}
+	remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "2", Version: 4}
 
 	msg := buildNetMsg("2", remoteHom, cabCalls, localsingle.ElevatorState{})
 	hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
@@ -209,13 +209,13 @@ func TestTieBreak_LowestIDWins(t *testing.T) {
 
 func TestTieBreak_LocalAlreadyLowest(t *testing.T) {
 	var hom HallOrderMatrix
-	hom[1][0] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "1", Version: 4}
+	hom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "1", Version: 4}
 
 	cabCalls := make(CabCallsMap)
 	var pending [N_FLOORS]bool
 
 	var remoteHom HallOrderMatrix
-	remoteHom[1][0] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "3", Version: 4}
+	remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "3", Version: 4}
 
 	msg := buildNetMsg("3", remoteHom, cabCalls, localsingle.ElevatorState{})
 	hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
@@ -227,13 +227,13 @@ func TestTieBreak_LocalAlreadyLowest(t *testing.T) {
 
 func TestTieBreak_EmptyLocalAdoptsRemote(t *testing.T) {
 	var hom HallOrderMatrix
-	hom[1][0] = OrderMatrixEntry{PeerStatus: Confirmed, AssignedElevator: "", Version: 4}
+	hom[1][0] = OrderMatrixEntry{Status: Confirmed, AssignedElevator: "", Version: 4}
 
 	cabCalls := make(CabCallsMap)
 	var pending [N_FLOORS]bool
 
 	var remoteHom HallOrderMatrix
-	remoteHom[1][0] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "3", Version: 4}
+	remoteHom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "3", Version: 4}
 
 	msg := buildNetMsg("3", remoteHom, cabCalls, localsingle.ElevatorState{})
 	hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
@@ -245,13 +245,13 @@ func TestTieBreak_EmptyLocalAdoptsRemote(t *testing.T) {
 
 func TestTieBreak_EmptyRemoteDoesNotWin(t *testing.T) {
 	var hom HallOrderMatrix
-	hom[1][0] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "2", Version: 4}
+	hom[1][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "2", Version: 4}
 
 	cabCalls := make(CabCallsMap)
 	var pending [N_FLOORS]bool
 
 	var remoteHom HallOrderMatrix
-	remoteHom[1][0] = OrderMatrixEntry{PeerStatus: Confirmed, AssignedElevator: "", Version: 4}
+	remoteHom[1][0] = OrderMatrixEntry{Status: Confirmed, AssignedElevator: "", Version: 4}
 
 	msg := buildNetMsg("3", remoteHom, cabCalls, localsingle.ElevatorState{})
 	hom, _, _, _ = onNetMsg(hom, cabCalls, "1", pending, nil, msg)
@@ -313,13 +313,13 @@ func TestRepeatedButtonPress_NoEffect(t *testing.T) {
 
 func TestClearedOrders_EmptyList(t *testing.T) {
 	var hom HallOrderMatrix
-	hom[0][0] = OrderMatrixEntry{PeerStatus: Assigned, AssignedElevator: "1", Version: 3}
+	hom[0][0] = OrderMatrixEntry{Status: Assigned, AssignedElevator: "1", Version: 3}
 	cabCalls := make(CabCallsMap)
 	cabCalls["1"] = [N_FLOORS]bool{}
 
 	hom, _, cmds := onClearedOrders(hom, cabCalls, "1", []localsingle.Order{})
 
-	if hom[0][0].PeerStatus != Assigned {
+	if hom[0][0].Status != Assigned {
 		t.Fatal("ingenting burde endres")
 	}
 	if len(cmds) != 0 {
@@ -333,13 +333,13 @@ func TestClearedOrders_EmptyList(t *testing.T) {
 
 func TestMovingElevator_DoesNotClaim(t *testing.T) {
 	var hom HallOrderMatrix
-	hom[2][0] = OrderMatrixEntry{PeerPeerStatus: Confirmed, Version: 4}
+	hom[2][0] = OrderMatrixEntry{Status: Confirmed, Version: 4}
 	cabCalls := make(CabCallsMap)
 
 	movingState := makeLocalState(1, localsingle.DirUp, localsingle.BehaviourMoving)
 	updatedHom, _, cmds := onNewLocalState(hom, nil, "1", cabCalls, movingState)
 
-	if updatedHom[2][0].PeerStatus == Assigned {
+	if updatedHom[2][0].Status == Assigned {
 		t.Fatal("heis i bevegelse burde ikke claime")
 	}
 	_, _, lo := drainCommands(cmds)
@@ -354,7 +354,7 @@ func TestMovingElevator_DoesNotClaim(t *testing.T) {
 
 func TestOnNetMsg_IgnoresOwnMessage(t *testing.T) {
 	var hom HallOrderMatrix
-	hom[0][0] = OrderMatrixEntry{PeerStatus: Pending, Version: 1}
+	hom[0][0] = OrderMatrixEntry{Status: Pending, Version: 1}
 	cabCalls := make(CabCallsMap)
 	var pending [N_FLOORS]bool
 
@@ -364,7 +364,7 @@ func TestOnNetMsg_IgnoresOwnMessage(t *testing.T) {
 	if len(cmds) != 0 {
 		t.Fatal("burde ikke produsere kommandoer for egen melding")
 	}
-	if hom[0][0].PeerStatus != Pending {
+	if hom[0][0].Status != Pending {
 		t.Fatal("burde ikke endre matrise for egen melding")
 	}
 }
@@ -445,16 +445,16 @@ func TestMockMain_TwoElevators(t *testing.T) {
 	msg := buildNetMsg("1", e1Hom, e1Cab, e1State)
 	e2Hom, e2Cab, e2Pending, _ = onNetMsg(e2Hom, e2Cab, "2", e2Pending, e2Peers, msg)
 
-	if e2Hom[2][0].PeerStatus != Confirmed {
-		t.Fatalf("e2 burde ha Confirmed, fikk %d", e2Hom[2][0].PeerStatus)
+	if e2Hom[2][0].Status != Confirmed {
+		t.Fatalf("e2 burde ha Confirmed, fikk %d", e2Hom[2][0].Status)
 	}
 
 	// e2 -> e1
 	msg = buildNetMsg("2", e2Hom, e2Cab, e2State)
 	e1Hom, e1Cab, e1Pending, _ = onNetMsg(e1Hom, e1Cab, "1", e1Pending, e1Peers, msg)
 
-	if e1Hom[2][0].PeerStatus != Confirmed {
-		t.Fatalf("e1 burde ha Confirmed, fikk %d", e1Hom[2][0].PeerStatus)
+	if e1Hom[2][0].Status != Confirmed {
+		t.Fatalf("e1 burde ha Confirmed, fikk %d", e1Hom[2][0].Status)
 	}
 
 	// Konvergens
@@ -471,7 +471,7 @@ func TestMockMain_TwoElevators(t *testing.T) {
 	order := OrderLocation{Floor: 2, Button: elevio.BT_HallUp, Entry: e1Hom[2][0]}
 	e1Hom, _ = claimOrder(e1Hom, "1", order)
 
-	if e1Hom[2][0].PeerStatus != Assigned || e1Hom[2][0].AssignedElevator != "1" {
+	if e1Hom[2][0].Status != Assigned || e1Hom[2][0].AssignedElevator != "1" {
 		t.Fatal("e1 burde ha Assigned til seg selv")
 	}
 
@@ -488,7 +488,7 @@ func TestMockMain_TwoElevators(t *testing.T) {
 	cleared := []localsingle.Order{{Floor: 2, Button: localsingle.BtnHallUp}}
 	e1Hom, e1Cab, _ = onClearedOrders(e1Hom, e1Cab, "1", cleared)
 
-	if e1Hom[2][0].PeerStatus != Inactive {
+	if e1Hom[2][0].Status != Inactive {
 		t.Fatal("burde være Inactive etter clear")
 	}
 
@@ -496,8 +496,8 @@ func TestMockMain_TwoElevators(t *testing.T) {
 	msg = buildNetMsg("1", e1Hom, e1Cab, e1State)
 	e2Hom, e2Cab, e2Pending, _ = onNetMsg(e2Hom, e2Cab, "2", e2Pending, e2Peers, msg)
 
-	if e2Hom[2][0].PeerStatus != Inactive {
-		t.Fatalf("e2 burde se Inactive, fikk %d", e2Hom[2][0].PeerStatus)
+	if e2Hom[2][0].Status != Inactive {
+		t.Fatalf("e2 burde se Inactive, fikk %d", e2Hom[2][0].Status)
 	}
 
 	// Endelig konvergens
