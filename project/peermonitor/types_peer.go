@@ -18,6 +18,10 @@ const (
 	StatusDead  = ordersync.StatusDead
 )
 
+type HeartBeat struct {
+	SenderID int
+}
+
 type Peer struct {
 	//Peermonitors peer struct differs from ordersyncs
 	ID         ElevID

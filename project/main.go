@@ -36,12 +36,13 @@ func main() {
 	// Channels and goroutines for networking
 	// PeerMonitorTx := make(chan peermonitor.RecoveryMsg)
 	// PeerMonitorRecMsgRx := make(chan peermonitor.RecoveryMsg)
-	PeerMonitorNetMsgRx := make(chan ordersync.NetMsg)
 
 	OrderSyncTx := make(chan ordersync.NetMsg)
 	OrderSyncRx := make(chan ordersync.NetMsg)
+	PeerMonitorTx := make(chan peermonitor.HeartBeat)
+	PeerMonitorRx := make(chan peermonitor.HeartBeat)
 
-	go transportUDP.Run(peerIDInt, OrderSyncTx, OrderSyncRx, PeerMonitorNetMsgRx) // ElevID måtte være string
+	go transportUDP.Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx) // ElevID måtte være string
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)
@@ -50,7 +51,7 @@ func main() {
 
 	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50 * time.Millisecond} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
 
-	go peermonitor.Run(peermonitorConfig, PeerMonitorNetMsgRx, peerEventChan)
+	go peermonitor.Run(peerIDInt, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
 
 	go ordersync.Run(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, OrderSyncRx, peerEventChan, localOrderChan, OrderSyncTx, driverCommandChan)
 	go localsingle.Run(localOrderChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)

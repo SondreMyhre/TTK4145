@@ -6,10 +6,10 @@ import (
 
 // core PeerMonitor
 
-func HandleHeartbeats(peerList []Peer, msg NetMsg, now time.Time) ([]Peer, bool) {
+func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen
 	changed := false
-	peerID := msg.SenderID
+	peerID := ElevID(heartBeat.SenderID)
 
 	index := findPeerIndex(peerList, peerID)
 	if index == -1 { //-1 if peer not in Peerlist
