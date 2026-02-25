@@ -2,19 +2,14 @@ package peermonitor
 
 import (
 	"time"
-	"strconv"
 )
 
 // core PeerMonitor
 
-func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat) {
-	// TO-DO: define ticker-time as const
-	heartBeatTicker := time.NewTicker(50 * time.Millisecond)
-	peerIDInt, _ := strconv.Atoi(peerID)
-	// defer heartBeatTicker.Stop()
+func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat, heartbeatTicker time.Time) {
 
 	for range heartBeatTicker.C {
-		heartBeat := HeartBeat{SenderID: peerIDInt}
+		heartBeat := HeartBeat{SenderID: ElevID(peerID)}
 		heartBeatTx <- heartBeat
 	}
 }
@@ -22,7 +17,7 @@ func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat) {
 func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen
 	changed := false
-	peerID := ElevID(heartBeat.SenderID)
+	peerID := heartBeat.SenderID
 
 	index := findPeerIndex(peerList, peerID)
 	if index == -1 { //-1 if peer not in Peerlist

@@ -9,13 +9,16 @@ import (
 // Shell PeerMonitor
 
 func Run(peerID string, ctx context.Context, cfg PeerConfig, heartBeatRx <-chan HeartBeat, heartBeatTx chan<- HeartBeat, chanOS chan<- PeerMsg) error {
-	ticker := time.NewTicker(cfg.TickInterval)
+	ticker := time.NewTicker(cfg.tickInterval)
 	defer ticker.Stop() //runs ticker while function is running
+
+	heartBeatTicker := time.NewTicker(cfg.heartbeatTicker)
+	defer heartbeatticker.Stop()
 
 	peerList := make([]Peer, 0)
 
 	// infinitely send heartBeats
-	go sendHeartbeats(peerID, heartBeatTx)
+	go sendHeartbeats(peerID, heartBeatTx, heartBeatTicker)
 
 	for {
 		select {
@@ -43,7 +46,7 @@ func Run(peerID string, ctx context.Context, cfg PeerConfig, heartBeatRx <-chan 
 			// Periodically check for peers that have timed out (Alive -> Dead)
 			var timeoutChanged bool
 			now := time.Now()
-			peerList, timeoutChanged = CheckTimeouts(peerList, now, cfg.Timeout) //looks for updates and sets changed to true/false
+			peerList, timeoutChanged = CheckTimeouts(peerList, now, cfg.timeout) //looks for updates and sets changed to true/false
 			if timeoutChanged {
 				select {
 				case chanOS <- ToPeerUpdate(peerList):

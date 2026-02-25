@@ -18,7 +18,7 @@ const (
 )
 
 type HeartBeat struct {
-	SenderID int
+	SenderID ElevID
 }
 
 type Peer struct {
@@ -29,6 +29,7 @@ type Peer struct {
 }
 
 type PeerConfig struct {
-	Timeout      time.Duration // How long before a peer is declared dead
-	TickInterval time.Duration // internall ticker
+	timeout         time.Duration // How long before a peer is declared dead
+	tickInterval    time.Duration // internall ticker
+	heartBeatTicker time.Duration
 }
