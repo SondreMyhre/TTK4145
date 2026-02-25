@@ -1,12 +1,14 @@
 package peermonitor
 
 import (
+	"context"
+	"fmt"
 	"time"
 )
 
 // Shell PeerMonitor
 
-func Run(cfg PeerConfig, hbRx <-chan NetMsg, chanOS chan<- PeerMsg) {
+func Run(ctx context.Context, cfg PeerConfig, hbRx <-chan NetMsg, chanOS chan<- PeerMsg) error {
 
 	ticker := time.NewTicker(cfg.TickInterval)
 	defer ticker.Stop() //runs ticker while function is running
@@ -15,23 +17,37 @@ func Run(cfg PeerConfig, hbRx <-chan NetMsg, chanOS chan<- PeerMsg) {
 
 	for {
 		select {
+		case <-ctx.Done():
+			return nil
+
 		case msg, ok := <-hbRx:
 			if !ok { // se om kanal er åpen, stopper dersom kanal er lukket
-				return
+				return fmt.Errorf("peermonitor: hbRx closed")
 			}
+
 			var changed bool
 			now := time.Now()
 			peerList, changed = HandleHeartbeats(peerList, msg, now) //looks for updates and sets changed to true/false
 			if changed {
-				chanOS <- ToPeerUpdate(peerList)
+				//dont block forever in case noone is reading or buffer full
+				select {
+				case chanOS <- ToPeerUpdate(peerList):
+				case <-ctx.Done():
+					return nil
+				}
 			}
+
 		case <-ticker.C: //C is channel for ticker
 			// Periodically check for peers that have timed out (Alive -> Dead)
 			var timeoutChanged bool
 			now := time.Now()
 			peerList, timeoutChanged = CheckTimeouts(peerList, now, cfg.Timeout) //looks for updates and sets changed to true/false
 			if timeoutChanged {
-				chanOS <- ToPeerUpdate(peerList)
+				select {
+				case chanOS <- ToPeerUpdate(peerList):
+				case <-ctx.Done():
+					return nil
+				}
 			}
 		}
 	}
