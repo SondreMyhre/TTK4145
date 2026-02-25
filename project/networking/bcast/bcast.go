@@ -1,7 +1,7 @@
 package bcast
 
 import (
-	conn "project/transportudp/conn"
+	conn "project/networking/conn"
 	"encoding/json"
 	"fmt"
 	"net"

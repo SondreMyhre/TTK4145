@@ -8,21 +8,23 @@ import (
 
 // Shell PeerMonitor
 
-func Run(ctx context.Context, cfg PeerConfig, hbRx <-chan NetMsg, chanOS chan<- PeerMsg) error {
-
+func Run(peerID string, ctx context.Context, cfg PeerConfig, heartBeatRx <-chan HeartBeat, heartBeatTx chan<- HeartBeat, chanOS chan<- PeerMsg) error {
 	ticker := time.NewTicker(cfg.TickInterval)
 	defer ticker.Stop() //runs ticker while function is running
 
 	peerList := make([]Peer, 0)
+
+	// infinitely send heartBeats
+	go sendHeartbeats(peerID, heartBeatTx)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
 
-		case msg, ok := <-hbRx:
+		case msg, ok := <-heartBeatRx:
 			if !ok { // se om kanal er åpen, stopper dersom kanal er lukket
-				return fmt.Errorf("peermonitor: hbRx closed")
+				return fmt.Errorf("peermonitor: heartBeatRx closed")
 			}
 
 			var changed bool
