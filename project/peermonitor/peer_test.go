@@ -1,6 +1,7 @@
 package peermonitor
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -16,9 +17,12 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	hbRx := make(chan NetMsg, 10)
 	chanOS := make(chan PeerMsg, 10)
 
+	errCh := make(chan error, 1)
 	done := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
-		Run(cfg, hbRx, chanOS)
+		errCh <- Run(ctx, cfg, hbRx, chanOS)
 		close(done)
 	}()
 
@@ -55,6 +59,9 @@ Drain:
 	close(hbRx)
 	select {
 	case <-done:
+		// Run should return when hbRx is closed.
+		// Current implementation returns a non-nil error in this case.
+		_ = <-errCh
 	case <-time.After(500 * time.Millisecond):
 		t.Fatalf("expected Run to return after hbRx is closed")
 	}
@@ -71,9 +78,12 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	hbRx := make(chan NetMsg, 10)
 	chanOS := make(chan PeerMsg, 10)
 
+	errCh := make(chan error, 1)
 	done := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
-		Run(cfg, hbRx, chanOS)
+		errCh <- Run(ctx, cfg, hbRx, chanOS)
 		close(done)
 	}()
 
@@ -110,6 +120,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	close(hbRx)
 	select {
 	case <-done:
+		_ = <-errCh
 	case <-time.After(500 * time.Millisecond):
 		t.Fatalf("expected Run to return after hbRx is closed")
 	}
