@@ -55,14 +55,3 @@ func Run(peerID int, ctx context.Context, cfg PeerConfig, heartBeatRx <-chan Hea
 		}
 	}
 }
-
-func sendHeartbeats(peerID int, heartBeatTx chan<- HeartBeat) {
-	// TO-DO: define ticker-time as const
-	heartBeatTicker := time.NewTicker(50 * time.Millisecond)
-	// defer heartBeatTicker.Stop()
-
-	for range heartBeatTicker.C {
-		heartBeat := HeartBeat{SenderID: peerID}
-		heartBeatTx <- heartBeat
-	}
-}

@@ -6,6 +6,17 @@ import (
 
 // core PeerMonitor
 
+func sendHeartbeats(peerID int, heartBeatTx chan<- HeartBeat) {
+	// TO-DO: define ticker-time as const
+	heartBeatTicker := time.NewTicker(50 * time.Millisecond)
+	// defer heartBeatTicker.Stop()
+
+	for range heartBeatTicker.C {
+		heartBeat := HeartBeat{SenderID: peerID}
+		heartBeatTx <- heartBeat
+	}
+}
+
 func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen
 	changed := false
