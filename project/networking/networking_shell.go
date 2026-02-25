@@ -7,19 +7,18 @@ package networking
 // broadcast-ip on labpc: 10.100.23.255
 
 import (
-	ordersync "project/ordersync" //...and ordersync
+	ordersync "project/ordersync" 
 	peermonitor "project/peermonitor"
 	bcast "project/networking/bcast"
 )
 
 func Run(
-		ordersyncTx <- chan ordersync.NetMsg, //broadcast netMsg from ordersync
-		ordersyncRx chan<- ordersync.NetMsg, //send NetMsg to ordersync ...
+		ordersyncTx <- chan ordersync.NetMsg, 
+		ordersyncRx chan<- ordersync.NetMsg, 
 
 		peermonitorTx <- chan peermonitor.HeartBeat,
-		peermonitorRx chan<- peermonitor.HeartBeat, //... and peermonitor
+		peermonitorRx chan<- peermonitor.HeartBeat, 
 	) {
-	// netMsgRx := make(chan ordersync.NetMsg)
 
 	// Reads messages from the channels, decodes them, and broadcasts
 	go bcast.Transmitter(broadcastPort, ordersyncTx, peermonitorTx)

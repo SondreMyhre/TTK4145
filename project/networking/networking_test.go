@@ -4,12 +4,11 @@ import (
 	"testing"
 	"fmt"
 	"time"
-	peermonitor "project/peermonitor" //will only be using the types in peermonitor...
-	ordersync "project/ordersync" //...and ordersync
-	// "reflect"
+	peermonitor "project/peermonitor" 
+	ordersync "project/ordersync" 
 )
 
-func TestMainLike(t *testing.T) {
+func TestNetworking(t *testing.T) {
 	OrderSyncTx := make(chan ordersync.NetMsg)
 	OrderSyncRx := make(chan ordersync.NetMsg)
 	PeerMonitorTx := make(chan peermonitor.HeartBeat)
