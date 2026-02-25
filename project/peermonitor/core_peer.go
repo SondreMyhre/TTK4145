@@ -2,17 +2,19 @@ package peermonitor
 
 import (
 	"time"
+	"strconv"
 )
 
 // core PeerMonitor
 
-func sendHeartbeats(peerID int, heartBeatTx chan<- HeartBeat) {
+func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat) {
 	// TO-DO: define ticker-time as const
 	heartBeatTicker := time.NewTicker(50 * time.Millisecond)
+	peerIDInt, _ := strconv.Atoi(peerID)
 	// defer heartBeatTicker.Stop()
 
 	for range heartBeatTicker.C {
-		heartBeat := HeartBeat{SenderID: peerID}
+		heartBeat := HeartBeat{SenderID: peerIDInt}
 		heartBeatTx <- heartBeat
 	}
 }

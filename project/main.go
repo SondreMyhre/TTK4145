@@ -7,7 +7,6 @@ import (
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
 	networking "project/networking"
-	"strconv"
 	"time"
 )
 
@@ -17,7 +16,6 @@ func main() {
 	flag.Parse()
 
 	elevio.Init(*peerID, *serverAddr, 4)
-	peerIDInt, _ := strconv.Atoi(*peerID)
 
 	driverCommandChan := make(chan elevio.DriverCommand) // Kan vurdere to separate channels inn??? Vet ikke hva som er best praksis
 	buttonChan := make(chan elevio.ButtonEvent)
@@ -43,7 +41,7 @@ func main() {
 
 	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50 * time.Millisecond} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
 
-	go peermonitor.Run(peerIDInt, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
+	go peermonitor.Run(*peerID, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
 
 	go ordersync.Run(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, OrderSyncRx, peerEventChan, localOrderChan, OrderSyncTx, driverCommandChan)
 	go localsingle.Run(localOrderChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
