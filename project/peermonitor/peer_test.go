@@ -14,7 +14,7 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	}
 
 	hbRx := make(chan NetMsg, 10)
-	chanOS := make(chan PeerUpdate, 10)
+	chanOS := make(chan PeerMsg, 10)
 
 	done := make(chan struct{})
 	go func() {
@@ -69,7 +69,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	}
 
 	hbRx := make(chan NetMsg, 10)
-	chanOS := make(chan PeerUpdate, 10)
+	chanOS := make(chan PeerMsg, 10)
 
 	done := make(chan struct{})
 	go func() {

@@ -77,7 +77,7 @@ func callHRA(hallOrderMatrix HallOrderMatrix, myID ElevID, localState localsingl
 	states[string(myID)] = localStateToHRA(myID, localState, cabCalls)
 	for _, peer := range peerList {
 		if peer.PeerStatus == StatusAlive {
-			states[string(peer.ID)] = localStateToHRA(peer.ID, peer.State, cabCalls)
+			states[string(peer.ID)] = localStateToHRA(peer.ID, peer.state, cabCalls)
 		}
 	}
 
