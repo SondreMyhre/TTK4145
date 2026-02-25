@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-//Worker works with all run(ctx)error 
+// Worker works with all run(ctx)error
 type Worker interface {
 	Run(ctx context.Context) error
 }
@@ -31,6 +31,7 @@ type Supervisor struct {
 	Child        ChildSpec
 	RestartDelay time.Duration
 }
-const(
+
+const (
 	RestartDelay = 100 * time.Millisecond
 )

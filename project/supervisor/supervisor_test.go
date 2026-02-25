@@ -2,11 +2,10 @@ package supervisor
 
 import (
 	"context"
+	"project/peermonitor"
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"project/peermonitor"
 )
 
 func TestSupervisor_RestartsPeerMonitorWhenHbRxClosed(t *testing.T) {

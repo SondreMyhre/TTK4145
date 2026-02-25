@@ -5,10 +5,10 @@ import (
 	"fmt"
 )
 
-func (fn WorkerFunc) Run(ctx context.Context) error{ return fn(ctx) }
+func (fn WorkerFunc) Run(ctx context.Context) error { return fn(ctx) }
 
-//creates new child	
-func New(child ChildSpec) Supervisor { 
+// creates new child
+func New(child ChildSpec) Supervisor {
 	return Supervisor{
 		Child:        child,
 		RestartDelay: RestartDelay,
@@ -18,7 +18,7 @@ func New(child ChildSpec) Supervisor {
 // panic safe
 func (supervisor Supervisor) runWorker(ctx context.Context) (err error) {
 	defer func() {
-		recovered := recover() 
+		recovered := recover()
 		if recovered != nil {
 			err = fmt.Errorf("worker panic: %v", recovered)
 		}

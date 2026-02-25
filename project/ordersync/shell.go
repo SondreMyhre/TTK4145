@@ -1,6 +1,7 @@
 package ordersync
 
 import (
+	"context"
 	"maps"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
@@ -8,6 +9,7 @@ import (
 )
 
 func Run(
+	ctx context.Context,
 	myID ElevID,
 
 	buttonChan <-chan elevio.ButtonEvent,
@@ -19,7 +21,7 @@ func Run(
 	localOrderChan chan<- elevio.ButtonEvent,
 	tx chan<- NetMsg,
 	lightCommandChan chan<- elevio.DriverCommand,
-) {
+) error {
 	var hallOrderMatrix HallOrderMatrix
 	var localState localsingle.ElevatorState
 	cabCalls := make(CabCallsMap)
@@ -27,11 +29,15 @@ func Run(
 	var peerList []Peer
 
 	heartbeatTicker := time.NewTicker(100 * time.Millisecond)
+	defer heartbeatTicker.Stop()
 
 	for {
 		var commands []command
 
 		select {
+		case <-ctx.Done():
+			return nil
+
 		case buttonEvent := <-buttonChan:
 			switch buttonEvent.Button {
 			case elevio.BT_Cab:
