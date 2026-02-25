@@ -10,11 +10,14 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	const peerTick = 50 * time.Millisecond
 
 	cfg := PeerConfig{
-		Timeout:      10 * time.Second, // large so timeout can't happen during test
-		TickInterval: peerTick,
+		timeout:      10 * time.Second, // large so timeout can't happen during test
+		tickInterval: peerTick,
+		// Make self-heartbeats effectively "off" for the duration of the test.
+		heartBeatTicker: time.Hour,
 	}
 
-	hbRx := make(chan NetMsg, 10)
+	hbRx := make(chan HeartBeat, 10)
+	hbTx := make(chan HeartBeat, 10)
 	chanOS := make(chan PeerMsg, 10)
 
 	errCh := make(chan error, 1)
@@ -22,12 +25,12 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
-		errCh <- Run(ctx, cfg, hbRx, chanOS)
+		errCh <- Run("self", ctx, cfg, hbRx, hbTx, chanOS)
 		close(done)
 	}()
 
 	// First heartbeat -> expect exactly one update (new peer)
-	hbRx <- NetMsg{SenderID: "1"}
+	hbRx <- HeartBeat{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -47,7 +50,7 @@ Drain:
 	}
 
 	// Second heartbeat soon after -> should not produce an update
-	hbRx <- NetMsg{SenderID: "1"}
+	hbRx <- HeartBeat{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -71,11 +74,14 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	const peerTick = 50 * time.Millisecond
 
 	cfg := PeerConfig{
-		Timeout:      500 * time.Millisecond,
-		TickInterval: peerTick,
+		timeout:      500 * time.Millisecond,
+		tickInterval: peerTick,
+		// Make self-heartbeats effectively "off" for the duration of the test.
+		heartBeatTicker: time.Hour,
 	}
 
-	hbRx := make(chan NetMsg, 10)
+	hbRx := make(chan HeartBeat, 10)
+	hbTx := make(chan HeartBeat, 10)
 	chanOS := make(chan PeerMsg, 10)
 
 	errCh := make(chan error, 1)
@@ -83,12 +89,12 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
-		errCh <- Run(ctx, cfg, hbRx, chanOS)
+		errCh <- Run("self", ctx, cfg, hbRx, hbTx, chanOS)
 		close(done)
 	}()
 
 	// Create peer
-	hbRx <- NetMsg{SenderID: "1"}
+	hbRx <- HeartBeat{SenderID: "1"}
 
 	// Consume the "new peer" update
 	select {

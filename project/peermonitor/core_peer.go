@@ -6,9 +6,9 @@ import (
 
 // core PeerMonitor
 
-func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat, heartbeatTicker time.Time) {
+func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat, hBticker *time.Ticker) {
 
-	for range heartBeatTicker.C {
+	for range hBticker.C {
 		heartBeat := HeartBeat{SenderID: ElevID(peerID)}
 		heartBeatTx <- heartBeat
 	}
