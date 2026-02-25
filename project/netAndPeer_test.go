@@ -1,13 +1,11 @@
 package main
 
 import (
-	"fmt"
-	transportudp "project/transportudp"
+	networking "project/networking"
 	ordersync "project/ordersync"     //...and ordersync
 	peermonitor "project/peermonitor" //will only be using the types in peermonitor...
 	"testing"
 	"time"
-	// "reflect"
 )
 
 func TestSystem(t *testing.T) {
@@ -18,9 +16,9 @@ func TestSystem(t *testing.T) {
 
 	peerIDInt := 1
 
-	go transportudp.Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
+	go networking.Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
 
 	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50 * time.Millisecond}
 	go peermonitor.Run(peerIDInt, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
-	// TO-DO: Fix peermonitor, so peermonitor and transportUDP can be tested together
+	// TO-DO: Fix peermonitor, so peermonitor and networking can be tested together
 }

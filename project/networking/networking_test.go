@@ -1,4 +1,4 @@
-package transportudp
+package networking
 
 import (
 	"testing"

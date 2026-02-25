@@ -1,4 +1,4 @@
-package transportudp
+package networking
 
 // REMEMBER:
 // maps need to have string-keys to be broadcasted
@@ -9,10 +9,8 @@ package transportudp
 import (
 	ordersync "project/ordersync" //...and ordersync
 	peermonitor "project/peermonitor"
-	"project/transportudp/bcast"
+	bcast "project/networking/bcast"
 )
-
-const broadcastPort = 50000
 
 func Run(
 		ordersyncTx <- chan ordersync.NetMsg, //broadcast netMsg from ordersync

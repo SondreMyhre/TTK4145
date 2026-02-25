@@ -6,7 +6,7 @@ import (
 	localsingle "project/localsingleelevator"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
-	transportudp "project/transportudp"
+	networking "project/networking"
 	"strconv"
 	"time"
 )
@@ -34,7 +34,7 @@ func main() {
 	PeerMonitorTx := make(chan peermonitor.HeartBeat)
 	PeerMonitorRx := make(chan peermonitor.HeartBeat)
 
-	go transportudp.Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
+	go networking.Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
 
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)
