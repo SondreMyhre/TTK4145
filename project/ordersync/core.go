@@ -135,7 +135,7 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 
 	for i := range peerList {
 		if peerList[i].ID == senderID {
-			peerList[i].State = msg.SenderState
+			peerList[i].state = msg.SenderState
 			break
 		}
 	}

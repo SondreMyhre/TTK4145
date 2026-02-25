@@ -9,14 +9,14 @@ import (
 func HandleHeartbeats(peerList []Peer, msg NetMsg, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen
 	changed := false
-	PeerID := msg.SenderID
+	peerID := msg.SenderID
 
-	index := findPeerIndex(peerList, PeerID)
+	index := findPeerIndex(peerList, peerID)
 	if index == -1 { //-1 if peer not in Peerlist
 		peerList = append(peerList, Peer{
-			ID:         PeerID,
+			ID:         peerID,
 			PeerStatus: StatusAlive,
-			LastSeen:   now,
+			lastSeen:   now,
 		})
 		return peerList, true
 	}
@@ -27,7 +27,7 @@ func HandleHeartbeats(peerList []Peer, msg NetMsg, now time.Time) ([]Peer, bool)
 		changed = true
 	}
 
-	peerList[index].LastSeen = now
+	peerList[index].lastSeen = now
 
 	return peerList, changed
 
@@ -39,7 +39,7 @@ func CheckTimeouts(peerList []Peer, now time.Time, timeout time.Duration) ([]Pee
 
 	for index := range peerList {
 		peer := peerList[index]
-		timeSinceLastSeen := now.Sub(peer.LastSeen)
+		timeSinceLastSeen := now.Sub(peer.lastSeen)
 
 		if peer.PeerStatus == StatusAlive && timeSinceLastSeen > timeout { //check for timeout
 			peerList[index].PeerStatus = StatusDead //declared dead
@@ -50,10 +50,18 @@ func CheckTimeouts(peerList []Peer, now time.Time, timeout time.Duration) ([]Pee
 	return peerList, changed
 }
 
-func ToPeerUpdate(peerList []Peer) PeerUpdate { // makes a copy of peerList before sending to avoid sharing mutable state between goroutines
-	out := make([]Peer, len(peerList))
-	copy(out, peerList)
-	return PeerUpdate{Peers: out}
+// makes a copy of peerList before sending to avoid sharing mutable state between goroutines
+
+func ToPeerUpdate(peerList []Peer) PeerMsg {
+	out := make([]PeerUpdate, len(peerList))
+	for index, peer := range peerList {
+		out[index] = PeerUpdate{
+			ID:         peer.ID,
+			PeerStatus: peer.PeerStatus,
+		}
+	}
+
+	return PeerMsg{Peers: out}
 }
 
 func findPeerIndex(peers []Peer, id ElevID) int { //finds ID of peer

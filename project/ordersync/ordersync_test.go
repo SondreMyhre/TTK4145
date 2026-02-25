@@ -434,8 +434,8 @@ func TestMockMain_TwoElevators(t *testing.T) {
 	e1State := localsingle.ElevatorState{Floor: 0, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
 	e2State := localsingle.ElevatorState{Floor: 3, Direction: localsingle.DirStop, Behaviour: localsingle.BehaviourIdle}
 
-	e1Peers := []Peer{{ID: "2", PeerStatus: StatusAlive, State: e2State}}
-	e2Peers := []Peer{{ID: "1", PeerStatus: StatusAlive, State: e1State}}
+	e1Peers := []Peer{{ID: "2", PeerStatus: StatusAlive, state: e2State}}
+	e2Peers := []Peer{{ID: "1", PeerStatus: StatusAlive, state: e1State}}
 
 	// Knappetrykk
 	e1Hom, _ = onHallButtonEvent(e1Hom, elevio.ButtonEvent{Floor: 2, Button: elevio.BT_HallUp})
