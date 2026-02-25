@@ -1,9 +1,12 @@
 package elevio
 
-import "time"
-import "sync"
-import "net"
-import "fmt"
+import (
+	"time"
+	"sync"
+	"net"
+	"fmt"
+	"log"
+)
 
 
 
@@ -37,11 +40,16 @@ type ButtonEvent struct {
 
 
 
-func Init(addr string, numFloors int) {
+func Init(peerID string, addr string, numFloors int) {
+	if peerID == "0" {
+		log.Fatal("Not valid peerID.")
+	}
+
 	if _initialized {
 		fmt.Println("Driver already initialized!")
 		return
 	}
+	
 	_numFloors = numFloors
 	_mtx = sync.Mutex{}
 	var err error

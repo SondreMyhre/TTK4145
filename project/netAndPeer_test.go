@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	transportudp "project/TransportUDP"
+	transportudp "project/transportudp"
 	ordersync "project/ordersync"     //...and ordersync
 	peermonitor "project/peermonitor" //will only be using the types in peermonitor...
 	"testing"
