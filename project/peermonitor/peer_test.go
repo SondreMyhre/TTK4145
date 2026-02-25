@@ -10,10 +10,10 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	const peerTick = 50 * time.Millisecond
 
 	cfg := PeerConfig{
-		timeout:      10 * time.Second, // large so timeout can't happen during test
-		tickInterval: peerTick,
+		Timeout:      10 * time.Second, // large so timeout can't happen during test
+		TickInterval: peerTick,
 		// Make self-heartbeats effectively "off" for the duration of the test.
-		heartBeatTicker: time.Hour,
+		HeartBeatTicker: time.Hour,
 	}
 
 	hbRx := make(chan HeartBeat, 10)
@@ -74,10 +74,10 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	const peerTick = 50 * time.Millisecond
 
 	cfg := PeerConfig{
-		timeout:      500 * time.Millisecond,
-		tickInterval: peerTick,
+		Timeout:      500 * time.Millisecond,
+		TickInterval: peerTick,
 		// Make self-heartbeats effectively "off" for the duration of the test.
-		heartBeatTicker: time.Hour,
+		HeartBeatTicker: time.Hour,
 	}
 
 	hbRx := make(chan HeartBeat, 10)

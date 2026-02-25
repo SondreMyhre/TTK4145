@@ -29,7 +29,7 @@ type Peer struct {
 }
 
 type PeerConfig struct {
-	timeout         time.Duration // How long before a peer is declared dead
-	tickInterval    time.Duration // internall ticker
-	heartBeatTicker time.Duration
+	Timeout         time.Duration // How long before a peer is declared dead
+	TickInterval    time.Duration // internall ticker
+	HeartBeatTicker time.Duration
 }
