@@ -17,32 +17,36 @@ func main() {
 
 	elevio.Init(*peerID, *serverAddr, 4)
 
-	driverCommandChan := make(chan elevio.DriverCommand) // Kan vurdere to separate channels inn??? Vet ikke hva som er best praksis
+	// Channel between elevio-driver and ordersync
 	buttonChan := make(chan elevio.ButtonEvent)
+
+	// Channel between ordersync and peermonitor
+	peerEventChan := make(chan []ordersync.Peer)
+	
+	// Channels for single-elevator operations
+	localOrderChan := make(chan elevio.ButtonEvent)
 	floorChan := make(chan int)
 	obstructionChan := make(chan bool)
+	driverCommandChan := make(chan elevio.DriverCommand) // Kan vurdere to separate channels inn??? Vet ikke hva som er best praksis
 	clearedOrdersChan := make(chan []localsingle.Order)
 	localStateChan := make(chan localsingle.ElevatorState)
-	peerEventChan := make(chan []ordersync.Peer)
-	localOrderChan := make(chan elevio.ButtonEvent)
 
-	// Channels and goroutines for networking
+	// Channels for networking
 	OrderSyncTx := make(chan ordersync.NetMsg)
 	OrderSyncRx := make(chan ordersync.NetMsg)
 	PeerMonitorTx := make(chan peermonitor.HeartBeat)
 	PeerMonitorRx := make(chan peermonitor.HeartBeat)
 
-	go networking.Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
-
+	// Routines for single elevator operations
 	go elevio.RunDriver(driverCommandChan)
 	go elevio.PollButtons(buttonChan)
 	go elevio.PollFloorSensor(floorChan)
 	go elevio.PollObstructionSwitch(obstructionChan)
 
+	// Channels for distributed system
 	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50 * time.Millisecond} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
-
 	go peermonitor.Run(*peerID, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
-
+	go networking.Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
 	go ordersync.Run(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, OrderSyncRx, peerEventChan, localOrderChan, OrderSyncTx, driverCommandChan)
 	go localsingle.Run(localOrderChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 
