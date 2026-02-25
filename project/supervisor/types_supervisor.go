@@ -21,7 +21,7 @@ type ChildSpec struct {
 	Restart RestartPolicy
 }
 
-const (
+const(
 	Permanent RestartPolicy = iota
 	Transient
 	Temporary

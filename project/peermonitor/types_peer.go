@@ -8,7 +8,6 @@ import (
 // types
 
 type ElevID = ordersync.ElevID
-type NetMsg = ordersync.NetMsg
 type PeerStatus = ordersync.PeerStatus
 type PeerUpdate = ordersync.PeerUpdate
 type PeerMsg = ordersync.PeerMsg
@@ -17,6 +16,10 @@ const (
 	StatusAlive = ordersync.StatusAlive
 	StatusDead  = ordersync.StatusDead
 )
+
+type HeartBeat struct {
+	SenderID int
+}
 
 type Peer struct {
 	//Peermonitors peer struct differs from ordersyncs
