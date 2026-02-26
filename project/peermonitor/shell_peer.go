@@ -12,10 +12,13 @@ func Run(peerID string, ctx context.Context, cfg PeerConfig, heartBeatRx <-chan 
 	ticker := time.NewTicker(cfg.TickInterval)
 	defer ticker.Stop() //runs ticker while function is running
 
+	heartBeatTicker := time.NewTicker(cfg.HeartBeatTicker)
+	defer heartBeatTicker.Stop()
+
 	peerList := make([]Peer, 0)
 
 	// infinitely send heartBeats
-	go sendHeartbeats(peerID, heartBeatTx)
+	go sendHeartbeats(peerID, heartBeatTx, heartBeatTicker)
 
 	for {
 		select {

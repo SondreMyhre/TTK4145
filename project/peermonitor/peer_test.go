@@ -1,6 +1,7 @@
 package peermonitor
 
 import (
+	"context"
 	"testing"
 	"time"
 )
@@ -11,19 +12,25 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	cfg := PeerConfig{
 		Timeout:      10 * time.Second, // large so timeout can't happen during test
 		TickInterval: peerTick,
+		// Make self-heartbeats effectively "off" for the duration of the test.
+		HeartBeatTicker: time.Hour,
 	}
 
-	hbRx := make(chan NetMsg, 10)
+	hbRx := make(chan HeartBeat, 10)
+	hbTx := make(chan HeartBeat, 10)
 	chanOS := make(chan PeerMsg, 10)
 
+	errCh := make(chan error, 1)
 	done := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
-		Run(cfg, hbRx, chanOS)
+		errCh <- Run("self", ctx, cfg, hbRx, hbTx, chanOS)
 		close(done)
 	}()
 
 	// First heartbeat -> expect exactly one update (new peer)
-	hbRx <- NetMsg{SenderID: "1"}
+	hbRx <- HeartBeat{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -43,7 +50,7 @@ Drain:
 	}
 
 	// Second heartbeat soon after -> should not produce an update
-	hbRx <- NetMsg{SenderID: "1"}
+	hbRx <- HeartBeat{SenderID: "1"}
 
 	select {
 	case <-chanOS:
@@ -55,6 +62,9 @@ Drain:
 	close(hbRx)
 	select {
 	case <-done:
+		// Run should return when hbRx is closed.
+		// Current implementation returns a non-nil error in this case.
+		_ = <-errCh
 	case <-time.After(500 * time.Millisecond):
 		t.Fatalf("expected Run to return after hbRx is closed")
 	}
@@ -66,19 +76,25 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	cfg := PeerConfig{
 		Timeout:      500 * time.Millisecond,
 		TickInterval: peerTick,
+		// Make self-heartbeats effectively "off" for the duration of the test.
+		HeartBeatTicker: time.Hour,
 	}
 
-	hbRx := make(chan NetMsg, 10)
+	hbRx := make(chan HeartBeat, 10)
+	hbTx := make(chan HeartBeat, 10)
 	chanOS := make(chan PeerMsg, 10)
 
+	errCh := make(chan error, 1)
 	done := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	go func() {
-		Run(cfg, hbRx, chanOS)
+		errCh <- Run("self", ctx, cfg, hbRx, hbTx, chanOS)
 		close(done)
 	}()
 
 	// Create peer
-	hbRx <- NetMsg{SenderID: "1"}
+	hbRx <- HeartBeat{SenderID: "1"}
 
 	// Consume the "new peer" update
 	select {
@@ -110,6 +126,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	close(hbRx)
 	select {
 	case <-done:
+		_ = <-errCh
 	case <-time.After(500 * time.Millisecond):
 		t.Fatalf("expected Run to return after hbRx is closed")
 	}
