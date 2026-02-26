@@ -25,7 +25,7 @@ func TestNetworking(t *testing.T) {
 	}()
 
 	go func() {
-		heartBeat := peermonitor.HeartBeat{SenderID: 1}
+		heartBeat := peermonitor.HeartBeat{SenderID: peermonitor.ElevID("1")}
 		for {
 			PeerMonitorTx <- heartBeat
 			time.Sleep(1 * time.Second)
