@@ -5,10 +5,10 @@ import (
 )
 
 // core PeerMonitor
+// bad practice with Ticker as parameter to the function?
+func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat, heartbeatTicker *time.Ticker) {
 
-func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat, hBticker *time.Ticker) {
-
-	for range hBticker.C {
+	for range heartbeatTicker.C {
 		heartBeat := HeartBeat{SenderID: ElevID(peerID)}
 		heartBeatTx <- heartBeat
 	}
