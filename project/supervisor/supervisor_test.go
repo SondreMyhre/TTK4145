@@ -10,6 +10,8 @@ import (
 	ordersync "project/ordersync"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
+	networking "project/networking"
+
 )
 
 func TestSupervisor_RestartsPeerMonitorWhenHbRxClosed(t *testing.T) {
@@ -328,5 +330,86 @@ func TestSupervisor_OrderSyncStopsEvenIfTxSendWouldBlock(t *testing.T) {
 
 	if got := runs.Load(); got != 1 {
 		t.Fatalf("expected exactly 1 run (no restart), got %d", got)
+	}
+}
+func TestNetworkingRun_StartsAndStops(t *testing.T) {
+	// Save original funcs
+	oldTx := networking.Transmitter
+	oldRx := networking.Reciever
+	defer func() {
+		networking.Transmitter = oldTx
+		networking.Reciever = oldRx
+	}()
+
+	var txCalled atomic.Bool
+	var rxCalled atomic.Bool
+
+	// Fake transmitter: mark called, then block forever
+	networking.Transmitter = func(port int, chans ...interface{}) {
+		txCalled.Store(true)
+
+		// Optional: verify channel types/order
+		if len(chans) != 2 {
+			t.Fatalf("Transmitter expected 2 chans, got %d", len(chans))
+		}
+		if _, ok := chans[0].(<-chan ordersync.NetMsg); !ok {
+			t.Fatalf("Transmitter chans[0] wrong type: %T", chans[0])
+		}
+		if _, ok := chans[1].(<-chan peermonitor.HeartBeat); !ok {
+			t.Fatalf("Transmitter chans[1] wrong type: %T", chans[1])
+		}
+
+		select {} // block forever
+	}
+
+	// Fake receiver: mark called, then block forever
+	networking.Reciever = func(port int, chans ...interface{}) {
+		rxCalled.Store(true)
+
+		// Optional: verify channel types/order
+		if len(chans) != 2 {
+			t.Fatalf("Reciever expected 2 chans, got %d", len(chans))
+		}
+		if _, ok := chans[0].(chan<- ordersync.NetMsg); !ok {
+			t.Fatalf("Reciever chans[0] wrong type: %T", chans[0])
+		}
+		if _, ok := chans[1].(chan<- peermonitor.HeartBeat); !ok {
+			t.Fatalf("Reciever chans[1] wrong type: %T", chans[1])
+		}
+
+		select {} // block forever
+	}
+
+	ordersyncTx := make(chan ordersync.NetMsg)
+	ordersyncRx := make(chan ordersync.NetMsg)
+	peermonitorTx := make(chan peermonitor.HeartBeat)
+	peermonitorRx := make(chan peermonitor.HeartBeat)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+
+	go func() {
+		networking.Run(ctx, ordersyncTx, ordersyncRx, peermonitorTx, peermonitorRx)
+		close(done)
+	}()
+
+	// Give goroutines a moment to start
+	time.Sleep(50 * time.Millisecond)
+
+	if !txCalled.Load() {
+		t.Fatal("networking transmitter was not started")
+	}
+	if !rxCalled.Load() {
+		t.Fatal("networking receiver was not started")
+	}
+
+	// Cancel should make Run return
+	cancel()
+
+	select {
+	case <-done:
+		// ok
+	case <-time.After(200 * time.Millisecond):
+		t.Fatal("networking.Run did not stop after context cancel")
 	}
 }
