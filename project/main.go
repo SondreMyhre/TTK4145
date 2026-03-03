@@ -4,9 +4,9 @@ import (
 	"flag"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
+	networking "project/networking"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
-	networking "project/networking"
 	"time"
 )
 
@@ -22,7 +22,7 @@ func main() {
 
 	// Channel between ordersync and peermonitor
 	peerEventChan := make(chan []ordersync.Peer)
-	
+
 	// Channels for single-elevator operations
 	localOrderChan := make(chan elevio.ButtonEvent)
 	floorChan := make(chan int)

@@ -6,6 +6,7 @@ import (
 	"time"
 	peermonitor "project/peermonitor" 
 	ordersync "project/ordersync" 
+	"context"
 )
 
 func TestNetworking(t *testing.T) {
@@ -14,7 +15,10 @@ func TestNetworking(t *testing.T) {
 	PeerMonitorTx := make(chan peermonitor.HeartBeat)
 	PeerMonitorRx := make(chan peermonitor.HeartBeat)
 
-	go Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()	
+
+	go Run(ctx , OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
 
 	go func() {
 		var netMsg = ordersync.NetMsg{}
@@ -25,7 +29,7 @@ func TestNetworking(t *testing.T) {
 	}()
 
 	go func() {
-		heartBeat := peermonitor.HeartBeat{SenderID: peermonitor.ElevID("1")}
+		heartBeat := peermonitor.HeartBeat{SenderID: "1"}
 		for {
 			PeerMonitorTx <- heartBeat
 			time.Sleep(1 * time.Second)
@@ -36,12 +40,12 @@ func TestNetworking(t *testing.T) {
 	for {
 		select {
 		case <-OrderSyncRx:
-			fmt.Println("															Net-msg recieved on order-sync chan")
+			fmt.Println("Net-msg recieved on order-sync chan")
 			fmt.Println()
 
 		case heartbeat := <-PeerMonitorRx:
 			fmt.Println("Heartbeat recieved on peermonitor chan")
-			fmt.Printf("		SenderID: %v", heartbeat.SenderID)
+			fmt.Printf("SenderID: %v", heartbeat.SenderID)
 			fmt.Println()
 		}
 	}
