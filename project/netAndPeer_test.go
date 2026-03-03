@@ -15,7 +15,6 @@ func TestSystem(t *testing.T) {
 	OrderSyncRx := make(chan ordersync.NetMsg)
 	PeerMonitorTx := make(chan peermonitor.HeartBeat)
 	PeerMonitorRx := make(chan peermonitor.HeartBeat)
-
 	peerEventChan := make(chan peermonitor.PeerMsg, 10) // IMPORTANT: buffer helps
 	peerID := "1"
 
