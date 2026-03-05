@@ -8,7 +8,7 @@ const (
 	N_FLOORS  = 4
 	N_HALL    = 2
 	N_BUTTONS = 3
-	BT_CAB = 2
+	BT_CAB    = 2
 )
 
 type ElevID string
@@ -31,7 +31,6 @@ type HallOrderMatrix [N_FLOORS][N_HALL]OrderMatrixEntry
 type CabCallsMap map[ElevID][N_FLOORS]bool
 
 type HallRequests [N_FLOORS][N_HALL]bool
-type CabRequests [N_FLOORS]bool
 
 type PeerStatus int
 
@@ -51,10 +50,6 @@ type PeerUpdate struct {
 	PeerStatus PeerStatus
 }
 
-type PeerMsg struct {
-	Peers []PeerUpdate
-}
-
 type NetMsg struct {
 	SenderID        ElevID
 	HallOrderMatrix HallOrderMatrix
@@ -62,11 +57,19 @@ type NetMsg struct {
 	SenderState     localsingle.ElevatorState
 }
 
-type Worldview struct {
+type WorldviewMsg struct {
 	HallRequests HallRequests
-	CabRequests  map[ElevID]CabRequests
+	CabRequests  CabCallsMap
 	PeerStates   map[ElevID]localsingle.ElevatorState
-	Peers         []Peer
+	Peers        []Peer
+}
+
+type worldviewState struct {
+	hallOrderMatrix HallOrderMatrix
+	cabRequests     CabCallsMap
+	pendingCabCalls [N_FLOORS]bool
+	peerList        []Peer
+	localState      localsingle.ElevatorState
 }
 
 // -------------------------------------------------------------
@@ -87,12 +90,4 @@ type buttonLampArgs struct {
 	Floor  int
 	Button int
 	Value  bool
-}
-
-type worldviewState struct {
-	hallOrderMatrix HallOrderMatrix
-	cabCalls 		CabCallsMap
-	pendingCabCalls	[N_FLOORS]bool
-	peerList 		[]Peer
-	localState 		localsingle.ElevatorState
 }

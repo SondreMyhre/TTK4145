@@ -1,10 +1,10 @@
 package localsingle
 
 import (
+	"context"
 	"fmt"
 	elevio "project/elevio"
 	"time"
-	"context"
 )
 
 const (
@@ -13,7 +13,7 @@ const (
 
 func Run(
 	ctx context.Context,
-	localOrderChan <-chan elevio.ButtonEvent,
+	requestMatrixChan <-chan RequestMatrix,
 	floorChan <-chan int,
 	obstructionChan <-chan bool,
 
@@ -27,41 +27,40 @@ func Run(
 	doorTimer := time.NewTimer(doorOpenDuration)
 	doorTimer.Stop()
 
-	localStateTicker := time.NewTicker(100 * time.Millisecond)
+	// localStateTicker := time.NewTicker(100 * time.Millisecond)
 
 	var commands []command
 
 	if elevio.GetFloor() == -1 {
-		commands = append(commands, elevator.onInitBetweenFloors())
-		executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
+		commands = append(commands, elevator.onInitBetweenFloors()...)
+		executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
 	}
 
 	for {
 		select {
-		case <- ctx.Done():
+		case <-ctx.Done():
 			return nil
-		case buttonEvent := <-localOrderChan:
-			btn := elevioToButtonType(buttonEvent.Button)
-			commands = elevator.onRequestButtonPress(buttonEvent.Floor, btn)
-			executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
+		case newRequests := <-requestMatrixChan:
+			commands = elevator.onNewRequestMatrix(newRequests)
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
 
 		case floor := <-floorChan:
 			commands = elevator.onFloorArrival(floor)
-			executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
 
 		case obstructed := <-obstructionChan:
 			commands = elevator.onObstruction(obstructed)
-			executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
 
 		case <-doorTimer.C:
 			commands = elevator.onDoorTimeout()
-			executeCommands(commands, driverCommandChan, clearedOrdersChan, doorTimer)
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
 
-		case <-localStateTicker.C:
-			select {
-			case localStateChan <- elevator.state:
-			default:
-			}
+		// case <-localStateTicker.C:
+		// 	select {
+		// 	case localStateChan <- elevator.state:
+		// 	default:
+		// 	}
 		}
 	}
 }
@@ -69,6 +68,7 @@ func Run(
 func executeCommands(
 	commands []command,
 	driverCommandChan chan<- elevio.DriverCommand,
+	localStateChan chan<- ElevatorState,
 	clearedChan chan<- []Order,
 	doorTimer *time.Timer,
 ) {
@@ -91,6 +91,8 @@ func executeCommands(
 		case sendClearedOrders:
 			cleared := command.value.([]Order)
 			clearedChan <- cleared
+		case sendLocalState:
+			localStateChan <- command.value.(ElevatorState)
 		}
 
 	}

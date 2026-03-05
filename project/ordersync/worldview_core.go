@@ -1,15 +1,11 @@
 package ordersync
 
-import (
-	localsingle "project/localsingleelevator"
-)
-
 func onCabButtonEvent(state worldviewState, myID ElevID, floor int) (worldviewState, []command) {
 	state.pendingCabCalls[floor] = true
 
-	localCabCalls := state.cabCalls[myID]
+	localCabCalls := state.cabRequests[myID]
 	localCabCalls[floor] = true
-	state.cabCalls[myID] = localCabCalls
+	state.cabRequests[myID] = localCabCalls
 
 	return state, []command{{_type: broadcastNetMessage}}
 }
@@ -26,8 +22,7 @@ func onHallButtonEvent(state worldviewState, floor int, button int) (worldviewSt
 	return state, []command{{_type: broadcastNetMessage}}
 }
 
-func onNewLocalState(state worldviewState, myID ElevID, newLocalState interface{ GetObstructed() bool }) (worldviewState, []command) {
-
+func onNewLocalState(state worldviewState) (worldviewState, []command) {
 	var commands []command
 
 	if state.localState.Obstructed {
@@ -65,9 +60,9 @@ func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, cle
 				})
 			}
 		} else {
-			localCabCalls := state.cabCalls[myID]
+			localCabCalls := state.cabRequests[myID]
 			localCabCalls[floor] = false
-			state.cabCalls[myID] = localCabCalls
+			state.cabRequests[myID] = localCabCalls
 			commands = append(commands, command{
 				_type: setButtonLamp,
 				value: buttonLampArgs{
@@ -174,7 +169,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 	}
 
 	if msg.CabCalls != nil {
-		state.cabCalls[senderID] = msg.CabCalls[senderID]
+		state.cabRequests[senderID] = msg.CabCalls[senderID]
 		for i := range state.pendingCabCalls {
 			if state.pendingCabCalls[i] && msg.CabCalls[myID][i] {
 				state.pendingCabCalls[i] = false
@@ -198,8 +193,6 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 }
 
 func onPeerEvent(state worldviewState, newPeerList []Peer) (worldviewState, []command) {
-	var commands []command
-
 	for _, newPeer := range newPeerList {
 		oldStatus := findPeerStatus(state.peerList, newPeer.ID)
 
@@ -211,36 +204,13 @@ func onPeerEvent(state worldviewState, newPeerList []Peer) (worldviewState, []co
 
 	state.peerList = newPeerList
 
-	return state, commands
-}
-
-func ExtractWorldView(state worldviewState, myID ElevID) Worldview {
-	hallRequests := extractHallRequests(state.hallOrderMatrix)
-
-	cabRequests := make(map[ElevID]CabRequests)
-	for id, calls := range state.cabCalls {
-		cabRequests[id] = calls
-	}
-
-	peerStates := make(map[ElevID]localsingle.ElevatorState)
-	peerStates[myID] = state.localState
-	for _, peer := range state.peerList {
-		peerStates[peer.ID] = peer.state
-
-	}
-
-	return Worldview{
-		HallRequests: hallRequests,
-		CabRequests:  cabRequests,
-		PeerStates:   peerStates,
-		Peers:        state.peerList,
-	}
+	return state, []command{{_type: broadcastNetMessage}}
 }
 
 func extractHallRequests(hallOrderMatrix HallOrderMatrix) HallRequests {
 	var hallRequests HallRequests
 	for floor := range N_FLOORS {
-		for button := range N_BUTTONS {
+		for button := range N_HALL {
 			hallRequests[floor][button] = (hallOrderMatrix[floor][button].Status == Confirmed)
 		}
 	}

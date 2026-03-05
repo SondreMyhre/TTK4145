@@ -36,6 +36,8 @@ type ElevatorState struct {
 	Obstructed bool
 }
 
+type RequestMatrix = [N_FLOORS][N_BUTTONS]bool
+
 type elevator struct {
 	state    ElevatorState
 	requests [N_FLOORS][N_BUTTONS]bool

@@ -69,7 +69,7 @@ func ToPeerUpdate(peerList []Peer) PeerMsg {
 		}
 	}
 
-	return PeerMsg{Peers: out}
+	return out
 }
 
 func findPeerIndex(peers []Peer, id ElevID) int { //finds ID of peer

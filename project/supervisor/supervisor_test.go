@@ -185,15 +185,15 @@ func TestSupervisor_RestartsOrderSyncWhenRxClosed(t *testing.T) {
 	rx := make(chan ordersync.NetMsg)
 	close(rx)
 
-	peerEventChan := make(chan []ordersync.Peer)
-	localOrderChan := make(chan elevio.ButtonEvent)
+	peerEventChan := make(chan []ordersync.PeerUpdate)
 	tx := make(chan ordersync.NetMsg, 10)
 	lightCommandChan := make(chan elevio.DriverCommand, 10)
+	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
 
 	var runs atomic.Int32
 	w := WorkerFunc(func(ctx context.Context) error {
 		runs.Add(1)
-		return ordersync.Run(
+		return ordersync.RunWorldView(
 			ctx,
 			ordersync.ElevID("self"),
 			buttonChan,
@@ -201,9 +201,9 @@ func TestSupervisor_RestartsOrderSyncWhenRxClosed(t *testing.T) {
 			clearedOrdersChan,
 			rx,
 			peerEventChan,
-			localOrderChan,
 			tx,
 			lightCommandChan,
+			worldviewChan,
 		)
 	})
 
@@ -227,15 +227,15 @@ func TestSupervisor_OrderSyncStopsCleanlyOnContextCancel(t *testing.T) {
 	localStateChan := make(chan localsingle.ElevatorState)
 	clearedOrdersChan := make(chan []localsingle.Order)
 	rx := make(chan ordersync.NetMsg)
-	peerEventChan := make(chan []ordersync.Peer)
-	localOrderChan := make(chan elevio.ButtonEvent)
+	peerEventChan := make(chan []ordersync.PeerUpdate)
 	tx := make(chan ordersync.NetMsg, 10)
 	lightCommandChan := make(chan elevio.DriverCommand, 10)
+	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
 
 	var runs atomic.Int32
 	w := WorkerFunc(func(ctx context.Context) error {
 		runs.Add(1)
-		return ordersync.Run(
+		return ordersync.RunWorldView(
 			ctx,
 			ordersync.ElevID("self"),
 			buttonChan,
@@ -243,9 +243,9 @@ func TestSupervisor_OrderSyncStopsCleanlyOnContextCancel(t *testing.T) {
 			clearedOrdersChan,
 			rx,
 			peerEventChan,
-			localOrderChan,
 			tx,
 			lightCommandChan,
+			worldviewChan,
 		)
 	})
 
@@ -280,17 +280,17 @@ func TestSupervisor_OrderSyncStopsEvenIfTxSendWouldBlock(t *testing.T) {
 	localStateChan := make(chan localsingle.ElevatorState)
 	clearedOrdersChan := make(chan []localsingle.Order)
 	rx := make(chan ordersync.NetMsg)
-	peerEventChan := make(chan []ordersync.Peer)
-	localOrderChan := make(chan elevio.ButtonEvent)
-
+	peerEventChan := make(chan []ordersync.PeerUpdate)
+	
 	// Unbuffered tx channel + nobody reads => broadcast send would block
 	tx := make(chan ordersync.NetMsg)
 	lightCommandChan := make(chan elevio.DriverCommand, 10)
+	worldviewChan := make(chan ordersync.WorldviewMsg)
 
 	var runs atomic.Int32
 	w := WorkerFunc(func(ctx context.Context) error {
 		runs.Add(1)
-		return ordersync.Run(
+		return ordersync.RunWorldView(
 			ctx,
 			ordersync.ElevID("self"),
 			buttonChan,
@@ -298,9 +298,9 @@ func TestSupervisor_OrderSyncStopsEvenIfTxSendWouldBlock(t *testing.T) {
 			clearedOrdersChan,
 			rx,
 			peerEventChan,
-			localOrderChan,
 			tx,
 			lightCommandChan,
+			worldviewChan,
 		)
 	})
 
