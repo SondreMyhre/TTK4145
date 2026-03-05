@@ -1,7 +1,6 @@
 package ordersync
 
 import (
-	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
 )
 
@@ -9,6 +8,7 @@ const (
 	N_FLOORS  = 4
 	N_HALL    = 2
 	N_BUTTONS = 3
+	BT_CAB = 2
 )
 
 type ElevID string
@@ -66,7 +66,7 @@ type Worldview struct {
 	HallRequests HallRequests
 	CabRequests  map[ElevID]CabRequests
 	PeerStates   map[ElevID]localsingle.ElevatorState
-	Peer         []Peer
+	Peers         []Peer
 }
 
 // -------------------------------------------------------------
@@ -74,8 +74,7 @@ type Worldview struct {
 type commandType int
 
 const (
-	sendOrderToLocal commandType = iota
-	broadcastNetMessage
+	broadcastNetMessage commandType = iota
 	setButtonLamp
 )
 
@@ -84,8 +83,16 @@ type command struct {
 	value any
 }
 
-type OrderLocation struct {
+type buttonLampArgs struct {
 	Floor  int
-	Button elevio.ButtonType
-	Entry  OrderMatrixEntry
+	Button int
+	Value  bool
+}
+
+type worldviewState struct {
+	hallOrderMatrix HallOrderMatrix
+	cabCalls 		CabCallsMap
+	pendingCabCalls	[N_FLOORS]bool
+	peerList 		[]Peer
+	localState 		localsingle.ElevatorState
 }

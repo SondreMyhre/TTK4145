@@ -1,130 +1,78 @@
 package ordersync
 
 import (
-	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
-	"strconv"
 )
 
-
-type wvCommandType int
-
-const (
-	wvBroadcast wvCommandType = iota
-	wvSetButtonLamp
-)
-
-type wvCommand struct {
-	_type wvCommandType
-	value any
-}
-
-type buttonLampArgs struct {
-	Floor  int
-	Button elevio.ButtonType
-	Value  bool
-}
-
-type worldviewState struct {
-	hallOrderMatrix HallOrderMatrix
-	cabCalls 		CabCallsMap
-	pendingCabCalls	[N_FLOORS]bool
-	peerList 		[]Peer
-	localState 		localsingle.ElevatorState
-}
-
-func onCabButtonEvent(state worldviewState, myID ElevID, buttonEvent elevio.ButtonEvent) (worldviewState, []wvCommand) {
-	state.pendingCabCalls[buttonEvent.Floor] = true
+func onCabButtonEvent(state worldviewState, myID ElevID, floor int) (worldviewState, []command) {
+	state.pendingCabCalls[floor] = true
 
 	localCabCalls := state.cabCalls[myID]
-	localCabCalls[buttonEvent.Floor] = true
+	localCabCalls[floor] = true
 	state.cabCalls[myID] = localCabCalls
 
-	return cabCalls, pendingCabCalls, []command{{_type: sendOrderToLocal, value: buttonEvent}, {_type: broadcastNetMessage}}
+	return state, []command{{_type: broadcastNetMessage}}
 }
 
-func onHallButtonEvent(hallOrderMatrix HallOrderMatrix, buttonEvent elevio.ButtonEvent) (HallOrderMatrix, []command) {
-	floor := buttonEvent.Floor
-	btn := buttonEvent.Button
-
-	entry := hallOrderMatrix[floor][btn]
+func onHallButtonEvent(state worldviewState, floor int, button int) (worldviewState, []command) {
+	entry := state.hallOrderMatrix[floor][button]
 
 	if entry.Status == Inactive {
 		entry.Status = Pending
-		entry.AssignedElevator = ""
 		entry.Version++
-		hallOrderMatrix[floor][btn] = entry
+		state.hallOrderMatrix[floor][button] = entry
 	}
 
-	return hallOrderMatrix, []command{{_type: broadcastNetMessage}}
+	return state, []command{{_type: broadcastNetMessage}}
 }
 
-func onNewLocalState(hallOrderMatrix HallOrderMatrix, peerList []Peer, myID ElevID, cabCalls CabCallsMap, newLocalState localsingle.ElevatorState) (HallOrderMatrix, localsingle.ElevatorState, []command) {
+func onNewLocalState(state worldviewState, myID ElevID, newLocalState interface{ GetObstructed() bool }) (worldviewState, []command) {
 
 	var commands []command
-	var localState localsingle.ElevatorState
-	broadcastNeeded := false
-	localState.Floor = newLocalState.Floor
-	localState.Direction = newLocalState.Direction
-	localState.Behaviour = newLocalState.Behaviour
-	localState.Obstructed = newLocalState.Obstructed
 
-	if localState.Obstructed {
-		hallOrderMatrix = releaseOrdersForElevID(hallOrderMatrix, myID)
-		broadcastNeeded = true
-	} else {
-		orders := detertmineMyOrders(hallOrderMatrix, myID, localState, cabCalls, peerList)
-		for _, order := range orders {
-			var claimCommands []command
-			hallOrderMatrix, claimCommands = claimOrder(hallOrderMatrix, myID, order)
-			commands = append(commands, claimCommands...)
-			broadcastNeeded = true
-		}
-	}
-
-	if broadcastNeeded {
+	if state.localState.Obstructed {
+		state.hallOrderMatrix = releaseAllConfirmed(state.hallOrderMatrix)
 		commands = append(commands, command{_type: broadcastNetMessage})
 	}
 
-	return hallOrderMatrix, localState, commands
+	return state, commands
 }
 
-func onClearedOrders(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID, clearedOrders []localsingle.Order) (HallOrderMatrix, CabCallsMap, []command) {
+func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, clearedButtons []int) (worldviewState, []command) {
 	var commands []command
 
-	if len(clearedOrders) == 0 {
-		return hallOrderMatrix, cabCalls, commands
+	if len(clearedFloors) == 0 {
+		return state, commands
 	}
 
-	for _, order := range clearedOrders {
-		floor := order.Floor
-		btn := localsingle.ButtonTypeToElevio(order.Button)
+	for i := range clearedFloors {
+		floor := clearedFloors[i]
+		button := clearedButtons[i]
 
-		if btn == elevio.BT_HallUp || btn == elevio.BT_HallDown {
-			entry := &hallOrderMatrix[floor][btn]
+		if button < N_HALL {
+			entry := &state.hallOrderMatrix[floor][button]
 			if entry.Status != Inactive {
 				entry.Status = Inactive
-				entry.AssignedElevator = ""
 				entry.Version++
 
 				commands = append(commands, command{
 					_type: setButtonLamp,
 					value: buttonLampArgs{
 						Floor:  floor,
-						Button: btn,
+						Button: button,
 						Value:  false,
 					},
 				})
 			}
-		} else if btn == elevio.BT_Cab {
-			localCabCalls := cabCalls[myID]
+		} else {
+			localCabCalls := state.cabCalls[myID]
 			localCabCalls[floor] = false
-			cabCalls[myID] = localCabCalls
+			state.cabCalls[myID] = localCabCalls
 			commands = append(commands, command{
 				_type: setButtonLamp,
 				value: buttonLampArgs{
 					Floor:  floor,
-					Button: btn,
+					Button: button,
 					Value:  false,
 				},
 			})
@@ -132,34 +80,35 @@ func onClearedOrders(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID
 	}
 	commands = append(commands, command{_type: broadcastNetMessage})
 
-	return hallOrderMatrix, cabCalls, commands
+	return state, commands
 }
 
-func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID, pendingCabCalls [N_FLOORS]bool, peerList []Peer, msg NetMsg) (HallOrderMatrix, CabCallsMap, [N_FLOORS]bool, []command) {
+func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []command) {
 	var commands []command
-	broadcastNeeded := false
-	senderID := msg.SenderID
 
+	senderID := msg.SenderID
 	if senderID == myID {
-		return hallOrderMatrix, cabCalls, pendingCabCalls, commands
+		return state, commands
 	}
 
-	for i := range peerList {
-		if peerList[i].ID == senderID {
-			peerList[i].state = msg.SenderState
+	broadcastNeeded := false
+
+	for i := range state.peerList {
+		if state.peerList[i].ID == senderID {
+			state.peerList[i].state = msg.SenderState
 			break
 		}
 	}
 
 	if msg.SenderState.Obstructed {
-		hallOrderMatrix = releaseOrdersForElevID(hallOrderMatrix, senderID)
+		state.hallOrderMatrix = releaseAllConfirmed(state.hallOrderMatrix)
 		broadcastNeeded = true
 	}
 
 	for floor := range N_FLOORS {
-		for btn := range N_HALL {
-			remote := msg.HallOrderMatrix[floor][btn]
-			local := &hallOrderMatrix[floor][btn]
+		for button := range N_HALL {
+			remote := msg.HallOrderMatrix[floor][button]
+			local := &state.hallOrderMatrix[floor][button]
 
 			if remote.Version > local.Version {
 				*local = remote
@@ -170,7 +119,7 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 						_type: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
-							Button: elevio.ButtonType(btn),
+							Button: button,
 							Value:  false,
 						},
 					})
@@ -182,45 +131,39 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 						_type: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
-							Button: elevio.ButtonType(btn),
+							Button: button,
 							Value:  true,
 						},
 					})
 				}
 
 			} else if remote.Version == local.Version {
-				switch remote.Status {
-				case Pending:
-					if local.Status == Pending {
-						local.Status = Confirmed
-						local.Version++
-						broadcastNeeded = true
-						commands = append(commands, command{
-							_type: setButtonLamp,
-							value: buttonLampArgs{
-								Floor:  floor,
-								Button: elevio.ButtonType(btn),
-								Value:  true,
-							},
-						})
-					}
-
-				case Confirmed, Assigned:
-					if remote.Status > local.Status {
-						*local = remote
-					}
-					if local.AssignedElevator != remote.AssignedElevator && local.AssignedElevator != "" {
-						remoteInt, _ := strconv.Atoi(string(remote.AssignedElevator))
-						localInt, _ := strconv.Atoi(string(local.AssignedElevator))
-						if remoteInt < localInt && remote.AssignedElevator != "" {
-							*local = remote
-						}
-					}
+				if remote.Status == Pending && local.Status == Pending {
+					local.Status = Confirmed
+					local.Version++
+					broadcastNeeded = true
 					commands = append(commands, command{
 						_type: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
-							Button: elevio.ButtonType(btn),
+							Button: button,
+							Value:  true,
+						}})
+				} else if remote.Status == Confirmed && local.Status != Confirmed {
+					*local = remote
+					commands = append(commands, command{
+						_type: setButtonLamp,
+						value: buttonLampArgs{
+							Floor:  floor,
+							Button: button,
+							Value:  true,
+						}})
+				} else if remote.Status == Confirmed {
+					commands = append(commands, command{
+						_type: setButtonLamp,
+						value: buttonLampArgs{
+							Floor:  floor,
+							Button: button,
 							Value:  true,
 						},
 					})
@@ -231,15 +174,15 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 	}
 
 	if msg.CabCalls != nil {
-		cabCalls[senderID] = msg.CabCalls[senderID]
-		for i := range pendingCabCalls {
-			if pendingCabCalls[i] && msg.CabCalls[myID][i] {
-				pendingCabCalls[i] = false
+		state.cabCalls[senderID] = msg.CabCalls[senderID]
+		for i := range state.pendingCabCalls {
+			if state.pendingCabCalls[i] && msg.CabCalls[myID][i] {
+				state.pendingCabCalls[i] = false
 				commands = append(commands, command{
 					_type: setButtonLamp,
 					value: buttonLampArgs{
 						Floor:  i,
-						Button: elevio.BT_Cab,
+						Button: BT_CAB,
 						Value:  true,
 					},
 				})
@@ -251,35 +194,58 @@ func onNetMsg(hallOrderMatrix HallOrderMatrix, cabCalls CabCallsMap, myID ElevID
 		commands = append(commands, command{_type: broadcastNetMessage})
 	}
 
-	return hallOrderMatrix, cabCalls, pendingCabCalls, commands
+	return state, commands
 }
 
-func onHeartbeatTick() []command {
-	return []command{{_type: broadcastNetMessage}}
-}
-
-func onPeerEvent(hallOrderMatrix HallOrderMatrix, oldPeerList []Peer, newPeerList []Peer) (HallOrderMatrix, []Peer, []command) {
+func onPeerEvent(state worldviewState, newPeerList []Peer) (worldviewState, []command) {
 	var commands []command
 
 	for _, newPeer := range newPeerList {
-		oldStatus := findPeerStatus(oldPeerList, newPeer.ID)
+		oldStatus := findPeerStatus(state.peerList, newPeer.ID)
 
 		if oldStatus == StatusAlive && newPeer.PeerStatus == StatusDead {
-			hallOrderMatrix = releaseOrdersForElevID(hallOrderMatrix, newPeer.ID)
+			state.hallOrderMatrix = releaseAllConfirmed(state.hallOrderMatrix)
 		}
 
 	}
-	commands = append(commands, command{_type: broadcastNetMessage})
-	return hallOrderMatrix, newPeerList, commands
+
+	state.peerList = newPeerList
+
+	return state, commands
 }
 
+func ExtractWorldView(state worldviewState, myID ElevID) Worldview {
+	hallRequests := extractHallRequests(state.hallOrderMatrix)
 
+	cabRequests := make(map[ElevID]CabRequests)
+	for id, calls := range state.cabCalls {
+		cabRequests[id] = calls
+	}
 
+	peerStates := make(map[ElevID]localsingle.ElevatorState)
+	peerStates[myID] = state.localState
+	for _, peer := range state.peerList {
+		peerStates[peer.ID] = peer.state
 
+	}
 
+	return Worldview{
+		HallRequests: hallRequests,
+		CabRequests:  cabRequests,
+		PeerStates:   peerStates,
+		Peers:        state.peerList,
+	}
+}
 
-
-
+func extractHallRequests(hallOrderMatrix HallOrderMatrix) HallRequests {
+	var hallRequests HallRequests
+	for floor := range N_FLOORS {
+		for button := range N_BUTTONS {
+			hallRequests[floor][button] = (hallOrderMatrix[floor][button].Status == Confirmed)
+		}
+	}
+	return hallRequests
+}
 
 func findPeerStatus(peerList []Peer, id ElevID) PeerStatus {
 	for _, peer := range peerList {
@@ -290,13 +256,12 @@ func findPeerStatus(peerList []Peer, id ElevID) PeerStatus {
 	return PeerStatus(-1)
 }
 
-func releaseOrdersForElevID(hallOrderMatrix HallOrderMatrix, elevID ElevID) HallOrderMatrix {
+func releaseAllConfirmed(hallOrderMatrix HallOrderMatrix) HallOrderMatrix {
 	for floor := range N_FLOORS {
 		for btn := range N_HALL {
 			entry := &hallOrderMatrix[floor][btn]
-			if entry.AssignedElevator == elevID && entry.Status == Assigned {
+			if entry.Status == Confirmed {
 				entry.Status = Pending
-				entry.AssignedElevator = ""
 				entry.Version++
 			}
 		}
