@@ -5,11 +5,19 @@ import (
 )
 
 // core PeerMonitor
+// bad practice with Ticker as parameter to the function?
+func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat, heartbeatTicker *time.Ticker) {
 
-func HandleHeartbeats(peerList []Peer, msg NetMsg, now time.Time) ([]Peer, bool) {
+	for range heartbeatTicker.C {
+		heartBeat := HeartBeat{SenderID: ElevID(peerID)}
+		heartBeatTx <- heartBeat
+	}
+}
+
+func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen
 	changed := false
-	peerID := msg.SenderID
+	peerID := heartBeat.SenderID
 
 	index := findPeerIndex(peerList, peerID)
 	if index == -1 { //-1 if peer not in Peerlist

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	elevio "project/elevio"
 	"time"
+	"context"
 )
 
 const (
@@ -11,6 +12,7 @@ const (
 )
 
 func Run(
+	ctx context.Context,
 	localOrderChan <-chan elevio.ButtonEvent,
 	floorChan <-chan int,
 	obstructionChan <-chan bool,
@@ -18,7 +20,7 @@ func Run(
 	driverCommandChan chan<- elevio.DriverCommand,
 	clearedOrdersChan chan<- []Order,
 	localStateChan chan<- ElevatorState,
-) {
+) error {
 	fmt.Println("LocalSingleElevator started")
 	elevator := makeUninitializedElevator()
 
@@ -36,6 +38,8 @@ func Run(
 
 	for {
 		select {
+		case <- ctx.Done():
+			return nil
 		case buttonEvent := <-localOrderChan:
 			btn := elevioToButtonType(buttonEvent.Button)
 			commands = elevator.onRequestButtonPress(buttonEvent.Floor, btn)
