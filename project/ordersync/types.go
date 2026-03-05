@@ -6,9 +6,12 @@ import (
 )
 
 const (
-	N_FLOORS = 4
-	N_HALL   = 2
+	N_FLOORS  = 4
+	N_HALL    = 2
+	N_BUTTONS = 3
 )
+
+type ElevID string
 
 type OrderStatus int
 
@@ -16,46 +19,19 @@ const (
 	Inactive OrderStatus = iota
 	Pending
 	Confirmed
-	Assigned
 )
 
-type ElevID string
-
-type commandType int
-
-const (
-	sendOrderToLocal commandType = iota
-	broadcastNetMessage
-	setButtonLamp
-)
-
-type command struct {
-	_type commandType
-	value any
-}
-
-type CabCallsMap map[ElevID][N_FLOORS]bool
-
-type NetMsg struct {
-	SenderID        ElevID
-	HallOrderMatrix HallOrderMatrix
-	CabCalls        CabCallsMap
-	SenderState     localsingle.ElevatorState
+type OrderMatrixEntry struct {
+	Status  OrderStatus
+	Version int
 }
 
 type HallOrderMatrix [N_FLOORS][N_HALL]OrderMatrixEntry
 
-type OrderMatrixEntry struct {
-	Status           OrderStatus
-	AssignedElevator ElevID
-	Version          int
-}
+type CabCallsMap map[ElevID][N_FLOORS]bool
 
-type buttonLampArgs struct {
-	Floor  int
-	Button elevio.ButtonType
-	Value  bool
-}
+type HallRequests [N_FLOORS][N_HALL]bool
+type CabRequests [N_FLOORS]bool
 
 type PeerStatus int
 
@@ -77,6 +53,35 @@ type PeerUpdate struct {
 
 type PeerMsg struct {
 	Peers []PeerUpdate
+}
+
+type NetMsg struct {
+	SenderID        ElevID
+	HallOrderMatrix HallOrderMatrix
+	CabCalls        CabCallsMap
+	SenderState     localsingle.ElevatorState
+}
+
+type Worldview struct {
+	HallRequests HallRequests
+	CabRequests  map[ElevID]CabRequests
+	PeerStates   map[ElevID]localsingle.ElevatorState
+	Peer         []Peer
+}
+
+// -------------------------------------------------------------
+
+type commandType int
+
+const (
+	sendOrderToLocal commandType = iota
+	broadcastNetMessage
+	setButtonLamp
+)
+
+type command struct {
+	_type commandType
+	value any
 }
 
 type OrderLocation struct {
