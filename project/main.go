@@ -7,7 +7,7 @@ import (
 	localsingle "project/localsingleelevator"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
-	transportUDP "project/transportudp"
+	transportUDP "project/networking"
 	"strconv"
 	"time"
 )
@@ -30,7 +30,7 @@ func main() {
 	obstructionChan := make(chan bool)
 	clearedOrdersChan := make(chan []localsingle.Order)
 	localStateChan := make(chan localsingle.ElevatorState)
-	peerEventChan := make(chan []ordersync.Peer)
+	peerEventChan := make(chan ordersync.PeerMsg)
 	localOrderChan := make(chan elevio.ButtonEvent)
 
 	// Channels and goroutines for networking

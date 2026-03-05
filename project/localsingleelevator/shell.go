@@ -55,7 +55,7 @@ func Run(
 
 		case <-localStateTicker.C:
 			select {
-			case localStateChan <- elevator.State:
+			case localStateChan <- elevator.state:
 			default:
 			}
 		}

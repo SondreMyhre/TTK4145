@@ -1,4 +1,4 @@
-package TransportUDP
+package networking
 // REMEMBER:
 // maps need to have string-keys to be broadcasted
 // all structs to be sent must have public members
@@ -6,7 +6,7 @@ package TransportUDP
 // 
 
 import (
-	"project/transportudp/bcast"
+	"project/networking/bcast"
 	// peermonitor "project/peermonitor" //will only be using the types in peermonitor...
 	ordersync "project/ordersync" //...and ordersync
 )

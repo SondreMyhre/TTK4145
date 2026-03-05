@@ -1,4 +1,4 @@
-package TransportUDP
+package networking
 
 import (
 	"testing"
