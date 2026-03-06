@@ -34,6 +34,7 @@ type ElevatorState struct {
 	Direction  Direction
 	Behaviour  ElevatorBehaviour
 	Obstructed bool
+	MotorStuck bool
 }
 
 type RequestMatrix = [N_FLOORS][N_BUTTONS]bool

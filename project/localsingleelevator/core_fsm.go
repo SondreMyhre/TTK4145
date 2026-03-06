@@ -51,6 +51,11 @@ func (elevator *elevator) onNewRequestMatrix(newRequests RequestMatrix) []comman
 
 func (elevator *elevator) onFloorArrival(newFloor int) []command {
 	elevator.state.Floor = newFloor
+
+	if elevator.state.MotorStuck {
+		elevator.state.MotorStuck = false
+	}
+
 	var commands []command
 	commands = append(commands, command{_type: setFloorIndicator, value: elevator.state.Floor})
 
@@ -121,4 +126,17 @@ func (elevator *elevator) onObstruction(obstructed bool) []command {
 		return commands
 	}
 	return commands
+}
+
+func (elevator *elevator) onMotorTimeout() []command {
+	var commands []command
+	
+	if elevator.state.Behaviour != BehaviourMoving {
+		return commands
+	}
+
+	elevator.state.MotorStuck = true
+
+    commands = append(commands, command{_type: sendLocalState, value: elevator.state})
+    return commands
 }

@@ -60,7 +60,8 @@ func RunWorldView(
 
 		case newLocalState := <-localStateChan:
 			state.localState = newLocalState
-			state, commands = onNewLocalState(state)
+			commands = []command{{_type: broadcastNetMessage}}
+			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
 		case cleared := <-clearedOrdersChan:
@@ -78,12 +79,11 @@ func RunWorldView(
 			publishWorldview()
 
 		case peerEvent := <-peerEventChan:
-			var newPeerlist []Peer
+			var newPeerList []Peer
 			for _, peer := range peerEvent {
-				newPeerlist = append(newPeerlist, Peer{ID: peer.ID, PeerStatus: peer.PeerStatus})
+				newPeerList = append(newPeerList, Peer{ID: peer.ID, PeerStatus: peer.PeerStatus})
 			}
-			state, commands = onPeerEvent(state, newPeerlist)
-			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			state.peerList = newPeerList
 			publishWorldview()
 
 		case <-heartbeatTicker.C:

@@ -62,7 +62,11 @@ func AssignRequests(worldview WorldviewMsg, myID ElevID) ([N_FLOORS][N_BUTTONS]b
 	states[string(myID)] = localStateToHRA(worldview.PeerStates[myID], worldview.CabRequests[myID])
 	for _, peer := range worldview.Peers {
 		if peer.PeerStatus == StatusAlive {
-			states[string(peer.ID)] = localStateToHRA(worldview.PeerStates[peer.ID], worldview.CabRequests[peer.ID])
+			peerState := worldview.PeerStates[peer.ID]
+			if peerState.Obstructed || peerState.MotorStuck {
+				continue
+			}
+			states[string(peer.ID)] = localStateToHRA(peerState, worldview.CabRequests[peer.ID])
 		}
 	}
 

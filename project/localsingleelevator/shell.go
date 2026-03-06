@@ -9,6 +9,7 @@ import (
 
 const (
 	doorOpenDuration = 3 * time.Second
+	motorWatchdogTimeout = 5 * time.Second
 )
 
 func Run(
@@ -27,40 +28,43 @@ func Run(
 	doorTimer := time.NewTimer(doorOpenDuration)
 	doorTimer.Stop()
 
-	// localStateTicker := time.NewTicker(100 * time.Millisecond)
+	motorWatchdogTimer := time.NewTimer(motorWatchdogTimeout)
+	motorWatchdogTimer.Stop()
 
 	var commands []command
 
+
+
 	if elevio.GetFloor() == -1 {
 		commands = append(commands, elevator.onInitBetweenFloors()...)
-		executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
+		executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
+
 		case newRequests := <-requestMatrixChan:
 			commands = elevator.onNewRequestMatrix(newRequests)
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
 		case floor := <-floorChan:
+			motorWatchdogTimer.Stop()
 			commands = elevator.onFloorArrival(floor)
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
 		case obstructed := <-obstructionChan:
 			commands = elevator.onObstruction(obstructed)
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
 		case <-doorTimer.C:
 			commands = elevator.onDoorTimeout()
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer)
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
-		// case <-localStateTicker.C:
-		// 	select {
-		// 	case localStateChan <- elevator.state:
-		// 	default:
-		// 	}
+		case <-motorWatchdogTimer.C:
+			commands = elevator.onMotorTimeout()
+			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 		}
 	}
 }
@@ -71,12 +75,16 @@ func executeCommands(
 	localStateChan chan<- ElevatorState,
 	clearedChan chan<- []Order,
 	doorTimer *time.Timer,
+	motorWatchdogTimer *time.Timer,
 ) {
 	for _, command := range commands {
 		switch command._type {
 		case setMotorDirection:
 			dir := command.value.(Direction)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
+			if dir != DirStop {
+				motorWatchdogTimer.Reset(motorWatchdogTimeout)
+			}
 		case setDoorOpenLamp:
 			value := command.value.(bool)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetDoorLamp, Value: value}

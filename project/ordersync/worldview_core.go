@@ -7,7 +7,17 @@ func onCabButtonEvent(state worldviewState, myID ElevID, floor int) (worldviewSt
 	localCabCalls[floor] = true
 	state.cabRequests[myID] = localCabCalls
 
-	return state, []command{{_type: broadcastNetMessage}}
+	var commands []command
+
+	if !hasAlivePeers(state.peerList) {
+		commands = append(commands, command{
+			_type: setButtonLamp,
+			value: buttonLampArgs{Floor: floor, Button: BT_CAB, Value: true},
+		})
+	}
+
+	commands = append(commands, command{_type: broadcastNetMessage})
+	return state, commands
 }
 
 func onHallButtonEvent(state worldviewState, floor int, button int) (worldviewState, []command) {
@@ -20,17 +30,6 @@ func onHallButtonEvent(state worldviewState, floor int, button int) (worldviewSt
 	}
 
 	return state, []command{{_type: broadcastNetMessage}}
-}
-
-func onNewLocalState(state worldviewState) (worldviewState, []command) {
-	var commands []command
-
-	if state.localState.Obstructed {
-		state.hallOrderMatrix = releaseAllConfirmed(state.hallOrderMatrix)
-		commands = append(commands, command{_type: broadcastNetMessage})
-	}
-
-	return state, commands
 }
 
 func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, clearedButtons []int) (worldviewState, []command) {
@@ -63,6 +62,7 @@ func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, cle
 			localCabCalls := state.cabRequests[myID]
 			localCabCalls[floor] = false
 			state.cabRequests[myID] = localCabCalls
+			state.pendingCabCalls[floor] = false // ??
 			commands = append(commands, command{
 				_type: setButtonLamp,
 				value: buttonLampArgs{
@@ -95,10 +95,9 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 		}
 	}
 
-	if msg.SenderState.Obstructed {
-		state.hallOrderMatrix = releaseAllConfirmed(state.hallOrderMatrix)
-		broadcastNeeded = true
-	}
+	// if msg.SenderState.Obstructed || msg.SenderState.MotorStuck {
+	// 	broadcastNeeded = true
+	// }
 
 	for floor := range N_FLOORS {
 		for button := range N_HALL {
@@ -183,6 +182,20 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 				})
 			}
 		}
+		// SPØRS OM DETTE MÅ ENDRES, BRUKE FLAGG HELLER KANSKJE??
+		if remoteMyCabs, ok := msg.CabCalls[myID]; ok {
+            localMyCabs := state.cabRequests[myID]
+            for floor := range N_FLOORS {
+                if remoteMyCabs[floor] && !localMyCabs[floor] {
+                    localMyCabs[floor] = true
+                    commands = append(commands, command{
+                        _type: setButtonLamp,
+                        value: buttonLampArgs{Floor: floor, Button: BT_CAB, Value: true},
+                    })
+                }
+            }
+            state.cabRequests[myID] = localMyCabs
+        }
 	}
 
 	if broadcastNeeded {
@@ -190,21 +203,6 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 	}
 
 	return state, commands
-}
-
-func onPeerEvent(state worldviewState, newPeerList []Peer) (worldviewState, []command) {
-	for _, newPeer := range newPeerList {
-		oldStatus := findPeerStatus(state.peerList, newPeer.ID)
-
-		if oldStatus == StatusAlive && newPeer.PeerStatus == StatusDead {
-			state.hallOrderMatrix = releaseAllConfirmed(state.hallOrderMatrix)
-		}
-
-	}
-
-	state.peerList = newPeerList
-
-	return state, []command{{_type: broadcastNetMessage}}
 }
 
 func extractHallRequests(hallOrderMatrix HallOrderMatrix) HallRequests {
@@ -226,15 +224,11 @@ func findPeerStatus(peerList []Peer, id ElevID) PeerStatus {
 	return PeerStatus(-1)
 }
 
-func releaseAllConfirmed(hallOrderMatrix HallOrderMatrix) HallOrderMatrix {
-	for floor := range N_FLOORS {
-		for btn := range N_HALL {
-			entry := &hallOrderMatrix[floor][btn]
-			if entry.Status == Confirmed {
-				entry.Status = Pending
-				entry.Version++
-			}
-		}
-	}
-	return hallOrderMatrix
+func hasAlivePeers(peerList []Peer) bool {
+    for _, peer := range peerList {
+        if peer.PeerStatus == StatusAlive {
+            return true
+        }
+    }
+    return false
 }
