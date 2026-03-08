@@ -9,7 +9,7 @@ func onCabButtonEvent(state worldviewState, myID ElevID, floor int) (worldviewSt
 
 	var commands []command
 
-	if !hasAlivePeers(state.peerList) {
+	if !hasAlivePeers(myID, state.peerList) {
 		commands = append(commands, command{
 			_type: setButtonLamp,
 			value: buttonLampArgs{Floor: floor, Button: BT_CAB, Value: true},
@@ -226,9 +226,6 @@ func onPeerEvent(state worldviewState, newPeerList []Peer) (worldviewState, []co
 		}
 
 	}
-
-	state.peerList = newPeerList
-
 	return state, []command{{_type: broadcastNetMessage}}
 }
 
@@ -264,9 +261,9 @@ func releaseAllConfirmed(hallOrderMatrix HallOrderMatrix) HallOrderMatrix {
 	return hallOrderMatrix
 }
 
-func hasAlivePeers(peerList []Peer) bool {
+func hasAlivePeers(myID ElevID, peerList []Peer) bool {
     for _, peer := range peerList {
-        if peer.PeerStatus == StatusAlive {
+        if peer.PeerStatus == StatusAlive && peer.ID != myID {
             return true
         }
     }

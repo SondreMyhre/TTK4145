@@ -83,7 +83,9 @@ func RunWorldView(
 			for _, peer := range peerEvent {
 				newPeerList = append(newPeerList, Peer{ID: peer.ID, PeerStatus: peer.PeerStatus})
 			}
+			state, commands = onPeerEvent(state, newPeerList)
 			state.peerList = newPeerList
+            applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
 		case <-heartbeatTicker.C:

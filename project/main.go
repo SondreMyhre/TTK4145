@@ -22,24 +22,24 @@ func main() {
 	defer cancel()
 
 	// elevio channels
-	buttonChan := make(chan elevio.ButtonEvent)
-	floorChan := make(chan int)
-	obstructionChan := make(chan bool)
-	driverCommandChan := make(chan elevio.DriverCommand)
+	buttonChan := make(chan elevio.ButtonEvent, 10)
+	floorChan := make(chan int, 1)
+	obstructionChan := make(chan bool, 1)
+	driverCommandChan := make(chan elevio.DriverCommand, 10)
 
 	// localsingle channels
-	requestMatrixChan := make(chan localsingle.RequestMatrix)
-	clearedOrdersChan := make(chan []localsingle.Order)
-	localStateChan := make(chan localsingle.ElevatorState)
+	requestMatrixChan := make(chan localsingle.RequestMatrix, 1)
+	clearedOrdersChan := make(chan []localsingle.Order, 10)
+	localStateChan := make(chan localsingle.ElevatorState, 1)
 
 	// networking channels
-	orderSyncTx := make(chan ordersync.NetMsg)
-	orderSyncRx := make(chan ordersync.NetMsg)
-	peerMonitorTx := make(chan peermonitor.HeartBeat)
-	peerMonitorRx := make(chan peermonitor.HeartBeat)
+	orderSyncTx := make(chan ordersync.NetMsg, 10)
+	orderSyncRx := make(chan ordersync.NetMsg, 10)
+	peerMonitorTx := make(chan peermonitor.HeartBeat, 10)
+	peerMonitorRx := make(chan peermonitor.HeartBeat, 10)
 
 	// Channel between ordersync and peermonitor
-	peerEventChan := make(chan []ordersync.PeerUpdate)
+	peerEventChan := make(chan []ordersync.PeerUpdate, 10)
 
 	worldviewChan := make(chan ordersync.WorldviewMsg, 1) 
 
