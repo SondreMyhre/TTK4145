@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
@@ -17,25 +18,31 @@ func main() {
 
 	elevio.Init(*peerID, *serverAddr, 4)
 
-	// Channel between elevio-driver and ordersync
-	buttonChan := make(chan elevio.ButtonEvent)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// elevio channels
+	buttonChan := make(chan elevio.ButtonEvent, 10)
+	floorChan := make(chan int, 1)
+	obstructionChan := make(chan bool, 1)
+	driverCommandChan := make(chan elevio.DriverCommand, 10)
+
+	// localsingle channels
+	requestMatrixChan := make(chan localsingle.RequestMatrix, 1)
+	clearedOrdersChan := make(chan []localsingle.Order, 10)
+	localStateChan := make(chan localsingle.ElevatorState, 1)
+
+	// networking channels
+	orderSyncTx := make(chan ordersync.NetMsg, 10)
+	orderSyncRx := make(chan ordersync.NetMsg, 10)
+	peerMonitorTx := make(chan peermonitor.HeartBeat, 10)
+	peerMonitorRx := make(chan peermonitor.HeartBeat, 10)
 
 	// Channel between ordersync and peermonitor
-	peerEventChan := make(chan []ordersync.Peer)
+	peerEventChan := make(chan []ordersync.PeerUpdate, 10)
 
-	// Channels for single-elevator operations
-	localOrderChan := make(chan elevio.ButtonEvent)
-	floorChan := make(chan int)
-	obstructionChan := make(chan bool)
-	driverCommandChan := make(chan elevio.DriverCommand) // Kan vurdere to separate channels inn??? Vet ikke hva som er best praksis
-	clearedOrdersChan := make(chan []localsingle.Order)
-	localStateChan := make(chan localsingle.ElevatorState)
+	worldviewChan := make(chan ordersync.WorldviewMsg, 1) 
 
-	// Channels for networking
-	OrderSyncTx := make(chan ordersync.NetMsg)
-	OrderSyncRx := make(chan ordersync.NetMsg)
-	PeerMonitorTx := make(chan peermonitor.HeartBeat)
-	PeerMonitorRx := make(chan peermonitor.HeartBeat)
 
 	// Routines for single elevator operations
 	go elevio.RunDriver(driverCommandChan)
@@ -44,11 +51,12 @@ func main() {
 	go elevio.PollObstructionSwitch(obstructionChan)
 
 	// Channels for distributed system
-	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50 * time.Millisecond} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
-	go peermonitor.Run(*peerID, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
-	go networking.Run(OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
-	go ordersync.Run(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, OrderSyncRx, peerEventChan, localOrderChan, OrderSyncTx, driverCommandChan)
-	go localsingle.Run(localOrderChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
+	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50 * time.Millisecond, HeartBeatTicker: 1 * time.Second} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
+	go peermonitor.Run(*peerID, ctx, peermonitorConfig, peerMonitorRx, peerMonitorTx, peerEventChan)
+	go networking.Run(ctx, orderSyncTx, orderSyncRx, peerMonitorTx, peerMonitorRx)
+	go ordersync.RunWorldView(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
+	go ordersync.RunAssigner(ctx, ordersync.ElevID(*peerID), worldviewChan, requestMatrixChan)
+	go localsingle.Run(ctx, requestMatrixChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 
 	select {}
 }

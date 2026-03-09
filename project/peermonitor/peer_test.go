@@ -107,7 +107,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	select {
 	case upd := <-chanOS:
 		found := false
-		for _, p := range upd.Peers {
+		for _, p := range upd {
 			if p.ID == "1" {
 				found = true
 				if p.PeerStatus != StatusDead {

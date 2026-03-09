@@ -1,7 +1,7 @@
 package localsingle
 
 func (elevator *elevator) requestsAbove() bool {
-	for f := elevator.State.Floor + 1; f < N_FLOORS; f++ {
+	for f := elevator.state.Floor + 1; f < N_FLOORS; f++ {
 		for btn := range N_BUTTONS {
 			if elevator.requests[f][btn] {
 				return true
@@ -12,7 +12,7 @@ func (elevator *elevator) requestsAbove() bool {
 }
 
 func (elevator *elevator) requestsBelow() bool {
-	for f := range elevator.State.Floor {
+	for f := range elevator.state.Floor {
 		for btn := range N_BUTTONS {
 			if elevator.requests[f][btn] {
 				return true
@@ -24,7 +24,7 @@ func (elevator *elevator) requestsBelow() bool {
 
 func (elevator *elevator) requestsHere() bool {
 	for btn := range N_BUTTONS {
-		if elevator.requests[elevator.State.Floor][btn] {
+		if elevator.requests[elevator.state.Floor][btn] {
 			return true
 		}
 	}
@@ -32,7 +32,7 @@ func (elevator *elevator) requestsHere() bool {
 }
 
 func (elevator *elevator) chooseDirection() directionBehaviourPair {
-	switch elevator.State.Direction {
+	switch elevator.state.Direction {
 	case DirUp:
 		if elevator.requestsAbove() {
 			return directionBehaviourPair{DirUp, BehaviourMoving}
@@ -69,14 +69,14 @@ func (elevator *elevator) chooseDirection() directionBehaviourPair {
 }
 
 func (elevator *elevator) shouldStop() bool {
-	switch elevator.State.Direction {
+	switch elevator.state.Direction {
 	case DirDown:
-		return elevator.requests[elevator.State.Floor][BtnHallDown] ||
-			elevator.requests[elevator.State.Floor][BtnCab] ||
+		return elevator.requests[elevator.state.Floor][BtnHallDown] ||
+			elevator.requests[elevator.state.Floor][BtnCab] ||
 			!elevator.requestsBelow()
 	case DirUp:
-		return elevator.requests[elevator.State.Floor][BtnHallUp] ||
-			elevator.requests[elevator.State.Floor][BtnCab] ||
+		return elevator.requests[elevator.state.Floor][BtnHallUp] ||
+			elevator.requests[elevator.state.Floor][BtnCab] ||
 			!elevator.requestsAbove()
 	default:
 		return true
@@ -84,53 +84,53 @@ func (elevator *elevator) shouldStop() bool {
 }
 
 func (elevator *elevator) shouldClearImmediately(buttonFloor int, buttonType ButtonType) bool {
-	return elevator.State.Floor == buttonFloor &&
-		((elevator.State.Direction == DirUp && buttonType == BtnHallUp) ||
-			(elevator.State.Direction == DirDown && buttonType == BtnHallDown) ||
-			elevator.State.Direction == DirStop ||
+	return elevator.state.Floor == buttonFloor &&
+		((elevator.state.Direction == DirUp && buttonType == BtnHallUp) ||
+			(elevator.state.Direction == DirDown && buttonType == BtnHallDown) ||
+			elevator.state.Direction == DirStop ||
 			buttonType == BtnCab)
 }
 
 func (elevator *elevator) clearAtCurrentFloor() []Order {
 	var clearedOrders []Order
 
-	if elevator.requests[elevator.State.Floor][BtnCab] {
-		elevator.requests[elevator.State.Floor][BtnCab] = false
-		clearedOrders = append(clearedOrders, Order{elevator.State.Floor, BtnCab})
+	if elevator.requests[elevator.state.Floor][BtnCab] {
+		elevator.requests[elevator.state.Floor][BtnCab] = false
+		clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnCab})
 	}
 
-	switch elevator.State.Direction {
+	switch elevator.state.Direction {
 	case DirUp:
-		if elevator.requests[elevator.State.Floor][BtnHallUp] {
-			elevator.requests[elevator.State.Floor][BtnHallUp] = false
-			clearedOrders = append(clearedOrders, Order{elevator.State.Floor, BtnHallUp})
+		if elevator.requests[elevator.state.Floor][BtnHallUp] {
+			elevator.requests[elevator.state.Floor][BtnHallUp] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
 		}
 
-		if !elevator.requestsAbove() && !elevator.requests[elevator.State.Floor][BtnHallUp] && elevator.requests[elevator.State.Floor][BtnHallDown] {
-			elevator.requests[elevator.State.Floor][BtnHallDown] = false
-			clearedOrders = append(clearedOrders, Order{elevator.State.Floor, BtnHallDown})
+		if !elevator.requestsAbove() && !elevator.requests[elevator.state.Floor][BtnHallUp] && elevator.requests[elevator.state.Floor][BtnHallDown] {
+			elevator.requests[elevator.state.Floor][BtnHallDown] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
 		}
 
 	case DirDown:
-		if elevator.requests[elevator.State.Floor][BtnHallDown] {
-			elevator.requests[elevator.State.Floor][BtnHallDown] = false
-			clearedOrders = append(clearedOrders, Order{elevator.State.Floor, BtnHallDown})
+		if elevator.requests[elevator.state.Floor][BtnHallDown] {
+			elevator.requests[elevator.state.Floor][BtnHallDown] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
 		}
 
-		if !elevator.requestsBelow() && !elevator.requests[elevator.State.Floor][BtnHallDown] && elevator.requests[elevator.State.Floor][BtnHallUp] {
-			elevator.requests[elevator.State.Floor][BtnHallUp] = false
-			clearedOrders = append(clearedOrders, Order{elevator.State.Floor, BtnHallUp})
+		if !elevator.requestsBelow() && !elevator.requests[elevator.state.Floor][BtnHallDown] && elevator.requests[elevator.state.Floor][BtnHallUp] {
+			elevator.requests[elevator.state.Floor][BtnHallUp] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
 		}
 
 	default:
-		if elevator.requests[elevator.State.Floor][BtnHallUp] {
-			elevator.requests[elevator.State.Floor][BtnHallUp] = false
-			clearedOrders = append(clearedOrders, Order{elevator.State.Floor, BtnHallUp})
+		if elevator.requests[elevator.state.Floor][BtnHallUp] {
+			elevator.requests[elevator.state.Floor][BtnHallUp] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
 		}
 
-		if elevator.requests[elevator.State.Floor][BtnHallDown] {
-			elevator.requests[elevator.State.Floor][BtnHallDown] = false
-			clearedOrders = append(clearedOrders, Order{elevator.State.Floor, BtnHallDown})
+		if elevator.requests[elevator.state.Floor][BtnHallDown] {
+			elevator.requests[elevator.state.Floor][BtnHallDown] = false
+			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
 		}
 	}
 

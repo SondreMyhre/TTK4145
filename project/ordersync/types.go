@@ -1,14 +1,17 @@
 package ordersync
 
 import (
-	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
 )
 
 const (
-	N_FLOORS = 4
-	N_HALL   = 2
+	N_FLOORS  = 4
+	N_HALL    = 2
+	N_BUTTONS = 3
+	BT_CAB    = 2
 )
+
+type ElevID string
 
 type OrderStatus int
 
@@ -16,46 +19,18 @@ const (
 	Inactive OrderStatus = iota
 	Pending
 	Confirmed
-	Assigned
 )
 
-type ElevID string
-
-type commandType int
-
-const (
-	sendOrderToLocal commandType = iota
-	broadcastNetMessage
-	setButtonLamp
-)
-
-type command struct {
-	_type commandType
-	value any
-}
-
-type CabCallsMap map[ElevID][N_FLOORS]bool
-
-type NetMsg struct {
-	SenderID        ElevID
-	HallOrderMatrix HallOrderMatrix
-	CabCalls        CabCallsMap
-	SenderState     localsingle.ElevatorState
+type OrderMatrixEntry struct {
+	Status  OrderStatus
+	Version int
 }
 
 type HallOrderMatrix [N_FLOORS][N_HALL]OrderMatrixEntry
 
-type OrderMatrixEntry struct {
-	Status           OrderStatus
-	AssignedElevator ElevID
-	Version          int
-}
+type CabCallsMap map[ElevID][N_FLOORS]bool
 
-type buttonLampArgs struct {
-	Floor  int
-	Button elevio.ButtonType
-	Value  bool
-}
+type HallRequests [N_FLOORS][N_HALL]bool
 
 type PeerStatus int
 
@@ -75,12 +50,44 @@ type PeerUpdate struct {
 	PeerStatus PeerStatus
 }
 
-type PeerMsg struct {
-	Peers []PeerUpdate
+type NetMsg struct {
+	SenderID        ElevID
+	HallOrderMatrix HallOrderMatrix
+	CabCalls        CabCallsMap
+	SenderState     localsingle.ElevatorState
 }
 
-type OrderLocation struct {
+type WorldviewMsg struct {
+	HallRequests HallRequests
+	CabRequests  CabCallsMap
+	PeerStates   map[ElevID]localsingle.ElevatorState
+	Peers        []Peer
+}
+
+type worldviewState struct {
+	hallOrderMatrix HallOrderMatrix
+	cabRequests     CabCallsMap
+	pendingCabCalls [N_FLOORS]bool
+	peerList        []Peer
+	localState      localsingle.ElevatorState
+}
+
+// -------------------------------------------------------------
+
+type commandType int
+
+const (
+	broadcastNetMessage commandType = iota
+	setButtonLamp
+)
+
+type command struct {
+	_type commandType
+	value any
+}
+
+type buttonLampArgs struct {
 	Floor  int
-	Button elevio.ButtonType
-	Entry  OrderMatrixEntry
+	Button int
+	Value  bool
 }

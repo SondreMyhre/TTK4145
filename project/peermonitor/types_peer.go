@@ -10,7 +10,7 @@ import (
 type ElevID = ordersync.ElevID
 type PeerStatus = ordersync.PeerStatus
 type PeerUpdate = ordersync.PeerUpdate
-type PeerMsg = ordersync.PeerMsg
+type PeerMsg = []PeerUpdate
 
 const (
 	StatusAlive = ordersync.StatusAlive

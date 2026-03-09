@@ -34,10 +34,13 @@ type ElevatorState struct {
 	Direction  Direction
 	Behaviour  ElevatorBehaviour
 	Obstructed bool
+	MotorStuck bool
 }
 
+type RequestMatrix = [N_FLOORS][N_BUTTONS]bool
+
 type elevator struct {
-	State    ElevatorState
+	state    ElevatorState
 	requests [N_FLOORS][N_BUTTONS]bool
 }
 
@@ -48,7 +51,7 @@ type directionBehaviourPair struct {
 
 func makeUninitializedElevator() elevator {
 	elevator := elevator{
-		State: ElevatorState{Floor: -1,
+		state: ElevatorState{Floor: -1,
 			Direction: DirStop,
 			Behaviour: BehaviourIdle,
 		},
