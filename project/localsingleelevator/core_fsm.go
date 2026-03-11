@@ -4,7 +4,6 @@ func (elevator *elevator) onInitBetweenFloors() []command {
 	var commands []command
 	elevator.state.Direction = DirDown
 	elevator.state.Behaviour = BehaviourMoving
-	commands = append(commands, command{cmdType: sendLocalState, value: elevator.state})
 	commands = append(commands, command{cmdType: setMotorDirection, value: DirDown})
 	return commands
 }
