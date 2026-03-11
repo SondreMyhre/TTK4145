@@ -6,7 +6,7 @@ import (
 	"maps"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
-	"time"
+	// "time"
 )
 
 func RunWorldView(
@@ -26,9 +26,6 @@ func RunWorldView(
 	state := worldviewState{
 		cabRequests: make(CabCallsMap),
 	}
-
-	heartbeatTicker := time.NewTicker(100 * time.Millisecond)
-	defer heartbeatTicker.Stop()
 
 	publishWorldview := func() {
 		worldview := extractWorldView(state, myID)
@@ -83,14 +80,10 @@ func RunWorldView(
 			for _, peer := range peerEvent {
 				newPeerList = append(newPeerList, Peer{ID: peer.ID, PeerStatus: peer.PeerStatus})
 			}
-			state, commands = onPeerEvent(state, newPeerList)
+			// state, commands = onPeerEvent(state, newPeerList)
 			state.peerList = newPeerList
-            applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			// applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 			publishWorldview()
-
-		case <-heartbeatTicker.C:
-			commands = []command{{_type: broadcastNetMessage}}
-			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 		}
 	}
 }

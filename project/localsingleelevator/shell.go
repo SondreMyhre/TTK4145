@@ -129,14 +129,3 @@ func ButtonTypeToElevio(b ButtonType) elevio.ButtonType {
 		return elevio.BT_Cab
 	}
 }
-
-func elevioToButtonType(b elevio.ButtonType) ButtonType {
-	switch b {
-	case elevio.BT_HallUp:
-		return BtnHallUp
-	case elevio.BT_HallDown:
-		return BtnHallDown
-	default:
-		return BtnCab
-	}
-}

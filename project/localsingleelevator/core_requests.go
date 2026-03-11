@@ -83,14 +83,6 @@ func (elevator *elevator) shouldStop() bool {
 	}
 }
 
-func (elevator *elevator) shouldClearImmediately(buttonFloor int, buttonType ButtonType) bool {
-	return elevator.state.Floor == buttonFloor &&
-		((elevator.state.Direction == DirUp && buttonType == BtnHallUp) ||
-			(elevator.state.Direction == DirDown && buttonType == BtnHallDown) ||
-			elevator.state.Direction == DirStop ||
-			buttonType == BtnCab)
-}
-
 func (elevator *elevator) clearAtCurrentFloor() []Order {
 	var clearedOrders []Order
 
