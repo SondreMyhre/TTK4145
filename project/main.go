@@ -3,11 +3,13 @@ package main
 import (
 	"context"
 	"flag"
+	"log"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
 	networking "project/networking"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
+	"project/supervisor"
 	"time"
 )
 
@@ -41,22 +43,102 @@ func main() {
 	// Channel between ordersync and peermonitor
 	peerEventChan := make(chan []ordersync.PeerUpdate, 10)
 
-	worldviewChan := make(chan ordersync.WorldviewMsg, 1) 
+	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
 
+	// Configuration
+	peermonitorConfig := peermonitor.PeerConfig{
+		Timeout:         10 * time.Second,
+		TickInterval:    50 * time.Millisecond,
+		HeartBeatTicker: 1 * time.Second,
+	}
 
-	// Routines for single elevator operations
-	go elevio.RunDriver(driverCommandChan)
-	go elevio.PollButtons(buttonChan)
-	go elevio.PollFloorSensor(floorChan)
-	go elevio.PollObstructionSwitch(obstructionChan)
+	// Define supervised children
+	children := []supervisor.ChildSpec{
+		// Elevio routines - these are infinite loops, wrap them to be context-aware
+		{
+			Name: "driver",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				go elevio.RunDriver(driverCommandChan)
+				<-ctx.Done()
+				return nil
+			}),
+			Restart: supervisor.Permanent,
+		},
+		{
+			Name: "poll-buttons",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				go elevio.PollButtons(buttonChan)
+				<-ctx.Done()
+				return nil
+			}),
+			Restart: supervisor.Permanent,
+		},
+		{
+			Name: "poll-floor",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				go elevio.PollFloorSensor(floorChan)
+				<-ctx.Done()
+				return nil
+			}),
+			Restart: supervisor.Permanent,
+		},
+		{
+			Name: "poll-obstruction",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				go elevio.PollObstructionSwitch(obstructionChan)
+				<-ctx.Done()
+				return nil
+			}),
+			Restart: supervisor.Permanent,
+		},
+		// Core system components
+		{
+			Name: "networking",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				networking.Run(ctx, orderSyncTx, orderSyncRx, peerMonitorTx, peerMonitorRx)
+				return nil
+			}),
+			Restart: supervisor.Permanent,
+		},
+		{
+			Name: "peermonitor",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				return peermonitor.Run(*peerID, ctx, peermonitorConfig, peerMonitorRx, peerMonitorTx, peerEventChan)
+			}),
+			Restart: supervisor.Permanent,
+		},
+		{
+			Name: "worldview",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				return ordersync.RunWorldView(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
+			}),
+			Restart: supervisor.Permanent,
+		},
+		{
+			Name: "assigner",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				return ordersync.RunAssigner(ctx, ordersync.ElevID(*peerID), worldviewChan, requestMatrixChan)
+			}),
+			Restart: supervisor.Permanent,
+		},
+		{
+			Name: "localsingle",
+			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
+				return localsingle.Run(ctx, requestMatrixChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
+			}),
+			Restart: supervisor.Permanent,
+		},
+	}
 
-	// Channels for distributed system
-	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50 * time.Millisecond, HeartBeatTicker: 1 * time.Second} // Vurdere endring? Kanskje unødvendig med egen struct PeerConfig
-	go peermonitor.Run(*peerID, ctx, peermonitorConfig, peerMonitorRx, peerMonitorTx, peerEventChan)
-	go networking.Run(ctx, orderSyncTx, orderSyncRx, peerMonitorTx, peerMonitorRx)
-	go ordersync.RunWorldView(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
-	go ordersync.RunAssigner(ctx, ordersync.ElevID(*peerID), worldviewChan, requestMatrixChan)
-	go localsingle.Run(ctx, requestMatrixChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
+	// Create and run supervisor
+	sup := supervisor.NewWithConfig(children, supervisor.SupervisorConfig{
+		MaxRestarts:  5,
+		MaxTime:      30 * time.Second,
+		RestartDelay: 200 * time.Millisecond,
+	})
 
-	select {}
+	log.Println("Starting elevator system with supervisor")
+	if err := sup.Run(ctx); err != nil {
+		log.Printf("Supervisor exited with error: %v", err)
+	}
 }
