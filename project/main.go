@@ -47,9 +47,9 @@ func main() {
 
 	// Configuration
 	peermonitorConfig := peermonitor.PeerConfig{
-		Timeout:         10 * time.Second,
+		Timeout:         1 * time.Second,
 		TickInterval:    50 * time.Millisecond,
-		HeartBeatTicker: 1 * time.Second,
+		HeartBeatTicker: 100 * time.Millisecond,
 	}
 
 	// Define supervised children
