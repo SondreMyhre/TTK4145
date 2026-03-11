@@ -5,9 +5,9 @@ import (
 )
 
 const (
-	N_FLOORS  = 4
+	N_FLOORS  = localsingle.N_FLOORS
 	N_HALL    = 2
-	N_BUTTONS = 3
+	N_BUTTONS = localsingle.N_BUTTONS
 	BT_CAB    = 2
 )
 
