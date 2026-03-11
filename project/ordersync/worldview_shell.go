@@ -6,6 +6,7 @@ import (
 	"maps"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
+	"time"
 	// "time"
 )
 
@@ -27,12 +28,11 @@ func RunWorldView(
 		cabRequests: make(CabCallsMap),
 	}
 
+	orderTicker := time.NewTicker(100 * time.Millisecond)
+
 	publishWorldview := func() {
 		worldview := extractWorldView(state, myID)
-		select {
-		case worldViewChan <- worldview:
-		default:
-		}
+		worldViewChan <- worldview
 	}
 
 	for {
@@ -77,13 +77,19 @@ func RunWorldView(
 
 		case peerEvent := <-peerEventChan:
 			var newPeerList []Peer
-			for _, peer := range peerEvent {
-				newPeerList = append(newPeerList, Peer{ID: peer.ID, PeerStatus: peer.PeerStatus})
+			for _, update := range peerEvent { // state står tom
+				existingState := findPeerState(state.peerList, update.ID)
+				newPeerList = append(newPeerList, Peer{ID: update.ID, PeerStatus: update.PeerStatus, state: existingState})
 			}
 			// state, commands = onPeerEvent(state, newPeerList)
 			state.peerList = newPeerList
 			// applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 			publishWorldview()
+
+		case <-orderTicker.C:
+			commands = []command{{_type: broadcastNetMessage}}
+			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			// publishWorldview()
 		}
 	}
 }
@@ -160,4 +166,13 @@ func extractWorldView(state worldviewState, myID ElevID) WorldviewMsg {
 		PeerStates:   peerStates,
 		Peers:        state.peerList,
 	}
+}
+
+func findPeerState(peerList []Peer, id ElevID) localsingle.ElevatorState {
+	for _, peer := range peerList {
+		if peer.ID == id {
+			return peer.state
+		}
+	}
+	return localsingle.ElevatorState{}
 }
