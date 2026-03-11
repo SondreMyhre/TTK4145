@@ -47,7 +47,7 @@ func main() {
 
 	// Configuration
 	peermonitorConfig := peermonitor.PeerConfig{
-		Timeout:         10 * time.Second,
+		Timeout:         5 * time.Second,
 		TickInterval:    50 * time.Millisecond,
 		HeartBeatTicker: 1 * time.Second,
 	}
