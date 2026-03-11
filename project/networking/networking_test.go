@@ -1,12 +1,12 @@
 package networking
 
 import (
-	"testing"
-	"fmt"
-	"time"
-	peermonitor "project/peermonitor" 
-	ordersync "project/ordersync" 
 	"context"
+	"fmt"
+	ordersync "project/ordersync"
+	peermonitor "project/peermonitor"
+	"testing"
+	"time"
 )
 
 func TestNetworking(t *testing.T) {
@@ -16,9 +16,9 @@ func TestNetworking(t *testing.T) {
 	PeerMonitorRx := make(chan peermonitor.HeartBeat)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()	
+	defer cancel()
 
-	go Run(ctx , OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
+	go Run(ctx, OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
 
 	go func() {
 		var netMsg = ordersync.NetMsg{}

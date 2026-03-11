@@ -16,7 +16,7 @@ func Run(peerID string, ctx context.Context, cfg PeerConfig, heartBeatRx <-chan 
 	defer heartBeatTicker.Stop()
 
 	go sendHeartbeats(peerID, heartBeatTx, heartBeatTicker)
-	
+
 	peerList := make([]Peer, 0)
 
 	for {

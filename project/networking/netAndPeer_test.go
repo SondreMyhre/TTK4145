@@ -1,11 +1,11 @@
 package networking
 
 import (
-	ordersync "project/ordersync"    
-	peermonitor "project/peermonitor" 
+	"context"
+	ordersync "project/ordersync"
+	peermonitor "project/peermonitor"
 	"testing"
 	"time"
-	"context"
 )
 
 func TestSystem(t *testing.T) {
@@ -19,9 +19,9 @@ func TestSystem(t *testing.T) {
 
 	peermonitorConfig := peermonitor.PeerConfig{Timeout: 10 * time.Second, TickInterval: 50 * time.Millisecond, HeartBeatTicker: 1 * time.Second}
 	ctx := context.Background()
-	
-	go Run(ctx, OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)	
+
+	go Run(ctx, OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
 	go peermonitor.Run(peerID, ctx, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
-	select{}
+	select {}
 	// TO-DO: Fix peermonitor, so peermonitor and networking can be tested together
 }

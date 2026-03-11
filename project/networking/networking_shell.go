@@ -7,16 +7,15 @@ package networking
 // broadcast-ip on labpc: 10.100.23.255
 
 import (
-	ordersync "project/ordersync" 
-	peermonitor "project/peermonitor"
-	bcast "project/networking/bcast"
 	"context"
+	bcast "project/networking/bcast"
+	ordersync "project/ordersync"
+	peermonitor "project/peermonitor"
 )
 
 // Allow test injection
-var Transmitter = bcast.Transmitter 
+var Transmitter = bcast.Transmitter
 var Reciever = bcast.Receiver
-
 
 func Run(
 	ctx context.Context,
@@ -26,8 +25,7 @@ func Run(
 	peermonitorRx chan<- peermonitor.HeartBeat,
 ) {
 	go Transmitter(broadcastPort, ordersyncTx, peermonitorTx) //allowes testing
-	go Reciever(broadcastPort, ordersyncRx, peermonitorRx) // allowes testng (can be swapped out)
-
+	go Reciever(broadcastPort, ordersyncRx, peermonitorRx)    // allowes testng (can be swapped out)
 
 	// Reads messages from the channels, decodes them, and broadcasts
 	//go bcast.Transmitter(broadcastPort, ordersyncTx, peermonitorTx)
@@ -35,6 +33,6 @@ func Run(
 	// Reads messages from the network, decodes them and, send over respective channels
 	//go bcast.Receiver(broadcastPort, ordersyncRx, peermonitorRx)
 
-	<- ctx.Done()
+	<-ctx.Done()
 
 }

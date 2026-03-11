@@ -35,18 +35,20 @@ func RunWorldView(
 		worldViewChan <- worldview
 	}
 
-	for {
+	if !first {
 		var commands []command
 
-		if !first {
-			netMsg, ok := <-netRx
-			if !ok {
-				return fmt.Errorf("Worldview: netRx closed")
-			}
-			state, commands = onNetMsg(state, myID, netMsg)
-			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
-			publishWorldview()
-		} 
+		netMsg, ok := <-netRx
+		if !ok {
+			return fmt.Errorf("Worldview: netRx closed")
+		}
+		state, commands = onNetMsg(state, myID, netMsg)
+		applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+		publishWorldview()
+	}
+
+	for {
+		var commands []command
 
 		select {
 		case <-ctx.Done():

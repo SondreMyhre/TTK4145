@@ -24,8 +24,8 @@ func TestSystem(t *testing.T) {
 	go networking.Run(ctx, OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)
 
 	cfg := peermonitor.PeerConfig{
-		Timeout:      10 * time.Second,
-		TickInterval: 50 * time.Millisecond,
+		Timeout:         10 * time.Second,
+		TickInterval:    50 * time.Millisecond,
 		HeartBeatTicker: time.Hour,
 		// make sure HeartBeatTicker is set too (see next section)
 	}
