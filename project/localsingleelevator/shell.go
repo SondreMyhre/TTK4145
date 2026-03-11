@@ -33,10 +33,8 @@ func Run(
 
 	var commands []command
 
-	if elevio.GetFloor() == -1 {
-		commands = append(commands, elevator.onInitBetweenFloors()...)
-		executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
-	}
+	commands = append(commands, elevator.onInitBetweenFloors()...)
+	executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
 	for {
 		select {
