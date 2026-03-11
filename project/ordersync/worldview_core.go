@@ -223,7 +223,7 @@ func extractHallRequests(hallOrderMatrix HallOrderMatrix) HallRequests {
 	return hallRequests
 }
 
-func findPeerStatus(peerList []Peer, id ElevID) PeerStatus {
+func hasAlivePeers(myID ElevID, peerList []Peer) bool {
 	for _, peer := range peerList {
 		if peer.ID == id {
 			return peer.PeerStatus
