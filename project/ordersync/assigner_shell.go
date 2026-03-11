@@ -2,7 +2,7 @@ package ordersync
 
 import (
 	"context"
-	"fmt"
+	// "fmt"
 	localsingle "project/localsingleelevator"
 )
 
@@ -24,7 +24,7 @@ func RunAssigner(
 		case worldview := <-worldviewChan:
 			assigned, err := AssignRequests(worldview, myID)
 			if err != nil {
-				fmt.Printf("assigner: %v\n", err)
+				// fmt.Printf("assigner: %v\n", err)
 				continue
 			}
 
