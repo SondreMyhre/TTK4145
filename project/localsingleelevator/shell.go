@@ -9,7 +9,7 @@ import (
 
 const (
 	doorOpenDuration     = 3 * time.Second
-	motorWatchdogTimeout = 5 * time.Second
+	motorWatchdogTimeout = 3500 * time.Millisecond
 )
 
 func Run(
