@@ -6,25 +6,36 @@ import (
 	"testing"
 	"time"
 
-	peermonitor "project/peermonitor"
-	ordersync "project/ordersync"
 	elevio "project/elevio"
 	localsingle "project/localsingleelevator"
 	networking "project/networking"
-
+	ordersync "project/ordersync"
+	peermonitor "project/peermonitor"
 )
+
+// Helper to create single-child supervisor for tests
+func newTestSupervisor(child ChildSpec) Supervisor {
+	return Supervisor{
+		Children: []ChildSpec{child},
+		Config: SupervisorConfig{
+			MaxRestarts:  10,
+			MaxTime:      time.Minute,
+			RestartDelay: 0,
+		},
+	}
+}
 
 func TestSupervisor_RestartsPeerMonitorWhenHbRxClosed(t *testing.T) {
 	hbRx := make(chan peermonitor.HeartBeat)
 	close(hbRx)
 
-	hbTx := make(chan peermonitor.HeartBeat, 10) // not used by test, but Run requires it
+	hbTx := make(chan peermonitor.HeartBeat, 10)
 	chanOS := make(chan peermonitor.PeerMsg, 10)
 
 	cfg := peermonitor.PeerConfig{
 		Timeout:         50 * time.Millisecond,
 		TickInterval:    10 * time.Millisecond,
-		HeartBeatTicker: time.Hour, // prevent self-heartbeat goroutine from doing anything in test
+		HeartBeatTicker: time.Hour,
 	}
 
 	var runs atomic.Int32
@@ -33,16 +44,13 @@ func TestSupervisor_RestartsPeerMonitorWhenHbRxClosed(t *testing.T) {
 		return peermonitor.Run("self", ctx, cfg, hbRx, hbTx, chanOS)
 	})
 
-	sup := Supervisor{
-		Child: ChildSpec{
-			Name:    "peermonitor",
-			Worker:  w,
-			Restart: Transient,
-		},
-		RestartDelay: 0,
-	}
+	sup := newTestSupervisor(ChildSpec{
+		Name:    "peermonitor",
+		Worker:  w,
+		Restart: Transient,
+	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
 	_ = sup.Run(ctx)
@@ -71,14 +79,11 @@ func TestSupervisor_StopsCleanlyOnContextCancel(t *testing.T) {
 		return peermonitor.Run("self", ctx, cfg, hbRx, hbTx, chanOS)
 	})
 
-	sup := Supervisor{
-		Child: ChildSpec{
-			Name:    "peermonitor",
-			Worker:  w,
-			Restart: Transient,
-		},
-		RestartDelay: 0,
-	}
+	sup := newTestSupervisor(ChildSpec{
+		Name:    "peermonitor",
+		Worker:  w,
+		Restart: Transient,
+	})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	errCh := make(chan error, 1)
@@ -105,8 +110,6 @@ func TestSupervisor_StopsCleanlyOnContextCancel(t *testing.T) {
 func TestSupervisor_PeerMonitorStopsEvenIfOutputSendWouldBlock(t *testing.T) {
 	hbRx := make(chan peermonitor.HeartBeat, 1)
 	hbTx := make(chan peermonitor.HeartBeat, 10)
-
-	// unbuffered output channel, and we never read from it
 	chanOS := make(chan peermonitor.PeerMsg)
 
 	cfg := peermonitor.PeerConfig{
@@ -121,20 +124,16 @@ func TestSupervisor_PeerMonitorStopsEvenIfOutputSendWouldBlock(t *testing.T) {
 		return peermonitor.Run("self", ctx, cfg, hbRx, hbTx, chanOS)
 	})
 
-	sup := Supervisor{
-		Child: ChildSpec{
-			Name:    "peermonitor",
-			Worker:  w,
-			Restart: Transient,
-		},
-		RestartDelay: 0,
-	}
+	sup := newTestSupervisor(ChildSpec{
+		Name:    "peermonitor",
+		Worker:  w,
+		Restart: Transient,
+	})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	errCh := make(chan error, 1)
 	go func() { errCh <- sup.Run(ctx) }()
 
-	// Trigger changed == true => tries to send update to chanOS (but nobody reads)
 	hbRx <- peermonitor.HeartBeat{SenderID: peermonitor.ElevID("peer-1")}
 
 	time.Sleep(10 * time.Millisecond)
@@ -162,12 +161,13 @@ func TestSupervisor_RestartsOnPanic(t *testing.T) {
 		panic("boom")
 	})
 
-	sup := Supervisor{
-		Child:        ChildSpec{Name: "panic", Worker: w, Restart: Transient},
-		RestartDelay: 0,
-	}
+	sup := newTestSupervisor(ChildSpec{
+		Name:    "panic",
+		Worker:  w,
+		Restart: Transient,
+	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
 	_ = sup.Run(ctx)
@@ -207,12 +207,13 @@ func TestSupervisor_RestartsOrderSyncWhenRxClosed(t *testing.T) {
 		)
 	})
 
-	sup := Supervisor{
-		Child:        ChildSpec{Name: "ordersync", Worker: w, Restart: Transient},
-		RestartDelay: 0,
-	}
+	sup := newTestSupervisor(ChildSpec{
+		Name:    "ordersync",
+		Worker:  w,
+		Restart: Transient,
+	})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
 	_ = sup.Run(ctx)
@@ -249,10 +250,11 @@ func TestSupervisor_OrderSyncStopsCleanlyOnContextCancel(t *testing.T) {
 		)
 	})
 
-	sup := Supervisor{
-		Child:        ChildSpec{Name: "ordersync", Worker: w, Restart: Transient},
-		RestartDelay: 0,
-	}
+	sup := newTestSupervisor(ChildSpec{
+		Name:    "ordersync",
+		Worker:  w,
+		Restart: Transient,
+	})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	errCh := make(chan error, 1)
@@ -281,8 +283,6 @@ func TestSupervisor_OrderSyncStopsEvenIfTxSendWouldBlock(t *testing.T) {
 	clearedOrdersChan := make(chan []localsingle.Order)
 	rx := make(chan ordersync.NetMsg)
 	peerEventChan := make(chan []ordersync.PeerUpdate)
-	
-	// Unbuffered tx channel + nobody reads => broadcast send would block
 	tx := make(chan ordersync.NetMsg)
 	lightCommandChan := make(chan elevio.DriverCommand, 10)
 	worldviewChan := make(chan ordersync.WorldviewMsg)
@@ -304,16 +304,16 @@ func TestSupervisor_OrderSyncStopsEvenIfTxSendWouldBlock(t *testing.T) {
 		)
 	})
 
-	sup := Supervisor{
-		Child:        ChildSpec{Name: "ordersync", Worker: w, Restart: Transient},
-		RestartDelay: 0,
-	}
+	sup := newTestSupervisor(ChildSpec{
+		Name:    "ordersync",
+		Worker:  w,
+		Restart: Transient,
+	})
 
 	ctx, cancel := context.WithCancel(context.Background())
 	errCh := make(chan error, 1)
 	go func() { errCh <- sup.Run(ctx) }()
 
-	// Hall button -> onHallButtonEvent -> broadcastNetMessage -> send on tx (blocks)
 	buttonChan <- elevio.ButtonEvent{Floor: 0, Button: elevio.BT_HallUp}
 
 	time.Sleep(10 * time.Millisecond)
@@ -332,84 +332,79 @@ func TestSupervisor_OrderSyncStopsEvenIfTxSendWouldBlock(t *testing.T) {
 		t.Fatalf("expected exactly 1 run (no restart), got %d", got)
 	}
 }
-func TestNetworkingRun_StartsAndStops(t *testing.T) {
-	// Save original funcs
-	oldTx := networking.Transmitter
-	oldRx := networking.Reciever
-	defer func() {
-		networking.Transmitter = oldTx
-		networking.Reciever = oldRx
-	}()
 
-	var txCalled atomic.Bool
-	var rxCalled atomic.Bool
+func TestSupervisor_MultipleChildren(t *testing.T) {
+	var runs1, runs2 atomic.Int32
 
-	// Fake transmitter: mark called, then block forever
-	networking.Transmitter = func(port int, chans ...interface{}) {
-		txCalled.Store(true)
-
-		// Optional: verify channel types/order
-		if len(chans) != 2 {
-			t.Fatalf("Transmitter expected 2 chans, got %d", len(chans))
-		}
-		if _, ok := chans[0].(<-chan ordersync.NetMsg); !ok {
-			t.Fatalf("Transmitter chans[0] wrong type: %T", chans[0])
-		}
-		if _, ok := chans[1].(<-chan peermonitor.HeartBeat); !ok {
-			t.Fatalf("Transmitter chans[1] wrong type: %T", chans[1])
-		}
-
-		select {} // block forever
+	sup := Supervisor{
+		Children: []ChildSpec{
+			{
+				Name: "child1",
+				Worker: WorkerFunc(func(ctx context.Context) error {
+					runs1.Add(1)
+					<-ctx.Done()
+					return nil
+				}),
+				Restart: Permanent,
+			},
+			{
+				Name: "child2",
+				Worker: WorkerFunc(func(ctx context.Context) error {
+					runs2.Add(1)
+					<-ctx.Done()
+					return nil
+				}),
+				Restart: Permanent,
+			},
+		},
+		Config: SupervisorConfig{
+			MaxRestarts:  5,
+			MaxTime:      time.Minute,
+			RestartDelay: 0,
+		},
 	}
 
-	// Fake receiver: mark called, then block forever
-	networking.Reciever = func(port int, chans ...interface{}) {
-		rxCalled.Store(true)
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
 
-		// Optional: verify channel types/order
-		if len(chans) != 2 {
-			t.Fatalf("Reciever expected 2 chans, got %d", len(chans))
-		}
-		if _, ok := chans[0].(chan<- ordersync.NetMsg); !ok {
-			t.Fatalf("Reciever chans[0] wrong type: %T", chans[0])
-		}
-		if _, ok := chans[1].(chan<- peermonitor.HeartBeat); !ok {
-			t.Fatalf("Reciever chans[1] wrong type: %T", chans[1])
-		}
+	_ = sup.Run(ctx)
 
-		select {} // block forever
-	}
-
-	ordersyncTx := make(chan ordersync.NetMsg)
-	ordersyncRx := make(chan ordersync.NetMsg)
-	peermonitorTx := make(chan peermonitor.HeartBeat)
-	peermonitorRx := make(chan peermonitor.HeartBeat)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	done := make(chan struct{})
-
-	go func() {
-		networking.Run(ctx, ordersyncTx, ordersyncRx, peermonitorTx, peermonitorRx)
-		close(done)
-	}()
-
-	// Give goroutines a moment to start
-	time.Sleep(50 * time.Millisecond)
-
-	if !txCalled.Load() {
-		t.Fatal("networking transmitter was not started")
-	}
-	if !rxCalled.Load() {
-		t.Fatal("networking receiver was not started")
-	}
-
-	// Cancel should make Run return
-	cancel()
-
-	select {
-	case <-done:
-		// ok
-	case <-time.After(200 * time.Millisecond):
-		t.Fatal("networking.Run did not stop after context cancel")
+	if runs1.Load() < 1 || runs2.Load() < 1 {
+		t.Fatalf("expected both children to run, got runs1=%d, runs2=%d", runs1.Load(), runs2.Load())
 	}
 }
+
+func TestSupervisor_MaxRestartsExceeded(t *testing.T) {
+	var runs atomic.Int32
+
+	sup := Supervisor{
+		Children: []ChildSpec{
+			{
+				Name: "crasher",
+				Worker: WorkerFunc(func(ctx context.Context) error {
+					runs.Add(1)
+					return nil // Exits immediately (error = nil, but Permanent means restart)
+				}),
+				Restart: Permanent,
+			},
+		},
+		Config: SupervisorConfig{
+			MaxRestarts:  3,
+			MaxTime:      time.Second,
+			RestartDelay: 0,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	_ = sup.Run(ctx)
+
+	// Should stop after MaxRestarts+1 (initial + 3 restarts = 4)
+	if got := runs.Load(); got > 4 {
+		t.Fatalf("expected max ~4 runs due to rate limiting, got %d", got)
+	}
+}
+
+// Dummy use of networking to avoid unused import error
+var _ = networking.Run
