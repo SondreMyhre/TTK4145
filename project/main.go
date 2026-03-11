@@ -16,6 +16,7 @@ import (
 func main() {
 	peerID := flag.String("peerID", "0", "peerID of the elevator to be created")
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
+	first := flag.Bool("first", false, "If this is the first elevator in the system")
 	flag.Parse()
 
 	elevio.Init(*peerID, *serverAddr, 4)
@@ -110,7 +111,7 @@ func main() {
 		{
 			Name: "worldview",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return ordersync.RunWorldView(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
+				return ordersync.RunWorldView(ctx, ordersync.ElevID(*peerID), *first, buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
 			}),
 			Restart: supervisor.Permanent,
 		},

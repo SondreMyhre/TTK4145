@@ -196,6 +196,7 @@ func TestSupervisor_RestartsOrderSyncWhenRxClosed(t *testing.T) {
 		return ordersync.RunWorldView(
 			ctx,
 			ordersync.ElevID("self"),
+			false,
 			buttonChan,
 			localStateChan,
 			clearedOrdersChan,
@@ -239,6 +240,7 @@ func TestSupervisor_OrderSyncStopsCleanlyOnContextCancel(t *testing.T) {
 		return ordersync.RunWorldView(
 			ctx,
 			ordersync.ElevID("self"),
+			false,
 			buttonChan,
 			localStateChan,
 			clearedOrdersChan,
@@ -293,6 +295,7 @@ func TestSupervisor_OrderSyncStopsEvenIfTxSendWouldBlock(t *testing.T) {
 		return ordersync.RunWorldView(
 			ctx,
 			ordersync.ElevID("self"),
+			false,
 			buttonChan,
 			localStateChan,
 			clearedOrdersChan,

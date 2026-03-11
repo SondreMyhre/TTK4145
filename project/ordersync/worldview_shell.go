@@ -12,6 +12,7 @@ import (
 func RunWorldView(
 	ctx context.Context,
 	myID ElevID,
+	first bool,
 
 	buttonChan <-chan elevio.ButtonEvent,
 	localStateChan <-chan localsingle.ElevatorState,
@@ -36,6 +37,16 @@ func RunWorldView(
 
 	for {
 		var commands []command
+
+		if !first {
+			netMsg, ok := <-netRx
+			if !ok {
+				return fmt.Errorf("Worldview: netRx closed")
+			}
+			state, commands = onNetMsg(state, myID, netMsg)
+			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			publishWorldview()
+		} 
 
 		select {
 		case <-ctx.Done():
