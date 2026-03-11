@@ -2,7 +2,7 @@ package ordersync
 
 import (
 	"encoding/json"
-	// "fmt"
+	"fmt"
 	"os/exec"
 	"runtime"
 
@@ -76,6 +76,9 @@ func AssignRequests(worldview WorldviewMsg, myID ElevID) ([N_FLOORS][N_BUTTONS]b
 	}
 
 	hraResult := callHRA(input)
+	if hraResult == nil {
+		return result, fmt.Errorf("HRA call failed")
+	}
 	myAssignments := hraResult[string(myID)]
 
 	for floor := range N_FLOORS {
