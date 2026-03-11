@@ -72,8 +72,8 @@ const (
 )
 
 type command struct {
-	_type commandType
-	value any
+	cmdType commandType
+	value   any
 }
 
 type buttonLampArgs struct {
