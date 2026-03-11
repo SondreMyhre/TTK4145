@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	doorOpenDuration = 3 * time.Second
+	doorOpenDuration     = 3 * time.Second
 	motorWatchdogTimeout = 5 * time.Second
 )
 
@@ -32,8 +32,6 @@ func Run(
 	motorWatchdogTimer.Stop()
 
 	var commands []command
-
-
 
 	if elevio.GetFloor() == -1 {
 		commands = append(commands, elevator.onInitBetweenFloors()...)
@@ -78,7 +76,7 @@ func executeCommands(
 	motorWatchdogTimer *time.Timer,
 ) {
 	for _, command := range commands {
-		switch command._type {
+		switch command.cmdType {
 		case setMotorDirection:
 			dir := command.value.(Direction)
 			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
