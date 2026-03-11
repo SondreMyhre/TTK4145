@@ -125,6 +125,16 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 							Value:  true,
 						},
 					})
+				case Confirmed:
+					local.Status = Confirmed
+					commands = append(commands, command{
+						_type: setButtonLamp,
+						value: buttonLampArgs{
+							Floor:  floor,
+							Button: button,
+							Value:  true,
+						},
+					})
 				}
 
 			} else if remote.Version == local.Version {
