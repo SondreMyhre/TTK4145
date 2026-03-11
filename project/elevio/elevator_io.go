@@ -31,6 +31,7 @@ const (
 	BT_HallUp   ButtonType = 0
 	BT_HallDown            = 1
 	BT_Cab                 = 2
+	N_BUTTONS			   = 3
 )
 
 type ButtonEvent struct {
@@ -49,6 +50,8 @@ func Init(peerID string, addr string, numFloors int) {
 		fmt.Println("Driver already initialized!")
 		return
 	}
+
+	
 	
 	_numFloors = numFloors
 	_mtx = sync.Mutex{}
@@ -58,6 +61,12 @@ func Init(peerID string, addr string, numFloors int) {
 		panic(err.Error())
 	}
 	_initialized = true
+
+	for floor := range numFloors {
+		for button := range N_BUTTONS {
+			SetButtonLamp(ButtonType(button), floor, false)
+		}
+	}
 }
 
 
