@@ -155,8 +155,9 @@ func extractWorldView(state worldviewState, myID ElevID) WorldviewMsg {
 	peerStates := make(map[ElevID]localsingle.ElevatorState)
 	peerStates[myID] = state.localState
 	for _, peer := range state.peerList {
-		peerStates[peer.ID] = peer.state
-
+		if peer.ID != myID {
+			peerStates[peer.ID] = peer.state
+		}
 	}
 
 	return WorldviewMsg{
