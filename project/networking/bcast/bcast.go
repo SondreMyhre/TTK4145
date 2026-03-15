@@ -66,9 +66,9 @@ func Receiver(port int, chans ...interface{}) {
 	var buf [bufSize]byte
 	conn := conn.DialBroadcastUDP(port)
 	for {
-		n, _, e := conn.ReadFrom(buf[0:])
-		if e != nil {
-			fmt.Printf("bcast.Receiver(%d, ...):ReadFrom() failed: \"%+v\"\n", port, e)
+		n, _, err := conn.ReadFrom(buf[0:])
+		if err != nil {
+			fmt.Printf("bcast.Receiver(%d, ...):ReadFrom() failed: \"%+v\"\n", port, err)
 		}
 
 		var ttj typeTaggedJSON
@@ -100,18 +100,18 @@ type typeTaggedJSON struct {
 //  - Why there is no `isMarshalable()` function in encoding/json is a mystery,
 //    so the tests on element type are hand-copied from `encoding/json/encode.go`
 func checkArgs(chans ...interface{}) {
-	n := 0
+	num := 0
 	for range chans {
-		n++
+		num++
 	}
-	elemTypes := make([]reflect.Type, n)
+	elemTypes := make([]reflect.Type, num)
 
-	for i, ch := range chans {
+	for idx, ch := range chans {
 		// Must be a channel
 		if reflect.ValueOf(ch).Kind() != reflect.Chan {
 			panic(fmt.Sprintf(
 				"Argument must be a channel, got '%s' instead (arg# %d)",
-				reflect.TypeOf(ch).String(), i+1))
+				reflect.TypeOf(ch).String(), idx+1))
 		}
 
 		elemType := reflect.TypeOf(ch).Elem()
@@ -121,13 +121,13 @@ func checkArgs(chans ...interface{}) {
 			if e == elemType {
 				panic(fmt.Sprintf(
 					"All channels must have mutually different element types, arg# %d and arg# %d both have element type '%s'",
-					j+1, i+1, e.String()))
+					j+1, idx+1, e.String()))
 			}
 		}
-		elemTypes[i] = elemType
+		elemTypes[idx] = elemType
 
 		// Element type must be encodable with JSON
-		checkTypeRecursive(elemType, []int{i+1})
+		checkTypeRecursive(elemType, []int{idx+1})
 
 	}
 }

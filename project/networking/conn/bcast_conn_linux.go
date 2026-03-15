@@ -19,10 +19,10 @@ func DialBroadcastUDP(port int) net.PacketConn {
 	syscall.Bind(s, &syscall.SockaddrInet4{Port: port})
 	if err != nil { fmt.Println("Error: Bind:", err) }
 
-	f := os.NewFile(uintptr(s), "")
-	conn, err := net.FilePacketConn(f)
+	file := os.NewFile(uintptr(s), "")
+	conn, err := net.FilePacketConn(file)
 	if err != nil { fmt.Println("Error: FilePacketConn:", err) }
-	f.Close()
+	file.Close()
 
 	return conn
 }

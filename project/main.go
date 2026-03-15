@@ -131,7 +131,7 @@ func main() {
 	}
 
 	// Create and run supervisor
-	sup := supervisor.NewWithConfig(children, supervisor.SupervisorConfig{
+	sup := supervisor.NewSupervisor(children, supervisor.SupervisorConfig{
 		MaxRestarts:  5,
 		MaxTime:      30 * time.Second,
 		RestartDelay: 200 * time.Millisecond,

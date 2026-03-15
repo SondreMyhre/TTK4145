@@ -82,7 +82,7 @@ const (
 )
 
 type command struct {
-	_type commandType
+	cmdType commandType
 	value any
 }
 
