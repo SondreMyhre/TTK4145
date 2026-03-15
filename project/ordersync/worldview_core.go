@@ -175,13 +175,13 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 
 	if msg.CabCalls != nil {
 		state.cabRequests[senderID] = msg.CabCalls[senderID]
-		for i := range state.pendingCabCalls {
-			if state.pendingCabCalls[i] && msg.CabCalls[myID][i] {
-				state.pendingCabCalls[i] = false
+		for floor := range state.pendingCabCalls {
+			if state.pendingCabCalls[floor] && msg.CabCalls[myID][i] {
+				state.pendingCabCalls[floor] = false
 				commands = append(commands, command{
 					cmdType: setButtonLamp,
 					value: buttonLampArgs{
-						Floor:  i,
+						Floor:  floor,
 						Button: BT_CAB,
 						Value:  true,
 					},
