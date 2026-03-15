@@ -88,9 +88,9 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 
 	broadcastNeeded := false
 
-	for i := range state.peerList {
-		if state.peerList[i].ID == senderID {
-			state.peerList[i].state = msg.SenderState
+	for idx := range state.peerList {
+		if state.peerList[idx].ID == senderID {
+			state.peerList[idx].state = msg.SenderState
 			break
 		}
 	}
@@ -176,7 +176,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 	if msg.CabCalls != nil {
 		state.cabRequests[senderID] = msg.CabCalls[senderID]
 		for floor := range state.pendingCabCalls {
-			if state.pendingCabCalls[floor] && msg.CabCalls[myID][i] {
+			if state.pendingCabCalls[floor] && msg.CabCalls[myID][floor] {
 				state.pendingCabCalls[floor] = false
 				commands = append(commands, command{
 					cmdType: setButtonLamp,
