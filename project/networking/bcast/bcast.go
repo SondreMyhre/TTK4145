@@ -106,28 +106,28 @@ func checkArgs(chans ...interface{}) {
 	}
 	elemTypes := make([]reflect.Type, num)
 
-	for idx, ch := range chans {
+	for i_idx, ch := range chans {
 		// Must be a channel
 		if reflect.ValueOf(ch).Kind() != reflect.Chan {
 			panic(fmt.Sprintf(
 				"Argument must be a channel, got '%s' instead (arg# %d)",
-				reflect.TypeOf(ch).String(), idx+1))
+				reflect.TypeOf(ch).String(), i_idx + 1))
 		}
 
 		elemType := reflect.TypeOf(ch).Elem()
 
 		// Element type must not be repeated
-		for j, e := range elemTypes {
+		for j_idx, e := range elemTypes {
 			if e == elemType {
 				panic(fmt.Sprintf(
 					"All channels must have mutually different element types, arg# %d and arg# %d both have element type '%s'",
-					j+1, idx+1, e.String()))
+					j_idx + 1, i_idx + 1, e.String()))
 			}
 		}
-		elemTypes[idx] = elemType
+		elemTypes[i_idx] = elemType
 
 		// Element type must be encodable with JSON
-		checkTypeRecursive(elemType, []int{idx+1})
+		checkTypeRecursive(elemType, []int{i_idx+1})
 
 	}
 }
