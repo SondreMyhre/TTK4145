@@ -1,9 +1,9 @@
 package localsingle
 
 func (elevator *elevator) requestsAbove() bool {
-	for f := elevator.state.Floor + 1; f < N_FLOORS; f++ {
+	for floor := elevator.state.Floor + 1; floor < N_FLOORS; floor++ {
 		for btn := range N_BUTTONS {
-			if elevator.requests[f][btn] {
+			if elevator.requests[floor][btn] {
 				return true
 			}
 		}
@@ -12,9 +12,9 @@ func (elevator *elevator) requestsAbove() bool {
 }
 
 func (elevator *elevator) requestsBelow() bool {
-	for f := range elevator.state.Floor {
+	for floor := range elevator.state.Floor {
 		for btn := range N_BUTTONS {
-			if elevator.requests[f][btn] {
+			if elevator.requests[floor][btn] {
 				return true
 			}
 		}

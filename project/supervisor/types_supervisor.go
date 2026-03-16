@@ -58,9 +58,9 @@ type restartTracker struct {
 	window     time.Duration
 }
 
-// Default configuration values
-const (
-	DefaultRestartDelay = 100 * time.Millisecond
-	DefaultMaxRestarts  = 5
-	DefaultMaxTime      = 10 * time.Second
-)
+// // Default configuration values
+// const (
+// 	DefaultRestartDelay = 100 * time.Millisecond
+// 	DefaultMaxRestarts  = 5
+// 	DefaultMaxTime      = 10 * time.Second
+// )
