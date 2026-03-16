@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"maps"
 	elevio "project/elevio"
-	localsingle "project/localsingle"
+	localsingle "project/elevatorcontroller"
 	"time"
 )
 

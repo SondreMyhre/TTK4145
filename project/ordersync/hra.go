@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"runtime"
 
-	localsingle "project/localsingle"
+	localsingle "project/elevatorcontroller"
 )
 
 type HRAElevState struct {

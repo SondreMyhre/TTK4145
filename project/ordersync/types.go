@@ -1,7 +1,7 @@
 package ordersync
 
 import (
-	localsingle "project/localsingle"
+	localsingle "project/elevatorcontroller"
 )
 
 const (

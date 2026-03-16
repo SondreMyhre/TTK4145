@@ -1,4 +1,4 @@
-package localsingle
+package elevatorcontroller
 
 func onInitBetweenFloors(elevator elevator) (elevator, []command) {
 	var commands []command

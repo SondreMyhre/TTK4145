@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 	elevio "project/elevio"
-	localsingle "project/localsingle"
+	localsingle "project/elevatorcontroller"
 	networking "project/networking"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
@@ -50,13 +50,6 @@ func main() {
 	// Channel between worldview and assigner in ordersync
 	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
 
-	// Configuration
-	peermonitorConfig := peermonitor.PeerConfig{
-		Timeout:         5 * time.Second,
-		TickInterval:    50 * time.Millisecond,
-		HeartBeatTicker: 1 * time.Second,
-	}
-
 	// elevio polling routines
 	go elevio.PollButtons(buttonChan)
 	go elevio.PollFloorSensor(floorChan)
@@ -83,7 +76,7 @@ func main() {
 		{
 			Name: "peermonitor",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return peermonitor.Run(ctx, *peerID, peermonitorConfig, peerMonitorRx, peerMonitorTx, peerEventChan)
+				return peermonitor.Run(ctx, *peerID, peerMonitorRx, peerEventChan, peerMonitorTx)
 			}),
 			Restart: supervisor.Permanent,
 		},
