@@ -7,12 +7,11 @@ package networking
 // broadcast-ip on labpc: 10.100.23.255
 
 import (
-	ordersync "project/ordersync" 
-	peermonitor "project/peermonitor"
-	bcast "project/networking/bcast"
 	"context"
+	bcast "project/networking/bcast"
+	ordersync "project/ordersync"
+	peermonitor "project/peermonitor"
 )
-
 
 func Run(
 	ctx context.Context,
@@ -24,6 +23,6 @@ func Run(
 	go bcast.Transmitter(broadcastPort, ordersyncTx, peermonitorTx)
 	go bcast.Receiver(broadcastPort, ordersyncRx, peermonitorRx)
 
-	<- ctx.Done()
+	<-ctx.Done()
 
 }

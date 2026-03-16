@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-const(
-	peerTimeout            = 5 * time.Second
-	peerTickInterval       = 50 * time.Millisecond
-	heartBeatTickInterval  = 1 * time.Second
+const (
+	peerTimeout           = 5 * time.Second
+	peerTickInterval      = 50 * time.Millisecond
+	heartBeatTickInterval = 1 * time.Second
 )
 
 type ElevID = ordersync.ElevID

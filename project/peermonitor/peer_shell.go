@@ -6,12 +6,12 @@ import (
 )
 
 func Run(ctx context.Context,
-		peerID string,  
+	peerID string,
 
-		heartBeatRx <-chan HeartBeat, 
+	heartBeatRx <-chan HeartBeat,
 
-		ordersyncTx chan<- PeerMsg,
-		heartBeatTx chan<- HeartBeat,
+	ordersyncTx chan<- PeerMsg,
+	heartBeatTx chan<- HeartBeat,
 ) error {
 	peerTicker := time.NewTicker(peerTickInterval)
 	heartBeatTicker := time.NewTicker(heartBeatTickInterval)
@@ -27,7 +27,7 @@ func Run(ctx context.Context,
 		case msg := <-heartBeatRx:
 			var changed bool
 			now := time.Now()
-			peerList, changed = HandleHeartbeats(peerList, msg, now) 
+			peerList, changed = HandleHeartbeats(peerList, msg, now)
 			if changed {
 				select {
 				case ordersyncTx <- ToPeerUpdate(peerList):

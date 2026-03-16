@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	elevio "project/elevio"
 	localsingle "project/elevatorcontroller"
+	elevio "project/elevio"
 	"time"
 )
 
