@@ -3,8 +3,8 @@ package elevatorcontroller
 import (
 	"context"
 	"fmt"
-	"time"
 	elevio "project/elevio"
+	"time"
 )
 
 const (
@@ -29,7 +29,6 @@ func Run(
 	doorTimer := time.NewTimer(doorOpenDuration)
 	doorTimer.Stop()
 	motorTimer.Stop()
-
 
 	var commands []command
 

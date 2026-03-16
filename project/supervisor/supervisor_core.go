@@ -8,12 +8,6 @@ import (
 // WorkerFunc implements Worker interface
 func (fn WorkerFunc) Run(ctx context.Context) error { return fn(ctx) }
 
-const(
-	MaxRestarts 	=  5
-	MaxTime 		= 30 * time.Second
-	RestartDelay 	= 200 * time.Millisecond
-)
-
 // NewSupervisor creates a supervisor with default config
 func NewSupervisor(children []ChildSpec) Supervisor {
 	return Supervisor{
@@ -26,7 +20,6 @@ func NewSupervisor(children []ChildSpec) Supervisor {
 	}
 }
 
- 
 // shouldRestart determines if a child should be restarted based on policy and error
 func shouldRestart(policy RestartPolicy, err error) bool {
 	switch policy {

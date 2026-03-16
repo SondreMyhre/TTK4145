@@ -6,6 +6,12 @@ import (
 	"time"
 )
 
+const (
+	MaxRestarts  = 5
+	MaxTime      = 5 * time.Second
+	RestartDelay = 200 * time.Millisecond
+)
+
 // Worker interface for any runnable component
 type Worker interface {
 	Run(ctx context.Context) error
@@ -57,10 +63,3 @@ type restartTracker struct {
 	maxCount   int
 	window     time.Duration
 }
-
-// // Default configuration values
-// const (
-// 	DefaultRestartDelay = 100 * time.Millisecond
-// 	DefaultMaxRestarts  = 5
-// 	DefaultMaxTime      = 10 * time.Second
-// )

@@ -1,10 +1,10 @@
 package bcast
 
 import (
-	conn "project/networking/conn"
 	"encoding/json"
 	"fmt"
 	"net"
+	conn "project/networking/conn"
 	"reflect"
 )
 
@@ -31,7 +31,7 @@ func Transmitter(port int, chans ...interface{}) {
 	}
 
 	conn := conn.DialBroadcastUDP(port)
-	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("10.100.23.255:%d", port))
+	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("255.255.255.255:%d", port))
 	for {
 		chosen, value, _ := reflect.Select(selectCases)
 		jsonstr, _ := json.Marshal(value.Interface())
@@ -40,17 +40,15 @@ func Transmitter(port int, chans ...interface{}) {
 			JSON:   jsonstr,
 		})
 		if len(ttj) > bufSize {
-		    panic(fmt.Sprintf(
-		        "Tried to send a message longer than the buffer size (length: %d, buffer size: %d)\n\t'%s'\n"+
-		        "Either send smaller packets, or go to network/bcast/bcast.go and increase the buffer size",
-		        len(ttj), bufSize, string(ttj)))
+			panic(fmt.Sprintf(
+				"Tried to send a message longer than the buffer size (length: %d, buffer size: %d)\n\t'%s'\n"+
+					"Either send smaller packets, or go to network/bcast/bcast.go and increase the buffer size",
+				len(ttj), bufSize, string(ttj)))
 		}
 		conn.WriteTo(ttj, addr)
-    		
+
 	}
 }
-
-
 
 // Matches type-tagged JSON received on `port` to element types of `chans`, then
 // sends the decoded value on the corresponding channel
@@ -111,7 +109,7 @@ func checkArgs(chans ...interface{}) {
 		if reflect.ValueOf(ch).Kind() != reflect.Chan {
 			panic(fmt.Sprintf(
 				"Argument must be a channel, got '%s' instead (arg# %d)",
-				reflect.TypeOf(ch).String(), i + 1))
+				reflect.TypeOf(ch).String(), i+1))
 		}
 
 		elemType := reflect.TypeOf(ch).Elem()
@@ -121,19 +119,18 @@ func checkArgs(chans ...interface{}) {
 			if e == elemType {
 				panic(fmt.Sprintf(
 					"All channels must have mutually different element types, arg# %d and arg# %d both have element type '%s'",
-					j + 1, i + 1, e.String()))
+					j+1, i+1, e.String()))
 			}
 		}
 		elemTypes[i] = elemType
 
 		// Element type must be encodable with JSON
-		checkTypeRecursive(elemType, []int{i+1})
+		checkTypeRecursive(elemType, []int{i + 1})
 
 	}
 }
 
-
-func checkTypeRecursive(val reflect.Type, offsets []int){
+func checkTypeRecursive(val reflect.Type, offsets []int) {
 	switch val.Kind() {
 	case reflect.Complex64, reflect.Complex128, reflect.Chan, reflect.Func, reflect.UnsafePointer:
 		panic(fmt.Sprintf(
