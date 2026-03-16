@@ -5,7 +5,11 @@ import (
 	"time"
 )
 
-// types
+const(
+	peerTimeout            = 5 * time.Second
+	peerTickInterval       = 50 * time.Millisecond
+	heartBeatTickInterval  = 1 * time.Second
+)
 
 type ElevID = ordersync.ElevID
 type PeerStatus = ordersync.PeerStatus
@@ -22,14 +26,13 @@ type HeartBeat struct {
 }
 
 type Peer struct {
-	//Peermonitors peer struct differs from ordersyncs
 	ID         ElevID
 	PeerStatus PeerStatus
 	lastSeen   time.Time
 }
 
 type PeerConfig struct {
-	Timeout         time.Duration // How long before a peer is declared dead
-	TickInterval    time.Duration // internall ticker
+	Timeout         time.Duration
+	TickInterval    time.Duration
 	HeartBeatTicker time.Duration
 }

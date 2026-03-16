@@ -45,13 +45,6 @@ func main() {
 
 	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
 
-	// Configuration
-	peermonitorConfig := peermonitor.PeerConfig{
-		Timeout:         5 * time.Second,
-		TickInterval:    50 * time.Millisecond,
-		HeartBeatTicker: 1 * time.Second,
-	}
-
 	// Define supervised children
 	children := []supervisor.ChildSpec{
 		// Elevio routines - these are infinite loops, wrap them to be context-aware
@@ -103,7 +96,7 @@ func main() {
 		{
 			Name: "peermonitor",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return peermonitor.Run(peermonitorConfig, *peerID, ctx, peerMonitorRx, peerEventChan, peerMonitorTx)
+				return peermonitor.Run(*peerID, ctx, peerMonitorRx, peerEventChan, peerMonitorTx)
 			}),
 			Restart: supervisor.Permanent,
 		},

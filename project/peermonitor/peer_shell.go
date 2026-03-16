@@ -5,8 +5,7 @@ import (
 	"time"
 )
 
-func Run(cfg PeerConfig,
-		peerID string, 
+func Run(peerID string, 
 		ctx context.Context,  
 
 		heartBeatRx <-chan HeartBeat, 
@@ -14,8 +13,8 @@ func Run(cfg PeerConfig,
 		ordersyncTx chan<- PeerMsg,
 		heartBeatTx chan<- HeartBeat,
 ) error {
-	peerTicker := time.NewTicker(cfg.TickInterval)
-	heartBeatTicker := time.NewTicker(cfg.HeartBeatTicker)
+	peerTicker := time.NewTicker(peerTickInterval)
+	heartBeatTicker := time.NewTicker(heartBeatTickInterval)
 	defer peerTicker.Stop()
 	defer heartBeatTicker.Stop()
 	peerList := make([]Peer, 0)
@@ -40,7 +39,7 @@ func Run(cfg PeerConfig,
 		case <-peerTicker.C:
 			var timeoutChanged bool
 			now := time.Now()
-			peerList, timeoutChanged = CheckTimeouts(peerList, now, cfg.Timeout)
+			peerList, timeoutChanged = CheckTimeouts(peerList, now, peerTimeout)
 			if timeoutChanged {
 				select {
 				case ordersyncTx <- ToPeerUpdate(peerList):
