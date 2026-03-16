@@ -57,46 +57,21 @@ func main() {
 		HeartBeatTicker: 1 * time.Second,
 	}
 
+	// elevio polling routines
+	go elevio.PollButtons(buttonChan)
+	go elevio.PollFloorSensor(floorChan)
+	go elevio.PollObstructionSwitch(obstructionChan)
+
 	// Define supervised children
 	children := []supervisor.ChildSpec{
-		// Elevio routines
 		{
-			Name: "driver",
+			Name: "elevio",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				go elevio.RunDriver(driverCommandChan)
-				<-ctx.Done()
+				elevio.RunDriver(ctx, driverCommandChan)
 				return nil
 			}),
 			Restart: supervisor.Permanent,
 		},
-		{
-			Name: "poll-buttons",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				go elevio.PollButtons(buttonChan)
-				<-ctx.Done()
-				return nil
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "poll-floor",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				go elevio.PollFloorSensor(floorChan)
-				<-ctx.Done()
-				return nil
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "poll-obstruction",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				go elevio.PollObstructionSwitch(obstructionChan)
-				<-ctx.Done()
-				return nil
-			}),
-			Restart: supervisor.Permanent,
-		},
-		// Core system components
 		{
 			Name: "networking",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
