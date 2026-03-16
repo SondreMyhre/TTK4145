@@ -5,12 +5,7 @@ import (
 	"sync"
 	"net"
 	"fmt"
-	"log"
 )
-
-
-//KAN TRENGE Å SKRIVES MER LESELIG
-
 
 const _pollRate = 20 * time.Millisecond
 
@@ -43,18 +38,13 @@ type ButtonEvent struct {
 
 
 
-func Init(peerID string, addr string, numFloors int) {
-	if peerID == "0" {
-		log.Fatal("Not valid peerID.")
-	}
+func Init(addr string, numFloors int) {
 
 	if _initialized {
 		fmt.Println("Driver already initialized!")
 		return
 	}
 
-	
-	
 	_numFloors = numFloors
 	_mtx = sync.Mutex{}
 	var err error

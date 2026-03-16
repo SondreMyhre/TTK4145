@@ -25,7 +25,7 @@ func TestRun_HeartbeatDoesNotSpamUpdates(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
-		errCh <- Run("self", ctx, cfg, hbRx, hbTx, chanOS)
+		errCh <- Run(ctx, "self", cfg, hbRx, hbTx, chanOS)
 		close(done)
 	}()
 
@@ -89,7 +89,7 @@ func TestRun_TimeoutProducesUpdate(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go func() {
-		errCh <- Run("self", ctx, cfg, hbRx, hbTx, chanOS)
+		errCh <- Run(ctx, "self", cfg, hbRx, hbTx, chanOS)
 		close(done)
 	}()
 

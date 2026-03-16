@@ -21,7 +21,7 @@ func TestSystem(t *testing.T) {
 	ctx := context.Background()
 	
 	go Run(ctx, OrderSyncTx, OrderSyncRx, PeerMonitorTx, PeerMonitorRx)	
-	go peermonitor.Run(peerID, ctx, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
+	go peermonitor.Run(ctx, peerID, peermonitorConfig, PeerMonitorRx, PeerMonitorTx, peerEventChan)
 	select{}
 	// TO-DO: Fix peermonitor, so peermonitor and networking can be tested together
 }
