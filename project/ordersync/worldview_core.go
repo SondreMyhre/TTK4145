@@ -211,18 +211,6 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 	return state, commands
 }
 
-// func onPeerEvent(state worldviewState, newPeerList []Peer) (worldviewState, []command) {
-// 	for _, newPeer := range newPeerList {
-// 		oldStatus := findPeerStatus(state.peerList, newPeer.ID)
-
-// 		if oldStatus == StatusAlive && newPeer.PeerStatus == StatusDead {
-// 			state.hallOrderMatrix = releaseAllConfirmed(state.hallOrderMatrix)
-// 		}
-
-// 	}
-// 	return state, []command{{_type: broadcastNetMessage}}
-// }
-
 func extractHallRequests(hallOrderMatrix HallOrderMatrix) HallRequests {
 	var hallRequests HallRequests
 	for floor := range N_FLOORS {

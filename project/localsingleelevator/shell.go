@@ -34,7 +34,7 @@ func Run(
 	var commands []command
 
 	if elevio.GetFloor() == -1 {
-		commands = append(commands, elevator.onInitBetweenFloors()...)
+		elevator, commands = onInitBetweenFloors(elevator)
 		executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 	} else {
 		elevator.state.Floor = elevio.GetFloor()
@@ -46,24 +46,24 @@ func Run(
 			return nil
 
 		case newRequests := <-requestMatrixChan:
-			commands = elevator.onNewRequestMatrix(newRequests)
+			elevator, commands = onNewRequestMatrix(elevator, newRequests)
 			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
 		case floor := <-floorChan:
 			motorWatchdogTimer.Stop()
-			commands = elevator.onFloorArrival(floor)
+			elevator, commands = onFloorArrival(elevator, floor)
 			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
 		case obstructed := <-obstructionChan:
-			commands = elevator.onObstruction(obstructed)
+			elevator, commands = onObstruction(elevator, obstructed)
 			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
 		case <-doorTimer.C:
-			commands = elevator.onDoorTimeout()
+			elevator, commands = onDoorTimeout(elevator)
 			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 
 		case <-motorWatchdogTimer.C:
-			commands = elevator.onMotorTimeout()
+			elevator, commands = onMotorTimeout(elevator)
 			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorWatchdogTimer)
 		}
 	}

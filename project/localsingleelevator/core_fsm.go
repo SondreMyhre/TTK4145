@@ -1,14 +1,14 @@
 package localsingle
 
-func (elevator *elevator) onInitBetweenFloors() []command {
+func onInitBetweenFloors(elevator elevator) (elevator, []command) {
 	var commands []command
 	elevator.state.Direction = DirDown
 	elevator.state.Behaviour = BehaviourMoving
 	commands = append(commands, command{cmdType: setMotorDirection, value: DirDown})
-	return commands
+	return elevator, commands
 }
 
-func (elevator *elevator) onNewRequestMatrix(newRequests RequestMatrix) []command {
+func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator, []command) {
 	var commands []command
 
 	elevator.requests = newRequests
@@ -22,9 +22,9 @@ func (elevator *elevator) onNewRequestMatrix(newRequests RequestMatrix) []comman
 				commands = append(commands, command{cmdType: sendClearedOrders, value: cleared})
 			}
 		}
-		return commands
+		return elevator, commands
 	case BehaviourMoving:
-		return commands
+		return elevator, commands
 	case BehaviourIdle:
 		pair := elevator.chooseDirection()
 		elevator.state.Direction = pair.direction
@@ -42,13 +42,13 @@ func (elevator *elevator) onNewRequestMatrix(newRequests RequestMatrix) []comman
 			commands = append(commands, command{cmdType: setMotorDirection, value: elevator.state.Direction})
 
 		}
-		return commands
+		return elevator, commands
 	}
 
-	return commands
+	return elevator, commands
 }
 
-func (elevator *elevator) onFloorArrival(newFloor int) []command {
+func onFloorArrival(elevator elevator, newFloor int) (elevator, []command) {
 	elevator.state.Floor = newFloor
 
 	if elevator.state.MotorStuck {
@@ -59,7 +59,7 @@ func (elevator *elevator) onFloorArrival(newFloor int) []command {
 	commands = append(commands, command{cmdType: setFloorIndicator, value: elevator.state.Floor})
 
 	if elevator.state.Behaviour != BehaviourMoving {
-		return commands
+		return elevator, commands
 	}
 
 	if elevator.shouldStop() {
@@ -75,19 +75,19 @@ func (elevator *elevator) onFloorArrival(newFloor int) []command {
 		commands = append(commands, command{cmdType: sendLocalState, value: elevator.state})
 	}
 
-	return commands
+	return elevator, commands
 }
 
-func (elevator *elevator) onDoorTimeout() []command {
+func onDoorTimeout(elevator elevator) (elevator, []command) {
 	var commands []command
 
 	if elevator.state.Behaviour != BehaviourDoorOpen {
-		return commands
+		return elevator, commands
 	}
 
 	if elevator.state.Obstructed {
 		commands = append(commands, command{cmdType: resetDoorTimer})
-		return commands
+		return elevator, commands
 	}
 
 	switch elevator.state.Behaviour {
@@ -113,29 +113,29 @@ func (elevator *elevator) onDoorTimeout() []command {
 		}
 
 	}
-	return commands
+	return elevator, commands
 }
 
-func (elevator *elevator) onObstruction(obstructed bool) []command {
+func onObstruction(elevator elevator, obstructed bool) (elevator, []command) {
 	var commands []command
 	elevator.state.Obstructed = obstructed
 	if elevator.state.Behaviour == BehaviourDoorOpen {
 		commands = append(commands, command{cmdType: resetDoorTimer})
 		commands = append(commands, command{cmdType: sendLocalState, value: elevator.state})
-		return commands
+		return elevator, commands
 	}
-	return commands
+	return elevator, commands
 }
 
-func (elevator *elevator) onMotorTimeout() []command {
+func onMotorTimeout(elevator elevator) (elevator, []command) {
 	var commands []command
 
 	if elevator.state.Behaviour != BehaviourMoving {
-		return commands
+		return elevator, commands
 	}
 
 	elevator.state.MotorStuck = true
 
 	commands = append(commands, command{cmdType: sendLocalState, value: elevator.state})
-	return commands
+	return elevator, commands
 }
