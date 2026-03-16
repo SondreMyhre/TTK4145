@@ -3,7 +3,7 @@ package ordersync
 import (
 	"context"
 	// "fmt"
-	localsingle "project/localsingleelevator"
+	localsingle "project/elevatorcontroller"
 )
 
 func RunAssigner(

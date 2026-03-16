@@ -8,32 +8,28 @@ import (
 	"log"
 )
 
+const pollRate = 20 * time.Millisecond
 
-//KAN TRENGE Å SKRIVES MER LESELIG
-
-
-const _pollRate = 20 * time.Millisecond
-
-var _initialized    bool = false
-var _numFloors      int = 4
-var _mtx            sync.Mutex
-var _conn           net.Conn
+var isInitialized    bool = false
+var numFloors        int = 4
+var mu               sync.Mutex
+var conn             net.Conn
 
 type MotorDirection int
 
 const (
 	MD_Up   MotorDirection = 1
-	MD_Down                = -1
-	MD_Stop                = 0
+	MD_Down MotorDirection = -1
+	MD_Stop MotorDirection = 0
 )
 
 type ButtonType int
 
 const (
 	BT_HallUp   ButtonType = 0
-	BT_HallDown            = 1
-	BT_Cab                 = 2
-	N_BUTTONS			   = 3
+	BT_HallDown ButtonType = 1
+	BT_Cab      ButtonType = 2
+	N_BUTTONS	ButtonType = 3
 )
 
 type ButtonEvent struct {
@@ -43,26 +39,26 @@ type ButtonEvent struct {
 
 
 
-func Init(peerID string, addr string, numFloors int) {
+func Init(peerID string, addr string, nFloors int) {
 	if peerID == "0" {
 		log.Fatal("Not valid peerID.")
 	}
 
-	if _initialized {
+	if isInitialized {
 		fmt.Println("Driver already initialized!")
 		return
 	}
 
 	
 	
-	_numFloors = numFloors
-	_mtx = sync.Mutex{}
+	numFloors = nFloors
+	mu = sync.Mutex{}
 	var err error
-	_conn, err = net.Dial("tcp", addr)
+	conn, err = net.Dial("tcp", addr)
 	if err != nil {
 		panic(err.Error())
 	}
-	_initialized = true
+	isInitialized = true
 
 	for floor := range numFloors {
 		for button := range N_BUTTONS {
@@ -96,10 +92,10 @@ func SetStopLamp(value bool) {
 
 
 func PollButtons(receiver chan<- ButtonEvent) {
-	prev := make([][3]bool, _numFloors)
+	prev := make([][3]bool, numFloors)
 	for {
-		time.Sleep(_pollRate)
-		for f := 0; f < _numFloors; f++ {
+		time.Sleep(pollRate)
+		for f := 0; f < numFloors; f++ {
 			for b := ButtonType(0); b < 3; b++ {
 				v := GetButton(b, f)
 				if v != prev[f][b] && v != false {
@@ -114,7 +110,7 @@ func PollButtons(receiver chan<- ButtonEvent) {
 func PollFloorSensor(receiver chan<- int) {
 	prev := -1
 	for {
-		time.Sleep(_pollRate)
+		time.Sleep(pollRate)
 		v := GetFloor()
 		if v != prev && v != -1 {
 			receiver <- v
@@ -126,7 +122,7 @@ func PollFloorSensor(receiver chan<- int) {
 func PollStopButton(receiver chan<- bool) {
 	prev := false
 	for {
-		time.Sleep(_pollRate)
+		time.Sleep(pollRate)
 		v := GetStop()
 		if v != prev {
 			receiver <- v
@@ -138,7 +134,7 @@ func PollStopButton(receiver chan<- bool) {
 func PollObstructionSwitch(receiver chan<- bool) {
 	prev := false
 	for {
-		time.Sleep(_pollRate)
+		time.Sleep(pollRate)
 		v := GetObstruction()
 		if v != prev {
 			receiver <- v
@@ -179,24 +175,24 @@ func GetObstruction() bool {
 
 
 func read(in [4]byte) [4]byte {
-	_mtx.Lock()
-	defer _mtx.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 	
-	_, err := _conn.Write(in[:])
+	_, err := conn.Write(in[:])
 	if err != nil { panic("Lost connection to Elevator Server") }
 	
 	var out [4]byte
-	_, err = _conn.Read(out[:])
+	_, err = conn.Read(out[:])
 	if err != nil { panic("Lost connection to Elevator Server") }
 	
 	return out
 }
 
 func write(in [4]byte) {
-	_mtx.Lock()
-	defer _mtx.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 	
-	_, err := _conn.Write(in[:])
+	_, err := conn.Write(in[:])
 	if err != nil { panic("Lost connection to Elevator Server") }
 }
 

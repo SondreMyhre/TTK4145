@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 	elevio "project/elevio"
-	localsingle "project/localsingleelevator"
+	localsingle "project/elevatorcontroller"
 	networking "project/networking"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
@@ -103,7 +103,7 @@ func main() {
 		{
 			Name: "peermonitor",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return peermonitor.Run(*peerID, ctx, peermonitorConfig, peerMonitorRx, peerMonitorTx, peerEventChan)
+				return peermonitor.Run(peermonitorConfig, *peerID, ctx, peerMonitorRx, peerEventChan, peerMonitorTx)
 			}),
 			Restart: supervisor.Permanent,
 		},

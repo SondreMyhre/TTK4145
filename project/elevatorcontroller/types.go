@@ -1,4 +1,4 @@
-package localsingle
+package elevatorcontroller
 
 const (
 	N_FLOORS  = 4

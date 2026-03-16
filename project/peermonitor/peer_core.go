@@ -6,13 +6,6 @@ import (
 
 // core PeerMonitor
 // bad practice with Ticker as parameter to the function?
-func sendHeartbeats(peerID string, heartBeatTx chan<- HeartBeat, heartbeatTicker *time.Ticker) {
-
-	for range heartbeatTicker.C {
-		heartBeat := HeartBeat{SenderID: ElevID(peerID)}
-		heartBeatTx <- heartBeat
-	}
-}
 
 func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Peer, bool) {
 	// Update or create peer, set Alive , set LastSeen

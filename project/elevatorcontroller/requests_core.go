@@ -1,4 +1,4 @@
-package localsingle
+package elevatorcontroller
 
 func (elevator *elevator) requestsAbove() bool {
 	for floor := elevator.state.Floor + 1; floor < N_FLOORS; floor++ {
