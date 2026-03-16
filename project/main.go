@@ -108,7 +108,7 @@ func main() {
 		{
 			Name: "peermonitor",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return peermonitor.Run(*peerID, ctx, peermonitorConfig, peerMonitorRx, peerMonitorTx, peerEventChan)
+				return peermonitor.Run(ctx, *peerID, peermonitorConfig, peerMonitorRx, peerMonitorTx, peerEventChan)
 			}),
 			Restart: supervisor.Permanent,
 		},

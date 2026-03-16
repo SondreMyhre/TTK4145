@@ -8,7 +8,7 @@ import (
 
 // Shell PeerMonitor
 
-func Run(peerID string, ctx context.Context, cfg PeerConfig, heartBeatRx <-chan HeartBeat, heartBeatTx chan<- HeartBeat, chanOS chan<- PeerMsg) error {
+func Run(ctx context.Context, peerID string, cfg PeerConfig, heartBeatRx <-chan HeartBeat, heartBeatTx chan<- HeartBeat, chanOS chan<- PeerMsg) error {
 	ticker := time.NewTicker(cfg.TickInterval)
 	defer ticker.Stop() //runs ticker while function is running
 

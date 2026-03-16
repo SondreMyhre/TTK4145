@@ -31,7 +31,7 @@ func TestSystem(t *testing.T) {
 	}
 
 	go func() {
-		_ = peermonitor.Run(peerID, ctx, cfg, PeerMonitorRx, PeerMonitorTx, peerEventChan)
+		_ = peermonitor.Run(ctx, peerID, cfg, PeerMonitorRx, PeerMonitorTx, peerEventChan)
 	}()
 
 	// Actually observe something from peerEventChan (otherwise this isn't a test)

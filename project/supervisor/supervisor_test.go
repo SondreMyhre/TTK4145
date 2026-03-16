@@ -41,7 +41,7 @@ func TestSupervisor_RestartsPeerMonitorWhenHbRxClosed(t *testing.T) {
 	var runs atomic.Int32
 	w := WorkerFunc(func(ctx context.Context) error {
 		runs.Add(1)
-		return peermonitor.Run("self", ctx, cfg, hbRx, hbTx, chanOS)
+		return peermonitor.Run(ctx, "self", cfg, hbRx, hbTx, chanOS)
 	})
 
 	sup := newTestSupervisor(ChildSpec{
@@ -76,7 +76,7 @@ func TestSupervisor_StopsCleanlyOnContextCancel(t *testing.T) {
 	var runs atomic.Int32
 	w := WorkerFunc(func(ctx context.Context) error {
 		runs.Add(1)
-		return peermonitor.Run("self", ctx, cfg, hbRx, hbTx, chanOS)
+		return peermonitor.Run(ctx, "self", cfg, hbRx, hbTx, chanOS)
 	})
 
 	sup := newTestSupervisor(ChildSpec{
@@ -121,7 +121,7 @@ func TestSupervisor_PeerMonitorStopsEvenIfOutputSendWouldBlock(t *testing.T) {
 	var runs atomic.Int32
 	w := WorkerFunc(func(ctx context.Context) error {
 		runs.Add(1)
-		return peermonitor.Run("self", ctx, cfg, hbRx, hbTx, chanOS)
+		return peermonitor.Run(ctx, "self", cfg, hbRx, hbTx, chanOS)
 	})
 
 	sup := newTestSupervisor(ChildSpec{
