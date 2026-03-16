@@ -8,27 +8,25 @@ import (
 // WorkerFunc implements Worker interface
 func (fn WorkerFunc) Run(ctx context.Context) error { return fn(ctx) }
 
-// // New creates a supervisor with default config
-// func NewSupervisor(children []ChildSpec) Supervisor {
-// 	return Supervisor{
-// 		Children: children,
-// 		Config: SupervisorConfig{
-// 			MaxRestarts:  DefaultMaxRestarts,
-// 			MaxTime:      DefaultMaxTime,
-// 			RestartDelay: DefaultRestartDelay,
-// 		},
-// 	}
-// }
+const(
+	MaxRestarts 	=  5
+	MaxTime 		= 30 * time.Second
+	RestartDelay 	= 200 * time.Millisecond
+)
 
-// NewWithConfig creates a supervisor with custom config
-
-func NewSupervisor(children []ChildSpec, config SupervisorConfig) Supervisor {
+// NewSupervisor creates a supervisor with default config
+func NewSupervisor(children []ChildSpec) Supervisor {
 	return Supervisor{
 		Children: children,
-		Config:   config,
+		Config: SupervisorConfig{
+			MaxRestarts:  MaxRestarts,
+			MaxTime:      MaxTime,
+			RestartDelay: RestartDelay,
+		},
 	}
 }
 
+ 
 // shouldRestart determines if a child should be restarted based on policy and error
 func shouldRestart(policy RestartPolicy, err error) bool {
 	switch policy {

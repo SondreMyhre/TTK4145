@@ -10,7 +10,6 @@ import (
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
 	"project/supervisor"
-	"time"
 )
 
 func main() {
@@ -104,11 +103,7 @@ func main() {
 	}
 
 	// Create and run supervisor
-	sup := supervisor.NewSupervisor(children, supervisor.SupervisorConfig{
-		MaxRestarts:  5,
-		MaxTime:      30 * time.Second,
-		RestartDelay: 200 * time.Millisecond,
-	})
+	sup := supervisor.NewSupervisor(children)
 
 	log.Println("Starting elevator system with supervisor")
 	if err := sup.Run(ctx); err != nil {
