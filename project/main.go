@@ -47,7 +47,7 @@ func main() {
 	// Channel between ordersync and peermonitor
 	peerEventChan := make(chan []ordersync.PeerUpdate, 10)
 
-	// Channel between ordersync and localsingle
+	// Channel between worldview and assigner in ordersync
 	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
 
 	// Configuration
