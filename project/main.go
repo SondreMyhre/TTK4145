@@ -18,7 +18,11 @@ func main() {
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
 
-	elevio.Init(*peerID, *serverAddr, 4)
+	if *peerID == "0" {
+		log.Fatal("Not valid peerID.")
+	}
+
+	elevio.Init(*serverAddr, localsingle.N_FLOORS)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -43,48 +47,24 @@ func main() {
 	// Channel between ordersync and peermonitor
 	peerEventChan := make(chan []ordersync.PeerUpdate, 10)
 
+	// Channel between worldview and assigner in ordersync
 	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
+
+	// elevio polling routines
+	go elevio.PollButtons(buttonChan)
+	go elevio.PollFloorSensor(floorChan)
+	go elevio.PollObstructionSwitch(obstructionChan)
 
 	// Define supervised children
 	children := []supervisor.ChildSpec{
-		// Elevio routines - these are infinite loops, wrap them to be context-aware
 		{
-			Name: "driver",
+			Name: "elevio",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				go elevio.RunDriver(driverCommandChan)
-				<-ctx.Done()
+				elevio.RunDriver(ctx, driverCommandChan)
 				return nil
 			}),
 			Restart: supervisor.Permanent,
 		},
-		{
-			Name: "poll-buttons",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				go elevio.PollButtons(buttonChan)
-				<-ctx.Done()
-				return nil
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "poll-floor",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				go elevio.PollFloorSensor(floorChan)
-				<-ctx.Done()
-				return nil
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "poll-obstruction",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				go elevio.PollObstructionSwitch(obstructionChan)
-				<-ctx.Done()
-				return nil
-			}),
-			Restart: supervisor.Permanent,
-		},
-		// Core system components
 		{
 			Name: "networking",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
@@ -96,7 +76,7 @@ func main() {
 		{
 			Name: "peermonitor",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return peermonitor.Run(*peerID, ctx, peerMonitorRx, peerEventChan, peerMonitorTx)
+				return peermonitor.Run(ctx, *peerID, peerMonitorRx, peerEventChan, peerMonitorTx)
 			}),
 			Restart: supervisor.Permanent,
 		},

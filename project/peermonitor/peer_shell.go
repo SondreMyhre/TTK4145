@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func Run(peerID string, 
-		ctx context.Context,  
+func Run(ctx context.Context,
+		peerID string,  
 
 		heartBeatRx <-chan HeartBeat, 
 

@@ -56,7 +56,7 @@ func RunWorldView(
 
 		case newLocalState := <-localStateChan:
 			state.localState = newLocalState
-			commands = []command{{cmdType: broadcastNetMessage}}
+			commands = []command{{kind: broadcastNetMessage}}
 			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
@@ -76,19 +76,16 @@ func RunWorldView(
 
 		case peerEvent := <-peerEventChan:
 			var newPeerList []Peer
-			for _, update := range peerEvent { // state står tom
+			for _, update := range peerEvent {
 				existingState := findPeerState(state.peerList, update.ID)
 				newPeerList = append(newPeerList, Peer{ID: update.ID, PeerStatus: update.PeerStatus, state: existingState})
 			}
-			// state, commands = onPeerEvent(state, newPeerList)
 			state.peerList = newPeerList
-			// applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
 		case <-orderTicker.C:
-			commands = []command{{cmdType: broadcastNetMessage}}
+			commands = []command{{kind: broadcastNetMessage}}
 			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
-			// publishWorldview()
 		}
 	}
 }
@@ -103,7 +100,7 @@ func applyCommands(
 	myID ElevID,
 ) {
 	for _, command := range commands {
-		switch command.cmdType {
+		switch command.kind {
 		case broadcastNetMessage:
 			cabCallsCopy := make(CabCallsMap, len(state.cabRequests))
 			maps.Copy(cabCallsCopy, state.cabRequests)
@@ -121,7 +118,7 @@ func applyCommands(
 			args := command.value.(buttonLampArgs)
 			select {
 			case lightCommandChan <- elevio.DriverCommand{
-				Type:   elevio.CommandSetButtonLamp,
+				Kind:   elevio.CommandSetButtonLamp,
 				Button: elevio.ButtonType(args.Button),
 				Floor:  args.Floor,
 				Value:  args.Value,

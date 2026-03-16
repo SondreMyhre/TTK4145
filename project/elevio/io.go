@@ -5,7 +5,6 @@ import (
 	"sync"
 	"net"
 	"fmt"
-	"log"
 )
 
 const pollRate = 20 * time.Millisecond
@@ -39,10 +38,7 @@ type ButtonEvent struct {
 
 
 
-func Init(peerID string, addr string, nFloors int) {
-	if peerID == "0" {
-		log.Fatal("Not valid peerID.")
-	}
+func Init(addr string, nFloors int) {
 
 	if isInitialized {
 		fmt.Println("Driver already initialized!")

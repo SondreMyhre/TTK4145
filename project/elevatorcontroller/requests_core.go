@@ -2,8 +2,8 @@ package elevatorcontroller
 
 func (elevator *elevator) requestsAbove() bool {
 	for floor := elevator.state.Floor + 1; floor < N_FLOORS; floor++ {
-		for btn := range N_BUTTONS {
-			if elevator.requests[floor][btn] {
+		for button := range N_BUTTONS {
+			if elevator.requests[floor][button] {
 				return true
 			}
 		}
@@ -13,8 +13,8 @@ func (elevator *elevator) requestsAbove() bool {
 
 func (elevator *elevator) requestsBelow() bool {
 	for floor := range elevator.state.Floor {
-		for btn := range N_BUTTONS {
-			if elevator.requests[floor][btn] {
+		for button := range N_BUTTONS {
+			if elevator.requests[floor][button] {
 				return true
 			}
 		}
@@ -23,8 +23,8 @@ func (elevator *elevator) requestsBelow() bool {
 }
 
 func (elevator *elevator) requestsHere() bool {
-	for btn := range N_BUTTONS {
-		if elevator.requests[elevator.state.Floor][btn] {
+	for button := range N_BUTTONS {
+		if elevator.requests[elevator.state.Floor][button] {
 			return true
 		}
 	}

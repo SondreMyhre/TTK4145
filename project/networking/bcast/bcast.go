@@ -100,34 +100,34 @@ type typeTaggedJSON struct {
 //  - Why there is no `isMarshalable()` function in encoding/json is a mystery,
 //    so the tests on element type are hand-copied from `encoding/json/encode.go`
 func checkArgs(chans ...interface{}) {
-	num := 0
+	n := 0
 	for range chans {
-		num++
+		n++
 	}
-	elemTypes := make([]reflect.Type, num)
+	elemTypes := make([]reflect.Type, n)
 
-	for i_idx, ch := range chans {
+	for i, ch := range chans {
 		// Must be a channel
 		if reflect.ValueOf(ch).Kind() != reflect.Chan {
 			panic(fmt.Sprintf(
 				"Argument must be a channel, got '%s' instead (arg# %d)",
-				reflect.TypeOf(ch).String(), i_idx + 1))
+				reflect.TypeOf(ch).String(), i + 1))
 		}
 
 		elemType := reflect.TypeOf(ch).Elem()
 
 		// Element type must not be repeated
-		for j_idx, e := range elemTypes {
+		for j, e := range elemTypes {
 			if e == elemType {
 				panic(fmt.Sprintf(
 					"All channels must have mutually different element types, arg# %d and arg# %d both have element type '%s'",
-					j_idx + 1, i_idx + 1, e.String()))
+					j + 1, i + 1, e.String()))
 			}
 		}
-		elemTypes[i_idx] = elemType
+		elemTypes[i] = elemType
 
 		// Element type must be encodable with JSON
-		checkTypeRecursive(elemType, []int{i_idx+1})
+		checkTypeRecursive(elemType, []int{i+1})
 
 	}
 }
