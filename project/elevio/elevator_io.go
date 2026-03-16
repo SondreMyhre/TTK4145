@@ -9,6 +9,8 @@ import (
 )
 
 
+//KAN TRENGE Å SKRIVES MER LESELIG
+
 
 const _pollRate = 20 * time.Millisecond
 

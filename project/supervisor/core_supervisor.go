@@ -8,20 +8,21 @@ import (
 // WorkerFunc implements Worker interface
 func (fn WorkerFunc) Run(ctx context.Context) error { return fn(ctx) }
 
-// New creates a supervisor with default config
-func New(children []ChildSpec) Supervisor {
-	return Supervisor{
-		Children: children,
-		Config: SupervisorConfig{
-			MaxRestarts:  DefaultMaxRestarts,
-			MaxTime:      DefaultMaxTime,
-			RestartDelay: DefaultRestartDelay,
-		},
-	}
-}
+// // New creates a supervisor with default config
+// func NewSupervisor(children []ChildSpec) Supervisor {
+// 	return Supervisor{
+// 		Children: children,
+// 		Config: SupervisorConfig{
+// 			MaxRestarts:  DefaultMaxRestarts,
+// 			MaxTime:      DefaultMaxTime,
+// 			RestartDelay: DefaultRestartDelay,
+// 		},
+// 	}
+// }
 
 // NewWithConfig creates a supervisor with custom config
-func NewWithConfig(children []ChildSpec, config SupervisorConfig) Supervisor {
+
+func NewSupervisor(children []ChildSpec, config SupervisorConfig) Supervisor {
 	return Supervisor{
 		Children: children,
 		Config:   config,

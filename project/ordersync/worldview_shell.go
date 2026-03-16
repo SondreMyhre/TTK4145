@@ -56,7 +56,7 @@ func RunWorldView(
 
 		case newLocalState := <-localStateChan:
 			state.localState = newLocalState
-			commands = []command{{_type: broadcastNetMessage}}
+			commands = []command{{cmdType: broadcastNetMessage}}
 			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
@@ -86,7 +86,7 @@ func RunWorldView(
 			publishWorldview()
 
 		case <-orderTicker.C:
-			commands = []command{{_type: broadcastNetMessage}}
+			commands = []command{{cmdType: broadcastNetMessage}}
 			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
 			// publishWorldview()
 		}
@@ -103,7 +103,7 @@ func applyCommands(
 	myID ElevID,
 ) {
 	for _, command := range commands {
-		switch command._type {
+		switch command.cmdType {
 		case broadcastNetMessage:
 			cabCallsCopy := make(CabCallsMap, len(state.cabRequests))
 			maps.Copy(cabCallsCopy, state.cabRequests)
