@@ -2,7 +2,6 @@ package peermonitor
 
 import (
 	"context"
-	"fmt"
 	"time"
 )
 
@@ -26,11 +25,7 @@ func Run(cfg PeerConfig,
 		case <-ctx.Done():
 			return nil
 
-		case msg, ok := <-heartBeatRx:
-			if !ok {
-				return fmt.Errorf("peermonitor: heartBeatRx closed")
-			}
-
+		case msg := <-heartBeatRx:
 			var changed bool
 			now := time.Now()
 			peerList, changed = HandleHeartbeats(peerList, msg, now) 
@@ -54,7 +49,7 @@ func Run(cfg PeerConfig,
 				}
 			}
 
-		case <- heartBeatTicker.C:
+		case <-heartBeatTicker.C:
 			heartBeat := HeartBeat{SenderID: ElevID(peerID)}
 			heartBeatTx <- heartBeat
 		}
