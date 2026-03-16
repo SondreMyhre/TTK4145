@@ -10,7 +10,7 @@ const (
 )
 
 type DriverCommand struct {
-	Type           DriverCommandType
+	Kind           DriverCommandType
 	MotorDirection MotorDirection
 	Button         ButtonType
 	Floor          int
@@ -19,7 +19,7 @@ type DriverCommand struct {
 
 func RunDriver(driverCommandChan <-chan DriverCommand) {
 	for command := range driverCommandChan {
-		switch command.Type {
+		switch command.Kind {
 		case CommandSetMotorDirection:
 			SetMotorDirection(command.MotorDirection)
 		case CommandSetButtonLamp:

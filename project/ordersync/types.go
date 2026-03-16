@@ -1,7 +1,7 @@
 package ordersync
 
 import (
-	localsingle "project/localsingleelevator"
+	localsingle "project/localsingle"
 )
 
 const (
@@ -82,7 +82,7 @@ const (
 )
 
 type command struct {
-	cmdType commandType
+	kind  commandType
 	value any
 }
 

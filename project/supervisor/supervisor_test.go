@@ -7,7 +7,7 @@ import (
 	"time"
 
 	elevio "project/elevio"
-	localsingle "project/localsingleelevator"
+	localsingle "project/localsingle"
 	networking "project/networking"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"

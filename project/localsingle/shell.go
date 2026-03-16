@@ -78,22 +78,22 @@ func executeCommands(
 	motorWatchdogTimer *time.Timer,
 ) {
 	for _, command := range commands {
-		switch command.cmdType {
+		switch command.kind {
 		case setMotorDirection:
 			dir := command.value.(Direction)
-			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
+			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
 			if dir != DirStop {
 				motorWatchdogTimer.Reset(motorWatchdogTimeout)
 			}
 		case setDoorOpenLamp:
 			value := command.value.(bool)
-			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetDoorLamp, Value: value}
+			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetDoorLamp, Value: value}
 		case setFloorIndicator:
 			floor := command.value.(int)
-			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetFloorIndicator, Floor: floor}
+			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetFloorIndicator, Floor: floor}
 		case setButtonLamp:
 			args := command.value.(buttonLampArgs)
-			driverCommandChan <- elevio.DriverCommand{Type: elevio.CommandSetButtonLamp, Button: ButtonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
+			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetButtonLamp, Button: ButtonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
 		case resetDoorTimer:
 			doorTimer.Reset(doorOpenDuration)
 		case sendClearedOrders:

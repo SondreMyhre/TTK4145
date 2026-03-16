@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 	elevio "project/elevio"
-	localsingle "project/localsingleelevator"
+	localsingle "project/localsingle"
 	networking "project/networking"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
@@ -18,7 +18,11 @@ func main() {
 	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
 
-	elevio.Init(*peerID, *serverAddr, 4)
+	if *peerID == "0" {
+		log.Fatal("Not valid peerID.")
+	}
+
+	elevio.Init(*serverAddr, localsingle.N_FLOORS)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -43,6 +47,7 @@ func main() {
 	// Channel between ordersync and peermonitor
 	peerEventChan := make(chan []ordersync.PeerUpdate, 10)
 
+	// Channel between ordersync and localsingle
 	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
 
 	// Configuration
@@ -54,7 +59,7 @@ func main() {
 
 	// Define supervised children
 	children := []supervisor.ChildSpec{
-		// Elevio routines - these are infinite loops, wrap them to be context-aware
+		// Elevio routines
 		{
 			Name: "driver",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
