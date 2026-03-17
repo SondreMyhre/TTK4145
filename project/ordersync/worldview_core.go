@@ -188,7 +188,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 				})
 			}
 		}
-		// SPØRS OM DETTE MÅ ENDRES, BRUKE FLAGG HELLER KANSKJE??
+		
 		if remoteMyCabs, ok := msg.CabCalls[myID]; ok {
 			localMyCabs := state.cabRequests[myID]
 			for floor := range N_FLOORS {

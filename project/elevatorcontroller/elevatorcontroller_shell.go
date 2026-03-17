@@ -3,17 +3,13 @@ package elevatorcontroller
 import (
 	"context"
 	"fmt"
-	elevio "project/elevio"
 	"time"
-)
-
-const (
-	doorOpenDuration     = 3 * time.Second
-	motorWatchdogTimeout = 3500 * time.Millisecond
+	elevio "project/elevio"
 )
 
 func Run(
 	ctx context.Context,
+
 	requestMatrixChan <-chan RequestMatrix,
 	floorChan <-chan int,
 	obstructionChan <-chan bool,
@@ -35,7 +31,6 @@ func Run(
 	if elevio.GetFloor() == -1 {
 		elevator, commands = onInitBetweenFloors(elevator)
 		executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
-
 	} else {
 		elevator.state.Floor = elevio.GetFloor()
 	}
