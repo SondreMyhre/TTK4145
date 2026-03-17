@@ -33,7 +33,7 @@ func main() {
 	driverCommandChan := make(chan elevio.DriverCommand, 10)
 
 	// localsingle channels
-	requestMatrixChan := make(chan localsingle.RequestMatrix, 1)
+	assignedRequestsChan := make(chan localsingle.RequestMatrix, 1)
 	clearedOrdersChan := make(chan []localsingle.Order, 10)
 	localStateChan := make(chan localsingle.ElevatorState, 1)
 
@@ -89,14 +89,14 @@ func main() {
 		{
 			Name: "assigner",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return ordersync.RunAssigner(ctx, ordersync.ElevID(*peerID), worldviewChan, requestMatrixChan)
+				return ordersync.RunAssigner(ctx, ordersync.ElevID(*peerID), worldviewChan, assignedRequestsChan)
 			}),
 			Restart: supervisor.Permanent,
 		},
 		{
 			Name: "localsingle",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return localsingle.Run(ctx, requestMatrixChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
+				return localsingle.Run(ctx, assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 			}),
 			Restart: supervisor.Permanent,
 		},

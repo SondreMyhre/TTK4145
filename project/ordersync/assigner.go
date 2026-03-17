@@ -11,9 +11,9 @@ func RunAssigner(
 
 	worldviewChan <-chan WorldviewMsg,
 
-	requestMatrixChan chan<- localsingle.RequestMatrix,
+	assignedRequestsChan chan<- localsingle.RequestMatrix,
 ) error {
-	var prevRequests [N_FLOORS][N_BUTTONS]bool
+	var prevAssignments [N_FLOORS][N_BUTTONS]bool
 
 	for {
 		select {
@@ -21,15 +21,15 @@ func RunAssigner(
 			return nil
 
 		case worldview := <-worldviewChan:
-			assigned, err := AssignRequests(worldview, myID)
+			newAssignments, err := AssignRequests(worldview, myID)
 			if err != nil {
 				continue
 			}
 
-			if assigned != prevRequests {
-				prevRequests = assigned
+			if newAssignments != prevAssignments {
+				prevAssignments = newAssignments
 				select {
-				case requestMatrixChan <- assigned:
+				case assignedRequestsChan <- newAssignments:
 				case <-ctx.Done():
 					return nil
 				}

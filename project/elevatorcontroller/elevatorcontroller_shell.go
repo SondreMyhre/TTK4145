@@ -14,7 +14,7 @@ const (
 
 func Run(
 	ctx context.Context,
-	requestMatrixChan <-chan RequestMatrix,
+	assignedRequestsChan <-chan RequestMatrix,
 	floorChan <-chan int,
 	obstructionChan <-chan bool,
 
@@ -45,7 +45,7 @@ func Run(
 		case <-ctx.Done():
 			return nil
 
-		case newRequests := <-requestMatrixChan:
+		case newRequests := <-assignedRequestsChan:
 			elevator, effects = onNewRequestMatrix(elevator, newRequests)
 			applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
 
