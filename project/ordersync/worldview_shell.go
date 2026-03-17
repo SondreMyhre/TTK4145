@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func RunWorldView(
+func RunWorldview(
 	ctx context.Context,
 	myID ElevID,
 

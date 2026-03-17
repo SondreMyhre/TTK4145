@@ -15,9 +15,10 @@ func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator,
 
 	switch elevator.state.Behaviour {
 	case BehaviourDoorOpen:
-		if elevator.shouldStop() {
+		if shouldStop(elevator) {
+			var cleared []Order
 			commands = append(commands, command{kind: resetDoorTimer})
-			cleared := elevator.clearAtCurrentFloor()
+			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
 				commands = append(commands, command{kind: sendClearedOrders, value: cleared})
 			}
@@ -26,17 +27,18 @@ func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator,
 	case BehaviourMoving:
 		return elevator, commands
 	case BehaviourIdle:
-		pair := elevator.chooseDirection()
+		pair := chooseDirection(elevator)
 		elevator.state.Direction = pair.direction
 		elevator.state.Behaviour = pair.behaviour
 		commands = append(commands, command{kind: sendLocalState, value: elevator.state})
 		switch pair.behaviour {
 		case BehaviourDoorOpen:
+			var cleared []Order
 			commands = append(commands, command{kind: setDoorOpenLamp, value: true})
 			commands = append(commands, command{kind: resetDoorTimer})
-			clearedOrders := elevator.clearAtCurrentFloor()
-			if len(clearedOrders) > 0 {
-				commands = append(commands, command{kind: sendClearedOrders, value: clearedOrders})
+			elevator, cleared = clearAtCurrentFloor(elevator)
+			if len(cleared) > 0 {
+				commands = append(commands, command{kind: sendClearedOrders, value: cleared})
 			}
 		case BehaviourMoving:
 			commands = append(commands, command{kind: setMotorDirection, value: elevator.state.Direction})
@@ -62,10 +64,11 @@ func onFloorArrival(elevator elevator, newFloor int) (elevator, []command) {
 		return elevator, commands
 	}
 
-	if elevator.shouldStop() {
+	if shouldStop(elevator) {
+		var cleared []Order
 		commands = append(commands, command{kind: setMotorDirection, value: DirStop})
 		commands = append(commands, command{kind: setDoorOpenLamp, value: true})
-		cleared := elevator.clearAtCurrentFloor()
+		elevator, cleared = clearAtCurrentFloor(elevator)
 		if len(cleared) > 0 {
 			commands = append(commands, command{kind: sendClearedOrders, value: cleared})
 		}
@@ -92,15 +95,16 @@ func onDoorTimeout(elevator elevator) (elevator, []command) {
 
 	switch elevator.state.Behaviour {
 	case BehaviourDoorOpen:
-		pair := elevator.chooseDirection()
+		pair := chooseDirection(elevator)
 		elevator.state.Direction = pair.direction
 		elevator.state.Behaviour = pair.behaviour
 		commands = append(commands, command{kind: sendLocalState, value: elevator.state})
 
 		switch elevator.state.Behaviour {
 		case BehaviourDoorOpen:
+			var cleared []Order
 			commands = append(commands, command{kind: resetDoorTimer})
-			cleared := elevator.clearAtCurrentFloor()
+			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
 				commands = append(commands, command{kind: sendClearedOrders, value: cleared})
 			}

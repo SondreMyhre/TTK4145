@@ -82,7 +82,7 @@ func main() {
 		{
 			Name: "worldview",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return ordersync.RunWorldView(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
+				return ordersync.RunWorldview(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
 			}),
 			Restart: supervisor.Permanent,
 		},
