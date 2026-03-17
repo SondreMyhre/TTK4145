@@ -1,8 +1,25 @@
 package elevatorcontroller
 
+import (
+	"time"
+)
+
 const (
 	N_FLOORS  = 4
 	N_BUTTONS = 3
+)
+const (
+	doorOpenDuration     = 3 * time.Second
+	motorWatchdogTimeout = 3500 * time.Millisecond
+)
+const (
+	setMotorDirection effectType = iota
+	setDoorOpenLamp
+	setFloorIndicator
+	setButtonLamp
+	resetDoorTimer
+	publishClearedOrders
+	publishLocalState
 )
 
 type ElevatorBehaviour int
@@ -21,14 +38,6 @@ const (
 	DirUp   Direction = 1
 )
 
-type ButtonType int
-
-const (
-	BtnHallUp ButtonType = iota
-	BtnHallDown
-	BtnCab
-)
-
 type ElevatorState struct {
 	Floor      int
 	Direction  Direction
@@ -37,40 +46,27 @@ type ElevatorState struct {
 	MotorStuck bool
 }
 
-type RequestMatrix = [N_FLOORS][N_BUTTONS]bool
-
 type elevator struct {
 	state    ElevatorState
 	requests [N_FLOORS][N_BUTTONS]bool
 }
+
+type ButtonType int
+
+const (
+	BtnHallUp ButtonType = iota
+	BtnHallDown
+	BtnCab
+)
+
+type RequestMatrix = [N_FLOORS][N_BUTTONS]bool
 
 type directionBehaviourPair struct {
 	direction Direction
 	behaviour ElevatorBehaviour
 }
 
-func makeUninitializedElevator() elevator {
-	elevator := elevator{
-		state: ElevatorState{Floor: -1,
-			Direction: DirStop,
-			Behaviour: BehaviourIdle,
-		},
-	}
-	return elevator
-}
-
 type effectType int
-
-const (
-	setMotorDirection effectType = iota
-	setDoorOpenLamp
-	setFloorIndicator
-	setButtonLamp
-	resetDoorTimer
-	publishClearedOrders
-	publishLocalState
-)
-
 type effect struct {
 	kind  effectType
 	value any
@@ -87,33 +83,12 @@ type Order struct {
 	Button ButtonType
 }
 
-// func PrintElevator(elevator LocalSingleElevator) {
-// 	fmt.Printf("  +--------------------+\n")
-// 	fmt.Printf(
-// 		"  |floor = %-2d          |\n"+
-// 			"  |direction  = %-12.12s|\n"+
-// 			"  |behav = %-12.12s|\n",
-// 		elevator.state.floor,
-// 		DirectionToString(elevator.state.direction),
-// 		ElevatorBehaviourToString(elevator.state.behaviour),
-// 	)
-// 	fmt.Printf("  +--------------------+\n")
-// 	fmt.Printf("  |  | up  | dn  | cab |\n")
-// 	for f := N_FLOORS - 1; f >= 0; f-- {
-// 		fmt.Printf("  | %d", f)
-// 		for btn := 0; btn < N_BUTTONS; btn++ {
-// 			if (f == N_FLOORS-1 && btn == int(elevio.BT_HallUp)) ||
-// 				(f == 0 && btn == int(elevio.BT_HallDown)) {
-// 				fmt.Printf("|     ")
-// 			} else {
-// 				if elevator.requests[f][btn] != false {
-// 					fmt.Print("|  #  ")
-// 				} else {
-// 					fmt.Print("|  -  ")
-// 				}
-// 			}
-// 		}
-// 		fmt.Printf("|\n")
-// 	}
-// 	fmt.Printf("  +--------------------+\n")
-// }
+func makeUninitializedElevator() elevator {
+	elevator := elevator{
+		state: ElevatorState{Floor: -1,
+			Direction: DirStop,
+			Behaviour: BehaviourIdle,
+		},
+	}
+	return elevator
+}

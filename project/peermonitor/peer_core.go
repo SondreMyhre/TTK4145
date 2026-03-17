@@ -4,16 +4,12 @@ import (
 	"time"
 )
 
-// core PeerMonitor
-// bad practice with Ticker as parameter to the function?
-
 func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Peer, bool) {
-	// Update or create peer, set Alive , set LastSeen
 	changed := false
 	peerID := heartBeat.SenderID
 
 	index := findPeerIndex(peerList, peerID)
-	if index == -1 { //-1 if peer not in Peerlist
+	if index == -1 {
 		peerList = append(peerList, Peer{
 			ID:         peerID,
 			PeerStatus: StatusAlive,
@@ -22,7 +18,6 @@ func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Pe
 		return peerList, true
 	}
 
-	//Peer exists is Dead -> Alive,
 	if peerList[index].PeerStatus != StatusAlive {
 		peerList[index].PeerStatus = StatusAlive
 		changed = true
@@ -35,23 +30,20 @@ func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Pe
 }
 
 func CheckTimeouts(peerList []Peer, now time.Time, timeout time.Duration) ([]Peer, bool) {
-	// Mark peers as Dead if LastSeen + timeout < now
 	changed := false
 
 	for index := range peerList {
 		peer := peerList[index]
 		timeSinceLastSeen := now.Sub(peer.lastSeen)
 
-		if peer.PeerStatus == StatusAlive && timeSinceLastSeen > timeout { //check for timeout
-			peerList[index].PeerStatus = StatusDead //declared dead
+		if peer.PeerStatus == StatusAlive && timeSinceLastSeen > timeout {
+			peerList[index].PeerStatus = StatusDead
 			changed = true
 		}
 	}
 
 	return peerList, changed
 }
-
-// makes a copy of peerList before sending to avoid sharing mutable state between goroutines
 
 func ToPeerUpdate(peerList []Peer) PeerMsg {
 	out := make([]PeerUpdate, len(peerList))
@@ -65,7 +57,7 @@ func ToPeerUpdate(peerList []Peer) PeerMsg {
 	return out
 }
 
-func findPeerIndex(peers []Peer, id ElevID) int { //finds ID of peer
+func findPeerIndex(peers []Peer, id ElevID) int {
 	for index := range peers {
 		if peers[index].ID == id {
 			return index

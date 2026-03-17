@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	elevatorcontroller "project/elevatorcontroller"
 	"runtime"
-
-	localsingle "project/elevatorcontroller"
 )
 
 type HRAElevState struct {
@@ -91,7 +90,7 @@ func AssignRequests(worldview WorldviewMsg, myID ElevID) ([N_FLOORS][N_BUTTONS]b
 	return result, nil
 }
 
-func localStateToHRA(localState localsingle.ElevatorState, cabRequests [N_FLOORS]bool) HRAElevState {
+func localStateToHRA(localState elevatorcontroller.ElevatorState, cabRequests [N_FLOORS]bool) HRAElevState {
 	return HRAElevState{
 		Behavior:    behaviourToString(localState.Behaviour),
 		Floor:       localState.Floor,
@@ -100,22 +99,22 @@ func localStateToHRA(localState localsingle.ElevatorState, cabRequests [N_FLOORS
 	}
 }
 
-func directionToString(direction localsingle.Direction) string {
+func directionToString(direction elevatorcontroller.Direction) string {
 	switch direction {
-	case localsingle.DirUp:
+	case elevatorcontroller.DirUp:
 		return "up"
-	case localsingle.DirDown:
+	case elevatorcontroller.DirDown:
 		return "down"
 	default:
 		return "stop"
 	}
 }
 
-func behaviourToString(behaviour localsingle.ElevatorBehaviour) string {
+func behaviourToString(behaviour elevatorcontroller.ElevatorBehaviour) string {
 	switch behaviour {
-	case localsingle.BehaviourMoving:
+	case elevatorcontroller.BehaviourMoving:
 		return "moving"
-	case localsingle.BehaviourDoorOpen:
+	case elevatorcontroller.BehaviourDoorOpen:
 		return "doorOpen"
 	default:
 		return "idle"

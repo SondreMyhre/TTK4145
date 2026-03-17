@@ -2,7 +2,7 @@ package ordersync
 
 import (
 	"context"
-	localsingle "project/elevatorcontroller"
+	elevatorcontroller "project/elevatorcontroller"
 )
 
 func RunAssigner(
@@ -11,7 +11,7 @@ func RunAssigner(
 
 	worldviewChan <-chan WorldviewMsg,
 
-	assignedRequestsChan chan<- localsingle.RequestMatrix,
+	assignedRequestsChan chan<- elevatorcontroller.RequestMatrix,
 ) error {
 	var prevAssignments [N_FLOORS][N_BUTTONS]bool
 

@@ -13,16 +13,19 @@ import (
 	peermonitor "project/peermonitor"
 )
 
+const broadcastPort = 50000
+
 func Run(
 	ctx context.Context,
+
 	ordersyncTx <-chan ordersync.NetMsg,
-	ordersyncRx chan<- ordersync.NetMsg,
 	peermonitorTx <-chan peermonitor.HeartBeat,
+
+	ordersyncRx chan<- ordersync.NetMsg,
 	peermonitorRx chan<- peermonitor.HeartBeat,
 ) {
 	go bcast.Transmitter(broadcastPort, ordersyncTx, peermonitorTx)
 	go bcast.Receiver(broadcastPort, ordersyncRx, peermonitorRx)
 
 	<-ctx.Done()
-
 }

@@ -1,13 +1,13 @@
 package ordersync
 
 import (
-	localsingle "project/elevatorcontroller"
+	elevatorcontroller "project/elevatorcontroller"
 )
 
 const (
-	N_FLOORS  = localsingle.N_FLOORS
+	N_FLOORS  = elevatorcontroller.N_FLOORS
 	N_HALL    = 2
-	N_BUTTONS = localsingle.N_BUTTONS
+	N_BUTTONS = elevatorcontroller.N_BUTTONS
 	BT_CAB    = 2
 )
 
@@ -42,7 +42,7 @@ const (
 type Peer struct {
 	ID         ElevID
 	PeerStatus PeerStatus
-	state      localsingle.ElevatorState
+	state      elevatorcontroller.ElevatorState
 }
 
 type PeerUpdate struct {
@@ -54,13 +54,13 @@ type NetMsg struct {
 	SenderID        ElevID
 	HallOrderMatrix HallOrderMatrix
 	CabCalls        CabCallsMap
-	SenderState     localsingle.ElevatorState
+	SenderState     elevatorcontroller.ElevatorState
 }
 
 type WorldviewMsg struct {
 	HallRequests HallRequests
 	CabRequests  CabCallsMap
-	PeerStates   map[ElevID]localsingle.ElevatorState
+	PeerStates   map[ElevID]elevatorcontroller.ElevatorState
 	Peers        []Peer
 }
 
@@ -69,7 +69,7 @@ type worldviewState struct {
 	cabRequests     CabCallsMap
 	pendingCabCalls [N_FLOORS]bool
 	peerList        []Peer
-	localState      localsingle.ElevatorState
+	localState      elevatorcontroller.ElevatorState
 }
 
 // -------------------------------------------------------------

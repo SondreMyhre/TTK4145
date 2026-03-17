@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	localsingle "project/elevatorcontroller"
+	elevatorcontroller "project/elevatorcontroller"
 	elevio "project/elevio"
 	"time"
 )
@@ -14,8 +14,8 @@ func RunWorldview(
 	myID ElevID,
 
 	buttonChan <-chan elevio.ButtonEvent,
-	localStateChan <-chan localsingle.ElevatorState,
-	clearedOrdersChan <-chan []localsingle.Order,
+	localStateChan <-chan elevatorcontroller.ElevatorState,
+	clearedOrdersChan <-chan []elevatorcontroller.Order,
 	netRx <-chan NetMsg,
 	peerEventChan <-chan []PeerUpdate,
 
@@ -126,7 +126,7 @@ func applyEffects(
 	}
 }
 
-func convertClearedOrders(orders []localsingle.Order) ([]int, []int) {
+func convertClearedOrders(orders []elevatorcontroller.Order) ([]int, []int) {
 	floors := make([]int, len(orders))
 	buttons := make([]int, len(orders))
 	for i, order := range orders {
@@ -149,7 +149,7 @@ func extractWorldview(state worldviewState, myID ElevID) WorldviewMsg {
 		cabRequests[id] = calls
 	}
 
-	peerStates := make(map[ElevID]localsingle.ElevatorState)
+	peerStates := make(map[ElevID]elevatorcontroller.ElevatorState)
 	peerStates[myID] = state.localState
 	for _, peer := range state.peerList {
 		if peer.ID != myID {
@@ -165,11 +165,11 @@ func extractWorldview(state worldviewState, myID ElevID) WorldviewMsg {
 	}
 }
 
-func findPeerState(peerList []Peer, id ElevID) localsingle.ElevatorState {
+func findPeerState(peerList []Peer, id ElevID) elevatorcontroller.ElevatorState {
 	for _, peer := range peerList {
 		if peer.ID == id {
 			return peer.state
 		}
 	}
-	return localsingle.ElevatorState{}
+	return elevatorcontroller.ElevatorState{}
 }

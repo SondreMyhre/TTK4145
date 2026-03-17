@@ -4,12 +4,12 @@ import (
 	"context"
 	"flag"
 	"log"
-	localsingle "project/elevatorcontroller"
+	elevatorcontroller "project/elevatorcontroller"
 	elevio "project/elevio"
 	networking "project/networking"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
-	"project/supervisor"
+	supervisor "project/supervisor"
 )
 
 func main() {
@@ -21,7 +21,7 @@ func main() {
 		log.Fatal("Not valid peerID.")
 	}
 
-	elevio.Init(*serverAddr, localsingle.N_FLOORS)
+	elevio.Init(*serverAddr, elevatorcontroller.N_FLOORS)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -32,10 +32,10 @@ func main() {
 	obstructionChan := make(chan bool, 1)
 	driverCommandChan := make(chan elevio.DriverCommand, 10)
 
-	// localsingle channels
-	assignedRequestsChan := make(chan localsingle.RequestMatrix, 1)
-	clearedOrdersChan := make(chan []localsingle.Order, 10)
-	localStateChan := make(chan localsingle.ElevatorState, 1)
+	// elevatorcontroller channels
+	assignedRequestsChan := make(chan elevatorcontroller.RequestMatrix, 1)
+	clearedOrdersChan := make(chan []elevatorcontroller.Order, 10)
+	localStateChan := make(chan elevatorcontroller.ElevatorState, 1)
 
 	// networking channels
 	orderSyncTx := make(chan ordersync.NetMsg, 10)
@@ -67,7 +67,7 @@ func main() {
 		{
 			Name: "networking",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				networking.Run(ctx, orderSyncTx, orderSyncRx, peerMonitorTx, peerMonitorRx)
+				networking.Run(ctx, orderSyncTx, peerMonitorTx, orderSyncRx, peerMonitorRx)
 				return nil
 			}),
 			Restart: supervisor.Permanent,
@@ -94,9 +94,9 @@ func main() {
 			Restart: supervisor.Permanent,
 		},
 		{
-			Name: "localsingle",
+			Name: "elevatorcontroller",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return localsingle.Run(ctx, assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
+				return elevatorcontroller.Run(ctx, assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 			}),
 			Restart: supervisor.Permanent,
 		},
