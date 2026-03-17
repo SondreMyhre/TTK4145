@@ -29,11 +29,6 @@ func RunWorldview(
 
 	orderTicker := time.NewTicker(100 * time.Millisecond)
 
-	publishWorldview := func() {
-		worldview := extractWorldview(state, myID)
-		worldviewChan <- worldview
-	}
-
 	for {
 		var effects []effect
 
@@ -52,19 +47,19 @@ func RunWorldview(
 				state, effects = onHallButtonEvent(state, floor, button)
 			}
 			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
-			publishWorldview()
+			publishWorldview(state, myID, worldviewChan)
 
 		case newLocalState := <-localStateChan:
 			state.localState = newLocalState
 			effects = []effect{{kind: broadcastNetMessage}}
 			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
-			publishWorldview()
+			publishWorldview(state, myID, worldviewChan)
 
 		case cleared := <-clearedOrdersChan:
 			clearedFloors, clearedButtons := convertClearedOrders(cleared)
 			state, effects = onClearedOrders(state, myID, clearedFloors, clearedButtons)
 			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
-			publishWorldview()
+			publishWorldview(state, myID, worldviewChan)
 
 		case netMsg, ok := <-netRx:
 			if !ok {
@@ -72,7 +67,7 @@ func RunWorldview(
 			}
 			state, effects = onNetMsg(state, myID, netMsg)
 			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
-			publishWorldview()
+			publishWorldview(state, myID, worldviewChan)
 
 		case peerEvent := <-peerEventChan:
 			var newPeerList []Peer
@@ -81,7 +76,7 @@ func RunWorldview(
 				newPeerList = append(newPeerList, Peer{ID: update.ID, PeerStatus: update.PeerStatus, state: existingState})
 			}
 			state.peerList = newPeerList
-			publishWorldview()
+			publishWorldview(state, myID, worldviewChan)
 
 		case <-orderTicker.C:
 			effects = []effect{{kind: broadcastNetMessage}}
@@ -139,6 +134,11 @@ func convertClearedOrders(orders []localsingle.Order) ([]int, []int) {
 		buttons[i] = int(order.Button)
 	}
 	return floors, buttons
+}
+
+func publishWorldview(state worldviewState, myID ElevID, worldviewChan chan<- WorldviewMsg) {
+	worldview := extractWorldview(state, myID)
+	worldviewChan <- worldview
 }
 
 func extractWorldview(state worldviewState, myID ElevID) WorldviewMsg {
