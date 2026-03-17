@@ -21,7 +21,7 @@ func RunWorldview(
 
 	netTx chan<- NetMsg,
 	lightCommandChan chan<- elevio.DriverCommand,
-	worldViewChan chan<- WorldviewMsg,
+	worldviewChan chan<- WorldviewMsg,
 ) error {
 	state := worldviewState{
 		cabRequests: make(CabCallsMap),
@@ -30,12 +30,12 @@ func RunWorldview(
 	orderTicker := time.NewTicker(100 * time.Millisecond)
 
 	publishWorldview := func() {
-		worldview := extractWorldView(state, myID)
-		worldViewChan <- worldview
+		worldview := extractWorldview(state, myID)
+		worldviewChan <- worldview
 	}
 
 	for {
-		var commands []command
+		var effects []effect
 
 		select {
 		case <-ctx.Done():
@@ -47,31 +47,31 @@ func RunWorldview(
 
 			switch {
 			case button == BT_CAB:
-				state, commands = onCabButtonEvent(state, myID, floor)
+				state, effects = onCabButtonEvent(state, myID, floor)
 			case button < N_HALL:
-				state, commands = onHallButtonEvent(state, floor, button)
+				state, effects = onHallButtonEvent(state, floor, button)
 			}
-			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
 		case newLocalState := <-localStateChan:
 			state.localState = newLocalState
-			commands = []command{{kind: broadcastNetMessage}}
-			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			effects = []effect{{kind: broadcastNetMessage}}
+			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
 		case cleared := <-clearedOrdersChan:
 			clearedFloors, clearedButtons := convertClearedOrders(cleared)
-			state, commands = onClearedOrders(state, myID, clearedFloors, clearedButtons)
-			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			state, effects = onClearedOrders(state, myID, clearedFloors, clearedButtons)
+			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
 		case netMsg, ok := <-netRx:
 			if !ok {
 				return fmt.Errorf("Worldview: netRx closed")
 			}
-			state, commands = onNetMsg(state, myID, netMsg)
-			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			state, effects = onNetMsg(state, myID, netMsg)
+			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
 			publishWorldview()
 
 		case peerEvent := <-peerEventChan:
@@ -84,23 +84,23 @@ func RunWorldview(
 			publishWorldview()
 
 		case <-orderTicker.C:
-			commands = []command{{kind: broadcastNetMessage}}
-			applyCommands(ctx, commands, netTx, lightCommandChan, state, myID)
+			effects = []effect{{kind: broadcastNetMessage}}
+			applyEffects(ctx, effects, netTx, lightCommandChan, state, myID)
 		}
 	}
 }
 
-func applyCommands(
+func applyEffects(
 	ctx context.Context,
-	commands []command,
+	effects []effect,
 	netTx chan<- NetMsg,
 	lightCommandChan chan<- elevio.DriverCommand,
 
 	state worldviewState,
 	myID ElevID,
 ) {
-	for _, command := range commands {
-		switch command.kind {
+	for _, effect := range effects {
+		switch effect.kind {
 		case broadcastNetMessage:
 			cabCallsCopy := make(CabCallsMap, len(state.cabRequests))
 			maps.Copy(cabCallsCopy, state.cabRequests)
@@ -115,7 +115,7 @@ func applyCommands(
 				return
 			}
 		case setButtonLamp:
-			args := command.value.(buttonLampArgs)
+			args := effect.value.(buttonLampArgs)
 			select {
 			case lightCommandChan <- elevio.DriverCommand{
 				Kind:   elevio.CommandSetButtonLamp,
@@ -141,7 +141,7 @@ func convertClearedOrders(orders []localsingle.Order) ([]int, []int) {
 	return floors, buttons
 }
 
-func extractWorldView(state worldviewState, myID ElevID) WorldviewMsg {
+func extractWorldview(state worldviewState, myID ElevID) WorldviewMsg {
 	hallRequests := extractHallRequests(state.hallOrderMatrix)
 
 	cabRequests := make(CabCallsMap)

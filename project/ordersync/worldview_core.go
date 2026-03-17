@@ -1,26 +1,26 @@
 package ordersync
 
-func onCabButtonEvent(state worldviewState, myID ElevID, floor int) (worldviewState, []command) {
+func onCabButtonEvent(state worldviewState, myID ElevID, floor int) (worldviewState, []effect) {
 	state.pendingCabCalls[floor] = true
 
 	localCabCalls := state.cabRequests[myID]
 	localCabCalls[floor] = true
 	state.cabRequests[myID] = localCabCalls
 
-	var commands []command
+	var effects []effect
 
 	if !hasAlivePeers(myID, state.peerList) {
-		commands = append(commands, command{
+		effects = append(effects, effect{
 			kind:  setButtonLamp,
 			value: buttonLampArgs{Floor: floor, Button: BT_CAB, Value: true},
 		})
 	}
 
-	commands = append(commands, command{kind: broadcastNetMessage})
-	return state, commands
+	effects = append(effects, effect{kind: broadcastNetMessage})
+	return state, effects
 }
 
-func onHallButtonEvent(state worldviewState, floor int, button int) (worldviewState, []command) {
+func onHallButtonEvent(state worldviewState, floor int, button int) (worldviewState, []effect) {
 	entry := state.hallOrderMatrix[floor][button]
 
 	if entry.Status == Inactive {
@@ -29,14 +29,14 @@ func onHallButtonEvent(state worldviewState, floor int, button int) (worldviewSt
 		state.hallOrderMatrix[floor][button] = entry
 	}
 
-	return state, []command{{kind: broadcastNetMessage}}
+	return state, []effect{{kind: broadcastNetMessage}}
 }
 
-func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, clearedButtons []int) (worldviewState, []command) {
-	var commands []command
+func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, clearedButtons []int) (worldviewState, []effect) {
+	var effects []effect
 
 	if len(clearedFloors) == 0 {
-		return state, commands
+		return state, effects
 	}
 
 	for i := range clearedFloors {
@@ -49,7 +49,7 @@ func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, cle
 				entry.Status = Inactive
 				entry.Version++
 
-				commands = append(commands, command{
+				effects = append(effects, effect{
 					kind: setButtonLamp,
 					value: buttonLampArgs{
 						Floor:  floor,
@@ -63,7 +63,7 @@ func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, cle
 			localCabCalls[floor] = false
 			state.cabRequests[myID] = localCabCalls
 			state.pendingCabCalls[floor] = false // ??
-			commands = append(commands, command{
+			effects = append(effects, effect{
 				kind: setButtonLamp,
 				value: buttonLampArgs{
 					Floor:  floor,
@@ -73,17 +73,17 @@ func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, cle
 			})
 		}
 	}
-	commands = append(commands, command{kind: broadcastNetMessage})
+	effects = append(effects, effect{kind: broadcastNetMessage})
 
-	return state, commands
+	return state, effects
 }
 
-func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []command) {
-	var commands []command
+func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []effect) {
+	var effects []effect
 
 	senderID := msg.SenderID
 	if senderID == myID {
-		return state, commands
+		return state, effects
 	}
 
 	broadcastNeeded := false
@@ -105,7 +105,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 
 				switch local.Status {
 				case Inactive:
-					commands = append(commands, command{
+					effects = append(effects, effect{
 						kind: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
@@ -117,7 +117,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 					local.Status = Confirmed
 					local.Version++
 					broadcastNeeded = true
-					commands = append(commands, command{
+					effects = append(effects, effect{
 						kind: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
@@ -127,7 +127,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 					})
 				case Confirmed:
 					local.Status = Confirmed
-					commands = append(commands, command{
+					effects = append(effects, effect{
 						kind: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
@@ -142,7 +142,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 					local.Status = Confirmed
 					local.Version++
 					broadcastNeeded = true
-					commands = append(commands, command{
+					effects = append(effects, effect{
 						kind: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
@@ -151,7 +151,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 						}})
 				} else if remote.Status == Confirmed && local.Status != Confirmed {
 					*local = remote
-					commands = append(commands, command{
+					effects = append(effects, effect{
 						kind: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
@@ -159,7 +159,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 							Value:  true,
 						}})
 				} else if remote.Status == Confirmed {
-					commands = append(commands, command{
+					effects = append(effects, effect{
 						kind: setButtonLamp,
 						value: buttonLampArgs{
 							Floor:  floor,
@@ -178,7 +178,7 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 		for floor := range state.pendingCabCalls {
 			if state.pendingCabCalls[floor] && msg.CabCalls[myID][floor] {
 				state.pendingCabCalls[floor] = false
-				commands = append(commands, command{
+				effects = append(effects, effect{
 					kind: setButtonLamp,
 					value: buttonLampArgs{
 						Floor:  floor,
@@ -188,13 +188,12 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 				})
 			}
 		}
-		// SPØRS OM DETTE MÅ ENDRES, BRUKE FLAGG HELLER KANSKJE??
 		if remoteMyCabs, ok := msg.CabCalls[myID]; ok {
 			localMyCabs := state.cabRequests[myID]
 			for floor := range N_FLOORS {
 				if remoteMyCabs[floor] && !localMyCabs[floor] {
 					localMyCabs[floor] = true
-					commands = append(commands, command{
+					effects = append(effects, effect{
 						kind:  setButtonLamp,
 						value: buttonLampArgs{Floor: floor, Button: BT_CAB, Value: true},
 					})
@@ -205,10 +204,10 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 	}
 
 	if broadcastNeeded {
-		commands = append(commands, command{kind: broadcastNetMessage})
+		effects = append(effects, effect{kind: broadcastNetMessage})
 	}
 
-	return state, commands
+	return state, effects
 }
 
 func extractHallRequests(hallOrderMatrix HallOrderMatrix) HallRequests {

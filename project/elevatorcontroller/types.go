@@ -59,20 +59,20 @@ func makeUninitializedElevator() elevator {
 	return elevator
 }
 
-type commandType int
+type effectType int
 
 const (
-	setMotorDirection commandType = iota
+	setMotorDirection effectType = iota
 	setDoorOpenLamp
 	setFloorIndicator
 	setButtonLamp
 	resetDoorTimer
-	sendClearedOrders
-	sendLocalState
+	publishClearedOrders
+	publishLocalState
 )
 
-type command struct {
-	kind  commandType
+type effect struct {
+	kind  effectType
 	value any
 }
 
