@@ -1,6 +1,6 @@
 package elevatorcontroller
 
-import(
+import (
 	"time"
 )
 
@@ -8,21 +8,22 @@ const (
 	N_FLOORS  = 4
 	N_BUTTONS = 3
 )
-const(
+const (
 	doorOpenDuration     = 3 * time.Second
 	motorWatchdogTimeout = 3500 * time.Millisecond
 )
 const (
-	setMotorDirection commandType = iota
+	setMotorDirection effectType = iota
 	setDoorOpenLamp
 	setFloorIndicator
 	setButtonLamp
 	resetDoorTimer
-	sendClearedOrders
-	sendLocalState
+	publishClearedOrders
+	publishLocalState
 )
 
 type ElevatorBehaviour int
+
 const (
 	BehaviourIdle ElevatorBehaviour = iota
 	BehaviourDoorOpen
@@ -30,6 +31,7 @@ const (
 )
 
 type Direction int
+
 const (
 	DirDown Direction = -1
 	DirStop Direction = 0
@@ -50,12 +52,12 @@ type elevator struct {
 }
 
 type ButtonType int
+
 const (
 	BtnHallUp ButtonType = iota
 	BtnHallDown
 	BtnCab
 )
-
 
 type RequestMatrix = [N_FLOORS][N_BUTTONS]bool
 
@@ -64,9 +66,9 @@ type directionBehaviourPair struct {
 	behaviour ElevatorBehaviour
 }
 
-type commandType int
-type command struct {
-	kind  commandType
+type effectType int
+type effect struct {
+	kind  effectType
 	value any
 }
 
@@ -90,4 +92,3 @@ func makeUninitializedElevator() elevator {
 	}
 	return elevator
 }
-

@@ -74,15 +74,15 @@ type worldviewState struct {
 
 // -------------------------------------------------------------
 
-type commandType int
+type effectType int
 
 const (
-	broadcastNetMessage commandType = iota
+	broadcastNetMessage effectType = iota
 	setButtonLamp
 )
 
-type command struct {
-	kind  commandType
+type effect struct {
+	kind  effectType
 	value any
 }
 

@@ -3,6 +3,7 @@ package elevio
 import "context"
 
 type DriverCommandType int
+
 const (
 	CommandSetMotorDirection DriverCommandType = iota
 	CommandSetButtonLamp

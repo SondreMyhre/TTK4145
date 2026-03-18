@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"runtime"
 	elevatorcontroller "project/elevatorcontroller"
+	"runtime"
 )
 
 type HRAElevState struct {

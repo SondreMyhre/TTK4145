@@ -3,14 +3,13 @@ package elevatorcontroller
 import (
 	"context"
 	"fmt"
-	"time"
 	elevio "project/elevio"
+	"time"
 )
 
 func Run(
 	ctx context.Context,
-
-	requestMatrixChan <-chan RequestMatrix,
+	assignedRequestsChan <-chan RequestMatrix,
 	floorChan <-chan int,
 	obstructionChan <-chan bool,
 
@@ -26,11 +25,12 @@ func Run(
 	doorTimer.Stop()
 	motorTimer.Stop()
 
-	var commands []command
+	var effects []effect
 
 	if elevio.GetFloor() == -1 {
-		elevator, commands = onInitBetweenFloors(elevator)
-		executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
+		elevator, effects = onInitBetweenFloors(elevator)
+		applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
+
 	} else {
 		elevator.state.Floor = elevio.GetFloor()
 	}
@@ -40,62 +40,62 @@ func Run(
 		case <-ctx.Done():
 			return nil
 
-		case newRequests := <-requestMatrixChan:
-			elevator, commands = onNewRequestMatrix(elevator, newRequests)
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
+		case newRequests := <-assignedRequestsChan:
+			elevator, effects = onNewRequestMatrix(elevator, newRequests)
+			applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
 
 		case floor := <-floorChan:
 			motorTimer.Stop()
-			elevator, commands = onFloorArrival(elevator, floor)
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
+			elevator, effects = onFloorArrival(elevator, floor)
+			applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
 
 		case obstructed := <-obstructionChan:
-			elevator, commands = onObstruction(elevator, obstructed)
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
+			elevator, effects = onObstruction(elevator, obstructed)
+			applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
 
 		case <-doorTimer.C:
-			elevator, commands = onDoorTimeout(elevator)
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
+			elevator, effects = onDoorTimeout(elevator)
+			applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
 
 		case <-motorTimer.C:
-			elevator, commands = onMotorTimeout(elevator)
-			executeCommands(commands, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
+			elevator, effects = onMotorTimeout(elevator)
+			applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
 		}
 	}
 }
 
-func executeCommands(
-	commands []command,
+func applyEffects(
+	effects []effect,
 	driverCommandChan chan<- elevio.DriverCommand,
 	localStateChan chan<- ElevatorState,
 	clearedChan chan<- []Order,
 	doorTimer *time.Timer,
 	motorTimer *time.Timer,
 ) {
-	for _, command := range commands {
-		switch command.kind {
+	for _, effect := range effects {
+		switch effect.kind {
 		case setMotorDirection:
-			dir := command.value.(Direction)
+			dir := effect.value.(Direction)
 			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
 			if dir != DirStop {
 				motorTimer.Reset(motorWatchdogTimeout)
 			}
 		case setDoorOpenLamp:
-			value := command.value.(bool)
+			value := effect.value.(bool)
 			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetDoorLamp, Value: value}
 		case setFloorIndicator:
-			floor := command.value.(int)
+			floor := effect.value.(int)
 			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetFloorIndicator, Floor: floor}
 		case setButtonLamp:
-			args := command.value.(buttonLampArgs)
+			args := effect.value.(buttonLampArgs)
 			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetButtonLamp, Button: ButtonTypeToElevio(args.Btn), Floor: args.Floor, Value: args.Value}
 		case resetDoorTimer:
 			doorTimer.Reset(doorOpenDuration)
-		case sendClearedOrders:
-			cleared := command.value.([]Order)
+		case publishClearedOrders:
+			cleared := effect.value.([]Order)
 			clearedChan <- cleared
-		case sendLocalState:
-			localStateChan <- command.value.(ElevatorState)
+		case publishLocalState:
+			localStateChan <- effect.value.(ElevatorState)
 		}
 
 	}

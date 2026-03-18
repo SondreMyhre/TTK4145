@@ -9,7 +9,7 @@ func HandleHeartbeats(peerList []Peer, heartBeat HeartBeat, now time.Time) ([]Pe
 	peerID := heartBeat.SenderID
 
 	index := findPeerIndex(peerList, peerID)
-	if index == -1 { 
+	if index == -1 {
 		peerList = append(peerList, Peer{
 			ID:         peerID,
 			PeerStatus: StatusAlive,
@@ -36,8 +36,8 @@ func CheckTimeouts(peerList []Peer, now time.Time, timeout time.Duration) ([]Pee
 		peer := peerList[index]
 		timeSinceLastSeen := now.Sub(peer.lastSeen)
 
-		if peer.PeerStatus == StatusAlive && timeSinceLastSeen > timeout { 
-			peerList[index].PeerStatus = StatusDead 
+		if peer.PeerStatus == StatusAlive && timeSinceLastSeen > timeout {
+			peerList[index].PeerStatus = StatusDead
 			changed = true
 		}
 	}
@@ -57,7 +57,7 @@ func ToPeerUpdate(peerList []Peer) PeerMsg {
 	return out
 }
 
-func findPeerIndex(peers []Peer, id ElevID) int { 
+func findPeerIndex(peers []Peer, id ElevID) int {
 	for index := range peers {
 		if peers[index].ID == id {
 			return index

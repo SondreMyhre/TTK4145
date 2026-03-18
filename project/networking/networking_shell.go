@@ -20,7 +20,7 @@ func Run(
 
 	ordersyncTx <-chan ordersync.NetMsg,
 	peermonitorTx <-chan peermonitor.HeartBeat,
-	
+
 	ordersyncRx chan<- ordersync.NetMsg,
 	peermonitorRx chan<- peermonitor.HeartBeat,
 ) {

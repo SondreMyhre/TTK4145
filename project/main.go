@@ -27,24 +27,24 @@ func main() {
 	defer cancel()
 
 	// elevio channels
-	buttonChan := make(chan elevio.ButtonEvent, 10)
+	buttonChan := make(chan elevio.ButtonEvent, 4)
 	floorChan := make(chan int, 1)
 	obstructionChan := make(chan bool, 1)
 	driverCommandChan := make(chan elevio.DriverCommand, 10)
 
 	// elevatorcontroller channels
-	requestMatrixChan := make(chan elevatorcontroller.RequestMatrix, 1)
-	clearedOrdersChan := make(chan []elevatorcontroller.Order, 10)
+	assignedRequestsChan := make(chan elevatorcontroller.RequestMatrix, 1)
+	clearedOrdersChan := make(chan []elevatorcontroller.Order, 1)
 	localStateChan := make(chan elevatorcontroller.ElevatorState, 1)
 
 	// networking channels
-	orderSyncTx := make(chan ordersync.NetMsg, 10)
-	orderSyncRx := make(chan ordersync.NetMsg, 10)
-	peerMonitorTx := make(chan peermonitor.HeartBeat, 10)
-	peerMonitorRx := make(chan peermonitor.HeartBeat, 10)
+	orderSyncTx := make(chan ordersync.NetMsg, 1)
+	orderSyncRx := make(chan ordersync.NetMsg, 2)
+	peerMonitorTx := make(chan peermonitor.HeartBeat, 1)
+	peerMonitorRx := make(chan peermonitor.HeartBeat, 2)
 
 	// Channel between ordersync and peermonitor
-	peerEventChan := make(chan []ordersync.PeerUpdate, 10)
+	peerEventChan := make(chan []ordersync.PeerUpdate)
 
 	// Channel between worldview and assigner in ordersync
 	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
@@ -82,21 +82,21 @@ func main() {
 		{
 			Name: "worldview",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return ordersync.RunWorldView(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
+				return ordersync.RunWorldview(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
 			}),
 			Restart: supervisor.Permanent,
 		},
 		{
 			Name: "assigner",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return ordersync.RunAssigner(ctx, ordersync.ElevID(*peerID), worldviewChan, requestMatrixChan)
+				return ordersync.RunAssigner(ctx, ordersync.ElevID(*peerID), worldviewChan, assignedRequestsChan)
 			}),
 			Restart: supervisor.Permanent,
 		},
 		{
 			Name: "elevatorcontroller",
 			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return elevatorcontroller.Run(ctx, requestMatrixChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
+				return elevatorcontroller.Run(ctx, assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 			}),
 			Restart: supervisor.Permanent,
 		},

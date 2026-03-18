@@ -1,141 +1,145 @@
 package elevatorcontroller
 
-func onInitBetweenFloors(elevator elevator) (elevator, []command) {
-	var commands []command
+func onInitBetweenFloors(elevator elevator) (elevator, []effect) {
+	var effects []effect
 	elevator.state.Direction = DirDown
 	elevator.state.Behaviour = BehaviourMoving
-	commands = append(commands, command{kind: setMotorDirection, value: DirDown})
-	return elevator, commands
+	effects = append(effects, effect{kind: setMotorDirection, value: DirDown})
+	return elevator, effects
 }
 
-func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator, []command) {
-	var commands []command
+func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator, []effect) {
+	var effects []effect
 
 	elevator.requests = newRequests
 
 	switch elevator.state.Behaviour {
 	case BehaviourDoorOpen:
-		if elevator.shouldStop() {
-			commands = append(commands, command{kind: resetDoorTimer})
-			cleared := elevator.clearAtCurrentFloor()
+		if shouldStop(elevator) {
+			var cleared []Order
+			effects = append(effects, effect{kind: resetDoorTimer})
+			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
-				commands = append(commands, command{kind: sendClearedOrders, value: cleared})
+				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
 			}
 		}
-		return elevator, commands
+		return elevator, effects
 	case BehaviourMoving:
-		return elevator, commands
+		return elevator, effects
 	case BehaviourIdle:
-		pair := elevator.chooseDirection()
+		pair := chooseDirection(elevator)
 		elevator.state.Direction = pair.direction
 		elevator.state.Behaviour = pair.behaviour
-		commands = append(commands, command{kind: sendLocalState, value: elevator.state})
+		effects = append(effects, effect{kind: publishLocalState, value: elevator.state})
 		switch pair.behaviour {
 		case BehaviourDoorOpen:
-			commands = append(commands, command{kind: setDoorOpenLamp, value: true})
-			commands = append(commands, command{kind: resetDoorTimer})
-			clearedOrders := elevator.clearAtCurrentFloor()
-			if len(clearedOrders) > 0 {
-				commands = append(commands, command{kind: sendClearedOrders, value: clearedOrders})
+			var cleared []Order
+			effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
+			effects = append(effects, effect{kind: resetDoorTimer})
+			elevator, cleared = clearAtCurrentFloor(elevator)
+			if len(cleared) > 0 {
+				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
 			}
 		case BehaviourMoving:
-			commands = append(commands, command{kind: setMotorDirection, value: elevator.state.Direction})
+			effects = append(effects, effect{kind: setMotorDirection, value: elevator.state.Direction})
 
 		}
-		return elevator, commands
+		return elevator, effects
 	}
 
-	return elevator, commands
+	return elevator, effects
 }
 
-func onFloorArrival(elevator elevator, newFloor int) (elevator, []command) {
+func onFloorArrival(elevator elevator, newFloor int) (elevator, []effect) {
 	elevator.state.Floor = newFloor
 
 	if elevator.state.MotorStuck {
 		elevator.state.MotorStuck = false
 	}
 
-	var commands []command
-	commands = append(commands, command{kind: setFloorIndicator, value: elevator.state.Floor})
+	var effects []effect
+	effects = append(effects, effect{kind: setFloorIndicator, value: elevator.state.Floor})
 
 	if elevator.state.Behaviour != BehaviourMoving {
-		return elevator, commands
+		return elevator, effects
 	}
 
-	if elevator.shouldStop() {
-		commands = append(commands, command{kind: setMotorDirection, value: DirStop})
-		commands = append(commands, command{kind: setDoorOpenLamp, value: true})
-		cleared := elevator.clearAtCurrentFloor()
+	if shouldStop(elevator) {
+		var cleared []Order
+		effects = append(effects, effect{kind: setMotorDirection, value: DirStop})
+		effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
+		elevator, cleared = clearAtCurrentFloor(elevator)
 		if len(cleared) > 0 {
-			commands = append(commands, command{kind: sendClearedOrders, value: cleared})
+			effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
 		}
-		commands = append(commands, command{kind: resetDoorTimer})
+		effects = append(effects, effect{kind: resetDoorTimer})
 
 		elevator.state.Behaviour = BehaviourDoorOpen
-		commands = append(commands, command{kind: sendLocalState, value: elevator.state})
+		effects = append(effects, effect{kind: publishLocalState, value: elevator.state})
 	}
 
-	return elevator, commands
+	return elevator, effects
 }
 
-func onDoorTimeout(elevator elevator) (elevator, []command) {
-	var commands []command
+func onDoorTimeout(elevator elevator) (elevator, []effect) {
+	var effects []effect
 
 	if elevator.state.Behaviour != BehaviourDoorOpen {
-		return elevator, commands
+		return elevator, effects
 	}
 
 	if elevator.state.Obstructed {
-		commands = append(commands, command{kind: resetDoorTimer})
-		return elevator, commands
+		effects = append(effects, effect{kind: resetDoorTimer})
+		return elevator, effects
 	}
 
 	switch elevator.state.Behaviour {
 	case BehaviourDoorOpen:
-		pair := elevator.chooseDirection()
+		pair := chooseDirection(elevator)
 		elevator.state.Direction = pair.direction
 		elevator.state.Behaviour = pair.behaviour
-		commands = append(commands, command{kind: sendLocalState, value: elevator.state})
+		effects = append(effects, effect{kind: publishLocalState, value: elevator.state})
 
 		switch elevator.state.Behaviour {
 		case BehaviourDoorOpen:
-			commands = append(commands, command{kind: resetDoorTimer})
-			cleared := elevator.clearAtCurrentFloor()
+			var cleared []Order
+			effects = append(effects, effect{kind: resetDoorTimer})
+			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
-				commands = append(commands, command{kind: sendClearedOrders, value: cleared})
+				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
 			}
 		case BehaviourMoving:
-			commands = append(commands, command{kind: setDoorOpenLamp, value: false})
-			commands = append(commands, command{kind: setMotorDirection, value: elevator.state.Direction})
+			effects = append(effects, effect{kind: setDoorOpenLamp, value: false})
+			effects = append(effects, effect{kind: setMotorDirection, value: elevator.state.Direction})
 		case BehaviourIdle:
-			commands = append(commands, command{kind: setDoorOpenLamp, value: false})
-			commands = append(commands, command{kind: setMotorDirection, value: elevator.state.Direction})
+			effects = append(effects, effect{kind: setDoorOpenLamp, value: false})
+			effects = append(effects, effect{kind: setMotorDirection, value: elevator.state.Direction})
 		}
 
 	}
-	return elevator, commands
+	return elevator, effects
 }
 
-func onObstruction(elevator elevator, obstructed bool) (elevator, []command) {
-	var commands []command
+func onObstruction(elevator elevator, obstructed bool) (elevator, []effect) {
+	var effects []effect
 	elevator.state.Obstructed = obstructed
 	if elevator.state.Behaviour == BehaviourDoorOpen {
-		commands = append(commands, command{kind: resetDoorTimer})
-		commands = append(commands, command{kind: sendLocalState, value: elevator.state})
-		return elevator, commands
+		effects = append(effects, effect{kind: resetDoorTimer})
+		effects = append(effects, effect{kind: publishLocalState, value: elevator.state})
+		return elevator, effects
 	}
-	return elevator, commands
+	return elevator, effects
 }
 
-func onMotorTimeout(elevator elevator) (elevator, []command) {
-	var commands []command
+func onMotorTimeout(elevator elevator) (elevator, []effect) {
+	var effects []effect
 
 	if elevator.state.Behaviour != BehaviourMoving {
-		return elevator, commands
+		return elevator, effects
 	}
 
 	elevator.state.MotorStuck = true
 
-	commands = append(commands, command{kind: sendLocalState, value: elevator.state})
-	return elevator, commands
+	effects = append(effects, effect{kind: publishLocalState, value: elevator.state})
+	return elevator, effects
 }

@@ -1,8 +1,8 @@
 package peermonitor
 
 import (
-	"time"
 	ordersync "project/ordersync"
+	"time"
 )
 
 const (
