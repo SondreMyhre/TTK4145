@@ -13,8 +13,8 @@ func Run(ctx context.Context,
 	ordersyncTx chan<- PeerMsg,
 	heartBeatTx chan<- HeartBeat,
 ) error {
-	peerTicker := time.NewTicker(peerTickInterval)
-	heartBeatTicker := time.NewTicker(heartBeatTickInterval)
+	peerTicker := time.NewTicker(PEER_TICK_INTERVAL)
+	heartBeatTicker := time.NewTicker(HEART_BEAT_TICK_INTERVAL)
 	defer peerTicker.Stop()
 	defer heartBeatTicker.Stop()
 	peerList := make([]Peer, 0)
@@ -39,7 +39,7 @@ func Run(ctx context.Context,
 		case <-peerTicker.C:
 			var timeoutChanged bool
 			now := time.Now()
-			peerList, timeoutChanged = CheckTimeouts(peerList, now, peerTimeout)
+			peerList, timeoutChanged = CheckTimeouts(peerList, now, PEER_TIMEOUT)
 			if timeoutChanged {
 				select {
 				case ordersyncTx <- ToPeerUpdate(peerList):

@@ -52,7 +52,7 @@ func (sup Supervisor) runChildLoop(ctx context.Context, state *childState) {
 		state.mu.Unlock()
 
 		// Run the child with panic recovery
-		err := runWorker(childCtx, state.spec)
+		err := safeRunWorker(childCtx, state.spec)
 		cancel()
 
 		if ctx.Err() != nil {
@@ -66,20 +66,17 @@ func (sup Supervisor) runChildLoop(ctx context.Context, state *childState) {
 			log.Printf("supervisor: child '%s' exited cleanly", state.spec.Name)
 		}
 
-		// Check restart policy
-		if !shouldRestart(state.spec.Restart, err) {
+		if !policyRestart(state.spec.Restart, err) {
 			log.Printf("supervisor: child '%s' will not be restarted (policy)", state.spec.Name)
 			return
 		}
 
-		// Check restart rate limit
-		if !state.tracker.recordRestart(time.Now()) {
+		if !recordTrackerRestart(&state.tracker, time.Now()) {
 			log.Printf("supervisor: child '%s' exceeded max restarts (%d in %v), giving up",
 				state.spec.Name, sup.Config.MaxRestarts, sup.Config.MaxTime)
 			return
 		}
 
-		// Restart delay
 		log.Printf("supervisor: restarting child '%s' after %v", state.spec.Name, sup.Config.RestartDelay)
 		select {
 		case <-time.After(sup.Config.RestartDelay):
@@ -89,12 +86,20 @@ func (sup Supervisor) runChildLoop(ctx context.Context, state *childState) {
 	}
 }
 
-// runWorker executes a worker with panic recovery
-func runWorker(ctx context.Context, child ChildSpec) (err error) {
+func safeRunWorker(ctx context.Context, child ChildSpec) error {
+	var panicErr error
+
 	defer func() {
-		if recovered := recover(); recovered != nil {
-			err = fmt.Errorf("worker '%s' panic: %v", child.Name, recovered)
+		panicValue := recover()
+		if panicValue != nil {
+			panicErr = fmt.Errorf("worker '%s' panic: %v", child.Name, panicValue)
 		}
 	}()
-	return child.Worker.Run(ctx)
+
+	workerErr := child.Worker.Run(ctx)
+
+	if panicErr != nil {
+		return panicErr
+	}
+	return workerErr
 }

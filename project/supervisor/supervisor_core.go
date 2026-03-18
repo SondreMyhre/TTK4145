@@ -13,15 +13,15 @@ func NewSupervisor(children []ChildSpec) Supervisor {
 	return Supervisor{
 		Children: children,
 		Config: SupervisorConfig{
-			MaxRestarts:  MaxRestarts,
-			MaxTime:      MaxTime,
-			RestartDelay: RestartDelay,
+			MaxRestarts:  MAX_RESTARTS,
+			MaxTime:      MAX_TIME,
+			RestartDelay: RESTART_DELAY,
 		},
 	}
 }
 
 // shouldRestart determines if a child should be restarted based on policy and error
-func shouldRestart(policy RestartPolicy, err error) bool {
+func policyRestart(policy RestartPolicy, err error) bool {
 	switch policy {
 	case Permanent:
 		return true
@@ -35,32 +35,29 @@ func shouldRestart(policy RestartPolicy, err error) bool {
 }
 
 // newRestartTracker creates a new restart rate limiter
-func newRestartTracker(maxCount int, window time.Duration) *restartTracker {
-	return &restartTracker{
-		timestamps: make([]time.Time, 0, maxCount),
-		maxCount:   maxCount,
-		window:     window,
+func newRestartTracker(maxCount int, timewindow time.Duration) restartTracker {
+	return restartTracker{
+		crashCount:     0,
+		firstCrashTime: time.Now(),
+		maxCount:       maxCount,
+		timewindow:     timewindow,
 	}
 }
 
-// recordRestart adds a restart timestamp and returns true if within limits
-func (restartTracker *restartTracker) recordRestart(now time.Time) bool {
-	cutoff := now.Add(-restartTracker.window)
-
-	// Remove old timestamps outside the window
-	valid := make([]time.Time, 0, len(restartTracker.timestamps))
-	for _, timeStamps := range restartTracker.timestamps {
-		if timeStamps.After(cutoff) {
-			valid = append(valid, timeStamps)
-		}
+// recordRestart increments the restart counter and returns true if within limits.
+// It resets the counter if the time window has passed since the first crash.
+func recordTrackerRestart(tracker *restartTracker, now time.Time) bool {
+	// If the time window has passed, reset the counter
+	if now.Sub(tracker.firstCrashTime) > tracker.timewindow {
+		tracker.crashCount = 0
+		tracker.firstCrashTime = now
 	}
-	restartTracker.timestamps = valid
 
+	tracker.crashCount++
 	// Check if we've exceeded max restarts
-	if len(restartTracker.timestamps) >= restartTracker.maxCount {
+	if tracker.crashCount > tracker.maxCount {
 		return false
 	}
-
-	restartTracker.timestamps = append(restartTracker.timestamps, now)
+	
 	return true
 }
