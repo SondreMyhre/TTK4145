@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	MaxRestarts  = 5
-	MaxTime      = 5 * time.Second
-	RestartDelay = 200 * time.Millisecond
+	MAX_RESTARTS= 5
+	MAX_TIME     = 5 * time.Second
+	RESTART_DELAY = 200 * time.Millisecond
 )
 
 // Worker interface for any runnable component
@@ -53,13 +53,14 @@ type Supervisor struct {
 type childState struct {
 	spec    ChildSpec
 	cancel  context.CancelFunc
-	tracker *restartTracker
+	tracker restartTracker
 	mu      sync.Mutex
 }
 
 // restartTracker tracks restart frequency for rate limiting (internal)
 type restartTracker struct {
-	timestamps []time.Time
-	maxCount   int
-	window     time.Duration
+	crashCount     int
+	firstCrashTime time.Time
+	maxCount       int
+	timewindow     time.Duration
 }
