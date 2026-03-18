@@ -10,15 +10,7 @@ import (
 
 const bufSize = 1024
 
-// Transmitter: Can take in several channels, where each channel can contain different datatypes
-// when a channel recieves a message, the transmitter encodes it marked with the datatype it is, then broadcasts
-// Reciever filters the broadcasted messages on datatype
-// NOTE: you can't send in two channels with the same datatype
-
-// Encodes received values from `chans` into type-tagged JSON, then broadcasts it on `port`
-// the ... means 0 or more arguments on ...interface{}-format, meaning we can input multiple channels to broadcast
 func Transmitter(port int, chans ...interface{}) {
-	// all chans-arguments must be channels
 	checkArgs(chans...)
 	typeNames := make([]string, len(chans))
 	selectCases := make([]reflect.SelectCase, len(typeNames))
@@ -50,16 +42,13 @@ func Transmitter(port int, chans ...interface{}) {
 	}
 }
 
-// Matches type-tagged JSON received on `port` to element types of `chans`, then
-// sends the decoded value on the corresponding channel
 func Receiver(port int, chans ...interface{}) {
-	checkArgs(chans...) //checking that all chans-arguments are channels
+	checkArgs(chans...)
 
-	chansMap := make(map[string]interface{}) //making an empty map with string-key and generic_interface-value
+	chansMap := make(map[string]interface{})
 	for _, ch := range chans {
 		chansMap[reflect.TypeOf(ch).Elem().String()] = ch
 	}
-	fmt.Println(chansMap)
 
 	var buf [bufSize]byte
 	conn := conn.DialBroadcastUDP(port)
@@ -90,15 +79,6 @@ type typeTaggedJSON struct {
 	JSON   []byte
 }
 
-// Checks that args to Tx'er/Rx'er are valid:
-//
-//	All args must be channels
-//	Element types of channels must be encodable with JSON
-//	No element types are repeated
-//
-// Implementation note:
-//   - Why there is no `isMarshalable()` function in encoding/json is a mystery,
-//     so the tests on element type are hand-copied from `encoding/json/encode.go`
 func checkArgs(chans ...interface{}) {
 	n := 0
 	for range chans {
@@ -116,7 +96,6 @@ func checkArgs(chans ...interface{}) {
 
 		elemType := reflect.TypeOf(ch).Elem()
 
-		// Element type must not be repeated
 		for j, e := range elemTypes {
 			if e == elemType {
 				panic(fmt.Sprintf(
@@ -126,7 +105,6 @@ func checkArgs(chans ...interface{}) {
 		}
 		elemTypes[i] = elemType
 
-		// Element type must be encodable with JSON
 		checkTypeRecursive(elemType, []int{i + 1})
 
 	}

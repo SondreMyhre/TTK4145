@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	elevatorcontroller "project/elevatorcontroller"
 	elevio "project/elevio"
@@ -53,6 +54,6 @@ func main() {
 	go ordersync.RunWorldview(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
 	go ordersync.RunAssigner(ordersync.ElevID(*peerID), worldviewChan, assignedRequestsChan)
 	go elevatorcontroller.Run(assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
-
+	fmt.Println("Elevator with peerID " + *peerID + " started")
 	select {}
 }

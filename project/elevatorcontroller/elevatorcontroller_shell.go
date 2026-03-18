@@ -1,7 +1,6 @@
 package elevatorcontroller
 
 import (
-	"fmt"
 	elevio "project/elevio"
 	"time"
 )
@@ -15,7 +14,6 @@ func Run(
 	clearedOrdersChan chan<- []Order,
 	localStateChan chan<- ElevatorState,
 ) {
-	fmt.Println("LocalSingleElevator started")
 	elevator := makeUninitializedElevator()
 
 	motorTimer := time.NewTimer(motorWatchdogTimeout)
