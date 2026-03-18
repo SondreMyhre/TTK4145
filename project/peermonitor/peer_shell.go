@@ -1,11 +1,10 @@
 package peermonitor
 
 import (
-	"context"
 	"time"
 )
 
-func Run(ctx context.Context,
+func Run(
 	peerID string,
 
 	heartBeatRx <-chan HeartBeat,
@@ -21,19 +20,12 @@ func Run(ctx context.Context,
 
 	for {
 		select {
-		case <-ctx.Done():
-			return nil
-
 		case msg := <-heartBeatRx:
 			var changed bool
 			now := time.Now()
 			peerList, changed = HandleHeartbeats(peerList, msg, now)
 			if changed {
-				select {
-				case ordersyncTx <- ToPeerUpdate(peerList):
-				case <-ctx.Done():
-					return nil
-				}
+				ordersyncTx <- ToPeerUpdate(peerList)
 			}
 
 		case <-peerTicker.C:
@@ -41,11 +33,7 @@ func Run(ctx context.Context,
 			now := time.Now()
 			peerList, timeoutChanged = CheckTimeouts(peerList, now, PEER_TIMEOUT)
 			if timeoutChanged {
-				select {
-				case ordersyncTx <- ToPeerUpdate(peerList):
-				case <-ctx.Done():
-					return nil
-				}
+				ordersyncTx <- ToPeerUpdate(peerList)
 			}
 
 		case <-heartBeatTicker.C:

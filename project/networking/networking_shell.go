@@ -7,7 +7,6 @@ package networking
 // broadcast-ip on labpc: 10.100.23.255
 
 import (
-	"context"
 	bcast "project/networking/bcast"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
@@ -16,8 +15,6 @@ import (
 const broadcastPort = 50000
 
 func Run(
-	ctx context.Context,
-
 	ordersyncTx <-chan ordersync.NetMsg,
 	peermonitorTx <-chan peermonitor.HeartBeat,
 
@@ -27,5 +24,5 @@ func Run(
 	go bcast.Transmitter(broadcastPort, ordersyncTx, peermonitorTx)
 	go bcast.Receiver(broadcastPort, ordersyncRx, peermonitorRx)
 
-	<-ctx.Done()
+	select {}
 }
