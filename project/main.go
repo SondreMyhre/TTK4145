@@ -63,11 +63,12 @@ func main() {
 	fmt.Println("\n=== Configuration ===")
 	fmt.Printf("N_FLOORS:                 %d\n", config.N_FLOORS)
 	fmt.Printf("BROADCAST_PORT:           %d\n", config.BROADCAST_PORT)
+	fmt.Printf("BROADCAST_ADDR:           %s\n", config.BROADCAST_ADDRESS)
 	fmt.Printf("POLL_RATE:                %v\n", config.POLL_RATE)
+	fmt.Printf("MOTOR_TIMEOUT:            %v\n", config.MOTORTIMEOUT)
 	fmt.Printf("PEER_TIMEOUT:             %v\n", config.PEER_TIMEOUT)
 	fmt.Printf("PEER_TICK_INTERVAL:       %v\n", config.PEER_TICK_INTERVAL)
 	fmt.Printf("HEARTBEAT_TICK_INTERVAL:  %v\n", config.HEARTBEAT_TICK_INTERVAL)
-	fmt.Printf("MOTOR_TIMEOUT:            %v\n", config.MOTORTIMEOUT)
 	fmt.Printf("NETMSG_TICK_INTERVAL:     %v\n", config.NETMSG_TICK_INTERVAL)
 	fmt.Println("===========================")
 
