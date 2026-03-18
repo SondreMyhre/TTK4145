@@ -51,7 +51,7 @@ func Init(addr string, nFloors int) {
 		panic(err.Error())
 	}
 	isInitialized = true
-
+	SetDoorOpenLamp(false)
 	for floor := range numFloors {
 		for button := range N_BUTTONS {
 			SetButtonLamp(ButtonType(button), floor, false)
