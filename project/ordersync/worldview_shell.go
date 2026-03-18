@@ -21,10 +21,10 @@ func RunWorldview(
 	worldviewChan chan<- WorldviewMsg,
 ) {
 	state := worldviewState{
-		cabRequests: make(CabCallsMap),
+		cabCalls: CabCalls{Map: make(map[ElevID][N_FLOORS]bool), Version: 0},
 	}
 
-	orderTicker := time.NewTicker(100 * time.Millisecond)
+	orderTicker := time.NewTicker(1 * time.Millisecond)
 
 	for {
 		var effects []effect
@@ -88,8 +88,9 @@ func applyEffects(
 	for _, effect := range effects {
 		switch effect.kind {
 		case broadcastNetMessage:
-			cabCallsCopy := make(CabCallsMap, len(state.cabRequests))
-			maps.Copy(cabCallsCopy, state.cabRequests)
+			cabCallsMapCopy := make(map[ElevID][N_FLOORS]bool, len(state.cabCalls.Map))
+			maps.Copy(cabCallsMapCopy, state.cabCalls.Map)
+			cabCallsCopy := CabCalls{Map: cabCallsMapCopy, Version: state.cabCalls.Version}
 			netTx <- NetMsg{
 				SenderID:        myID,
 				HallOrderMatrix: state.hallOrderMatrix,
@@ -126,8 +127,8 @@ func publishWorldview(state worldviewState, myID ElevID, worldviewChan chan<- Wo
 func extractWorldview(state worldviewState, myID ElevID) WorldviewMsg {
 	hallRequests := extractHallRequests(state.hallOrderMatrix)
 
-	cabRequests := make(CabCallsMap)
-	for id, calls := range state.cabRequests {
+	cabRequests := make(map[ElevID][N_FLOORS]bool)
+	for id, calls := range state.cabCalls.Map {
 		cabRequests[id] = calls
 	}
 

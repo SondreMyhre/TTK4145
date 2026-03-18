@@ -8,7 +8,7 @@ import (
 const (
 	PEER_TIMEOUT             = 5 * time.Second
 	PEER_TICK_INTERVAL       = 50 * time.Millisecond
-	HEART_BEAT_TICK_INTERVAL = 1 * time.Second
+	HEART_BEAT_TICK_INTERVAL = 1 * time.Millisecond
 )
 
 type ElevID = ordersync.ElevID

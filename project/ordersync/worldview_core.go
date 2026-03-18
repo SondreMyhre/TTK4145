@@ -1,11 +1,10 @@
 package ordersync
 
 func onCabButtonEvent(state worldviewState, myID ElevID, floor int) (worldviewState, []effect) {
-	state.pendingCabCalls[floor] = true
-
-	localCabCalls := state.cabRequests[myID]
+	localCabCalls := state.cabCalls.Map[myID]
 	localCabCalls[floor] = true
-	state.cabRequests[myID] = localCabCalls
+	state.cabCalls.Map[myID] = localCabCalls
+	state.cabCalls.Version++
 
 	var effects []effect
 
@@ -59,10 +58,10 @@ func onClearedOrders(state worldviewState, myID ElevID, clearedFloors []int, cle
 				})
 			}
 		} else {
-			localCabCalls := state.cabRequests[myID]
+			localCabCalls := state.cabCalls.Map[myID]
 			localCabCalls[floor] = false
-			state.cabRequests[myID] = localCabCalls
-			state.pendingCabCalls[floor] = false // ??
+			state.cabCalls.Map[myID] = localCabCalls
+			state.cabCalls.Version++
 			effects = append(effects, effect{
 				kind: setButtonLamp,
 				value: buttonLampArgs{
@@ -173,35 +172,23 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 		}
 	}
 
-	if msg.CabCalls != nil {
-		state.cabRequests[senderID] = msg.CabCalls[senderID]
-		for floor := range state.pendingCabCalls {
-			if state.pendingCabCalls[floor] && msg.CabCalls[myID][floor] {
-				state.pendingCabCalls[floor] = false
-				effects = append(effects, effect{
-					kind: setButtonLamp,
-					value: buttonLampArgs{
-						Floor:  floor,
-						Button: BT_CAB,
-						Value:  true,
-					},
-				})
-			}
+	if msg.CabCalls.Version > state.cabCalls.Version {
+		state.cabCalls = msg.CabCalls
+	}
+
+	localCabCalls := state.cabCalls.Map[myID]
+	for floor := range N_FLOORS {
+		if localCabCalls[floor] {
+			effects = append(effects, effect{
+				kind: setButtonLamp,
+				value: buttonLampArgs{
+					Floor:  floor,
+					Button: BT_CAB,
+					Value:  true,
+				},
+			})
 		}
 
-		if remoteMyCabs, ok := msg.CabCalls[myID]; ok {
-			localMyCabs := state.cabRequests[myID]
-			for floor := range N_FLOORS {
-				if remoteMyCabs[floor] && !localMyCabs[floor] {
-					localMyCabs[floor] = true
-					effects = append(effects, effect{
-						kind:  setButtonLamp,
-						value: buttonLampArgs{Floor: floor, Button: BT_CAB, Value: true},
-					})
-				}
-			}
-			state.cabRequests[myID] = localMyCabs
-		}
 	}
 
 	if broadcastNeeded {
