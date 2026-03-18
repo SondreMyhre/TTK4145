@@ -26,35 +26,32 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// elevio channels
+	// ---- Initialize channels ---
+	// Hardware communication
 	buttonChan := make(chan elevio.ButtonEvent, 4)
 	floorChan := make(chan int, 1)
 	obstructionChan := make(chan bool, 1)
 	driverCommandChan := make(chan elevio.DriverCommand, 10)
 
-	// elevatorcontroller channels
-	assignedRequestsChan := make(chan elevatorcontroller.RequestMatrix, 1)
-	clearedOrdersChan := make(chan []elevatorcontroller.Order, 1)
-	localStateChan := make(chan elevatorcontroller.ElevatorState, 1)
-
-	// networking channels
+	// Networking
 	orderSyncTx := make(chan ordersync.NetMsg, 1)
 	orderSyncRx := make(chan ordersync.NetMsg, 2)
 	peerMonitorTx := make(chan peermonitor.HeartBeat, 1)
 	peerMonitorRx := make(chan peermonitor.HeartBeat, 2)
 
-	// Channel between ordersync and peermonitor
+	// Elevator control system
+	assignedRequestsChan := make(chan elevatorcontroller.RequestMatrix, 1)
+	clearedOrdersChan := make(chan []elevatorcontroller.Order, 1)
+	localStateChan := make(chan elevatorcontroller.ElevatorState, 1)
+	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
 	peerEventChan := make(chan []ordersync.PeerUpdate)
 
-	// Channel between worldview and assigner in ordersync
-	worldviewChan := make(chan ordersync.WorldviewMsg, 1)
-
-	// elevio polling routines
+	// ---- Initialize polling routines ----
 	go elevio.PollButtons(buttonChan)
 	go elevio.PollFloorSensor(floorChan)
 	go elevio.PollObstructionSwitch(obstructionChan)
 
-	// Define supervised children
+	// ---- Initialize supervised elevator node  ----
 	children := []supervisor.ChildSpec{
 		{
 			Name: "elevio",
@@ -102,7 +99,7 @@ func main() {
 		},
 	}
 
-	// Create and run supervisor
+	// ---- Run supervisor ----
 	sup := supervisor.NewSupervisor(children)
 
 	log.Println("Starting elevator system with supervisor")
