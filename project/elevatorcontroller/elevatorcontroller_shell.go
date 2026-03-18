@@ -1,14 +1,12 @@
 package elevatorcontroller
 
 import (
-	"context"
 	"fmt"
 	elevio "project/elevio"
 	"time"
 )
 
 func Run(
-	ctx context.Context,
 	assignedRequestsChan <-chan RequestMatrix,
 	floorChan <-chan int,
 	obstructionChan <-chan bool,
@@ -16,7 +14,7 @@ func Run(
 	driverCommandChan chan<- elevio.DriverCommand,
 	clearedOrdersChan chan<- []Order,
 	localStateChan chan<- ElevatorState,
-) error {
+) {
 	fmt.Println("LocalSingleElevator started")
 	elevator := makeUninitializedElevator()
 
@@ -37,9 +35,6 @@ func Run(
 
 	for {
 		select {
-		case <-ctx.Done():
-			return nil
-
 		case newRequests := <-assignedRequestsChan:
 			elevator, effects = onNewRequestMatrix(elevator, newRequests)
 			applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)

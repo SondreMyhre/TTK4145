@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	elevatorcontroller "project/elevatorcontroller"
@@ -9,7 +8,6 @@ import (
 	networking "project/networking"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
-	supervisor "project/supervisor"
 )
 
 func main() {
@@ -22,9 +20,6 @@ func main() {
 	}
 
 	elevio.Init(*serverAddr, elevatorcontroller.N_FLOORS)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	// ---- Initialize channels ---
 	// Hardware communication
@@ -52,58 +47,12 @@ func main() {
 	go elevio.PollObstructionSwitch(obstructionChan)
 
 	// ---- Initialize supervised elevator node  ----
-	children := []supervisor.ChildSpec{
-		{
-			Name: "elevio",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				elevio.RunDriver(ctx, driverCommandChan)
-				return nil
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "networking",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				networking.Run(ctx, orderSyncTx, peerMonitorTx, orderSyncRx, peerMonitorRx)
-				return nil
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "peermonitor",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return peermonitor.Run(ctx, *peerID, peerMonitorRx, peerEventChan, peerMonitorTx)
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "worldview",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return ordersync.RunWorldview(ctx, ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "assigner",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return ordersync.RunAssigner(ctx, ordersync.ElevID(*peerID), worldviewChan, assignedRequestsChan)
-			}),
-			Restart: supervisor.Permanent,
-		},
-		{
-			Name: "elevatorcontroller",
-			Worker: supervisor.WorkerFunc(func(ctx context.Context) error {
-				return elevatorcontroller.Run(ctx, assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
-			}),
-			Restart: supervisor.Permanent,
-		},
-	}
+	go elevio.RunDriver(driverCommandChan)
+	go networking.Run(orderSyncTx, peerMonitorTx, orderSyncRx, peerMonitorRx)
+	go peermonitor.Run(*peerID, peerMonitorRx, peerEventChan, peerMonitorTx)
+	go ordersync.RunWorldview(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
+	go ordersync.RunAssigner(ordersync.ElevID(*peerID), worldviewChan, assignedRequestsChan)
+	go elevatorcontroller.Run(assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 
-	// ---- Run supervisor ----
-	sup := supervisor.NewSupervisor(children)
-
-	log.Println("Starting elevator system with supervisor")
-	if err := sup.Run(ctx); err != nil {
-		log.Printf("Supervisor exited with error: %v", err)
-	}
+	select {}
 }
