@@ -8,22 +8,22 @@ func onInitBetweenFloors(elevator elevator) (elevator, []effect) {
 	return elevator, effects
 }
 
-func mergeRequests(oldRequest RequestMatrix, newRequests RequestMatrix)RequestMatrix{
-	merged := newRequests
+// func mergeRequests(oldRequest RequestMatrix, newRequests RequestMatrix)RequestMatrix{
+// 	merged := newRequests
 
-	for floor := range N_FLOORS {
-		for btn := range N_BUTTONS-1{
-			merged[floor][btn] = newRequests[floor][btn] || oldRequest[floor][btn]
-		}
-	}
-	return merged
-}
+// 	for floor := range N_FLOORS {
+// 		for btn := range N_BUTTONS-1{
+// 			merged[floor][btn] = newRequests[floor][btn] || oldRequest[floor][btn]
+// 		}
+// 	}
+// 	return merged
+// }
 
 func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator, []effect) {
 	var effects []effect
 
-	elevator.requests = mergeRequests(elevator.requests, newRequests)
-
+	//elevator.requests = mergeRequests(elevator.requests, newRequests)
+	elevator.requests =newRequests
 	switch elevator.state.Behaviour {
 	case BehaviourDoorOpen:
 		if shouldStop(elevator) {
