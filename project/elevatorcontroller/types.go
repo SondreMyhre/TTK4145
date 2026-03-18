@@ -9,8 +9,8 @@ const (
 	N_FLOORS  = config.N_FLOORS
 	N_BUTTONS = 3
 
-	doorOpenDuration     = 3 * time.Second
 	motorTimeout = config.MOTORTIMEOUT
+	doorOpenDuration     = 3 * time.Second
 
 	setMotorDirection effectType = iota
 	setDoorOpenLamp

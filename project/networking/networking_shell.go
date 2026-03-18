@@ -7,10 +7,11 @@ package networking
 // broadcast-ip on labpc: 10.100.23.255
 
 import (
+	"fmt"
+	config "project/config"
 	bcast "project/networking/bcast"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
-	config "project/config"
 )
 
 func Run(
@@ -20,7 +21,8 @@ func Run(
 	ordersyncRx chan<- ordersync.NetMsg,
 	peermonitorRx chan<- peermonitor.HeartBeat,
 ) {
-	go bcast.Transmitter(config.BROADCAST_PORT, ordersyncTx, peermonitorTx)
+	broadcastSocket := fmt.Sprintf("%s:%d", config.BROADCAST_ADDRESS, config.BROADCAST_PORT)
+	go bcast.Transmitter(broadcastSocket, config.BROADCAST_PORT, ordersyncTx, peermonitorTx)
 	go bcast.Receiver(config.BROADCAST_PORT, ordersyncRx, peermonitorRx)
 
 	select {}

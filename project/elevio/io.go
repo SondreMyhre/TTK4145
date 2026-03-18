@@ -39,7 +39,7 @@ type ButtonEvent struct {
 	Button ButtonType
 }
 
-func Init() {
+func Init(serverAddr string) {
 	if isInitialized {
 		fmt.Println("Driver already initialized!")
 		return
@@ -47,7 +47,7 @@ func Init() {
 
 	mu = sync.Mutex{}
 	var err error
-	conn, err = net.Dial("tcp", config.SERVERADDR)
+	conn, err = net.Dial("tcp", serverAddr)
 	if err != nil {
 		panic(err.Error())
 	}
