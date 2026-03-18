@@ -2,7 +2,6 @@ package ordersync
 
 import (
 	elevatorcontroller "project/elevatorcontroller"
-	"fmt"
 )
 
 func RunAssigner(
@@ -55,12 +54,6 @@ func RunAssigner(
 		hraResult[string(myID)] = newAssignments
 
 		if newAssignments != prevAssignments {
-			for id, m := range hraResult {
-				fmt.Printf("hraResult[%s]:\n", id)
-				for f := 0; f < N_FLOORS; f++ {
-					fmt.Printf("  floor %d: %v\n", f, m[f])
-				}
-			}
 			prevAssignments = newAssignments
 			assignedRequestsChan <- newAssignments
 		}
