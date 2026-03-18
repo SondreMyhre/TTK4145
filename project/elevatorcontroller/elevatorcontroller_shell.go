@@ -16,7 +16,7 @@ func Run(
 ) {
 	elevator := makeUninitializedElevator()
 
-	motorTimer := time.NewTimer(motorWatchdogTimeout)
+	motorTimer := time.NewTimer(motorTimeout)
 	doorTimer := time.NewTimer(doorOpenDuration)
 	doorTimer.Stop()
 	motorTimer.Stop()
@@ -71,7 +71,7 @@ func applyEffects(
 			dir := effect.value.(Direction)
 			driverCommandChan <- elevio.DriverCommand{Kind: elevio.CommandSetMotorDirection, MotorDirection: directionToMotorDirection(dir)}
 			if dir != DirStop {
-				motorTimer.Reset(motorWatchdogTimeout)
+				motorTimer.Reset(motorTimeout)
 			}
 		case setDoorOpenLamp:
 			value := effect.value.(bool)

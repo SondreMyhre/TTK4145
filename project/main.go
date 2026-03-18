@@ -13,14 +13,13 @@ import (
 
 func main() {
 	peerID := flag.String("peerID", "0", "peerID of the elevator to be created")
-	serverAddr := flag.String("serverAddr", "localhost:15657", "IP-address of the elevatorserver or simulatorserver")
 	flag.Parse()
 
 	if *peerID == "0" {
 		log.Fatal("Not valid peerID.")
 	}
 
-	elevio.Init(*serverAddr, elevatorcontroller.N_FLOORS)
+	elevio.Init()
 
 	// ---- Initialize channels ---
 	// Hardware communication

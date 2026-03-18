@@ -10,9 +10,8 @@ import (
 	bcast "project/networking/bcast"
 	ordersync "project/ordersync"
 	peermonitor "project/peermonitor"
+	config "project/config"
 )
-
-const broadcastPort = 50000
 
 func Run(
 	ordersyncTx <-chan ordersync.NetMsg,
@@ -21,8 +20,8 @@ func Run(
 	ordersyncRx chan<- ordersync.NetMsg,
 	peermonitorRx chan<- peermonitor.HeartBeat,
 ) {
-	go bcast.Transmitter(broadcastPort, ordersyncTx, peermonitorTx)
-	go bcast.Receiver(broadcastPort, ordersyncRx, peermonitorRx)
+	go bcast.Transmitter(config.BROADCAST_PORT, ordersyncTx, peermonitorTx)
+	go bcast.Receiver(config.BROADCAST_PORT, ordersyncRx, peermonitorRx)
 
 	select {}
 }

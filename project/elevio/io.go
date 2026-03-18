@@ -5,12 +5,15 @@ import (
 	"net"
 	"sync"
 	"time"
+	config "project/config"
 )
 
-const pollRate = 20 * time.Millisecond
+const (
+	pollRate = config.POLL_RATE
+	numFloors = config.N_FLOORS
+)
 
 var isInitialized bool = false
-var numFloors int = 4
 var mu sync.Mutex
 var conn net.Conn
 
@@ -36,17 +39,15 @@ type ButtonEvent struct {
 	Button ButtonType
 }
 
-func Init(addr string, nFloors int) {
-
+func Init() {
 	if isInitialized {
 		fmt.Println("Driver already initialized!")
 		return
 	}
 
-	numFloors = nFloors
 	mu = sync.Mutex{}
 	var err error
-	conn, err = net.Dial("tcp", addr)
+	conn, err = net.Dial("tcp", config.SERVERADDR)
 	if err != nil {
 		panic(err.Error())
 	}
