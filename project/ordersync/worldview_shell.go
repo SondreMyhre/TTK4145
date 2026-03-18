@@ -24,7 +24,7 @@ func RunWorldview(
 		cabCalls: CabCalls{Map: make(map[ElevID][N_FLOORS]bool), Version: 0},
 	}
 
-	orderTicker := time.NewTicker(1 * time.Millisecond)
+	netMsgTicker := time.NewTicker(netMsgTickInterval)
 
 	for {
 		var effects []effect
@@ -69,7 +69,7 @@ func RunWorldview(
 			state.peerList = newPeerList
 			publishWorldview(state, myID, worldviewChan)
 
-		case <-orderTicker.C:
+		case <-netMsgTicker.C:
 			effects = []effect{{kind: broadcastNetMessage}}
 			applyEffects(state, myID, effects, netTx, lightCommandChan)
 		}

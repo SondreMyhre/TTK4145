@@ -2,10 +2,13 @@ package ordersync
 
 import (
 	elevatorcontroller "project/elevatorcontroller"
+	config "project/config"
 )
 
+const netMsgTickInterval = config.NETMSG_TICK_INTERVAL
+
 const (
-	N_FLOORS  = elevatorcontroller.N_FLOORS
+	N_FLOORS  = config.N_FLOORS
 	N_HALL    = 2
 	N_BUTTONS = elevatorcontroller.N_BUTTONS
 	BT_CAB    = 2

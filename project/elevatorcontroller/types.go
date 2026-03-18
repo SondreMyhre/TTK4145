@@ -2,17 +2,16 @@ package elevatorcontroller
 
 import (
 	"time"
+	config "project/config"
 )
 
 const (
-	N_FLOORS  = 4
+	N_FLOORS  = config.N_FLOORS
 	N_BUTTONS = 3
-)
-const (
+
+	motorTimeout = config.MOTORTIMEOUT
 	doorOpenDuration     = 3 * time.Second
-	motorWatchdogTimeout = 3500 * time.Millisecond
-)
-const (
+
 	setMotorDirection effectType = iota
 	setDoorOpenLamp
 	setFloorIndicator

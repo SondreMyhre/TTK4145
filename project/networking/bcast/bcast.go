@@ -10,7 +10,7 @@ import (
 
 const bufSize = 1024
 
-func Transmitter(port int, chans ...interface{}) {
+func Transmitter(broadcastSocket string, port int, chans ...interface{}) {
 	checkArgs(chans...)
 	typeNames := make([]string, len(chans))
 	selectCases := make([]reflect.SelectCase, len(typeNames))
@@ -23,7 +23,7 @@ func Transmitter(port int, chans ...interface{}) {
 	}
 
 	conn := conn.DialBroadcastUDP(port)
-	addr, _ := net.ResolveUDPAddr("udp4", fmt.Sprintf("10.100.23.255:%d", port))
+	addr, _ := net.ResolveUDPAddr("udp4", broadcastSocket)
 	for {
 		chosen, value, _ := reflect.Select(selectCases)
 		jsonstr, _ := json.Marshal(value.Interface())

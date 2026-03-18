@@ -13,7 +13,7 @@ func Run(
 	heartBeatTx chan<- HeartBeat,
 ) error {
 	peerTicker := time.NewTicker(PEER_TICK_INTERVAL)
-	heartBeatTicker := time.NewTicker(HEART_BEAT_TICK_INTERVAL)
+	heartBeatTicker := time.NewTicker(HEARTBEAT_TICK_INTERVAL)
 	defer peerTicker.Stop()
 	defer heartBeatTicker.Stop()
 	peerList := make([]Peer, 0)
