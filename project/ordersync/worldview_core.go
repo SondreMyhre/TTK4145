@@ -198,8 +198,8 @@ func onNetMsg(state worldviewState, myID ElevID, msg NetMsg) (worldviewState, []
 	return state, effects
 }
 
-func extractHallRequests(hallOrderMatrix HallOrderMatrix) HallRequests {
-	var hallRequests HallRequests
+func extractHallRequests(hallOrderMatrix HallOrderMatrix) [N_FLOORS][N_HALL]bool {
+	var hallRequests [N_FLOORS][N_HALL]bool
 	for floor := range N_FLOORS {
 		for button := range N_HALL {
 			hallRequests[floor][button] = (hallOrderMatrix[floor][button].Status == Confirmed)

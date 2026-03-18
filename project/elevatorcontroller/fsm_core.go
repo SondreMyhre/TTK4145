@@ -1,5 +1,7 @@
 package elevatorcontroller
 
+import "fmt"
+
 func onInitBetweenFloors(elevator elevator) (elevator, []effect) {
 	var effects []effect
 	elevator.state.Direction = DirDown
@@ -10,12 +12,13 @@ func onInitBetweenFloors(elevator elevator) (elevator, []effect) {
 
 func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator, []effect) {
 	var effects []effect
-
+	
 	elevator.requests = newRequests
 
 	switch elevator.state.Behaviour {
 	case BehaviourDoorOpen:
 		if shouldStop(elevator) {
+			fmt.Printf("onNewRequestMatrix() BehaviourDoorOpen\n")
 			var cleared []Order
 			effects = append(effects, effect{kind: resetDoorTimer})
 			elevator, cleared = clearAtCurrentFloor(elevator)
@@ -36,6 +39,7 @@ func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator,
 			var cleared []Order
 			effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
 			effects = append(effects, effect{kind: resetDoorTimer})
+			fmt.Printf("onNewRequestMatrix() BehaviourIdle -> BehaviourDoorOpen\n")
 			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
 				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
@@ -65,6 +69,7 @@ func onFloorArrival(elevator elevator, newFloor int) (elevator, []effect) {
 	}
 
 	if shouldStop(elevator) {
+		fmt.Printf("onFloorArrival()\n")
 		var cleared []Order
 		effects = append(effects, effect{kind: setMotorDirection, value: DirStop})
 		effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
@@ -104,6 +109,7 @@ func onDoorTimeout(elevator elevator) (elevator, []effect) {
 		case BehaviourDoorOpen:
 			var cleared []Order
 			effects = append(effects, effect{kind: resetDoorTimer})
+			fmt.Printf("onDoorTimeout() BehaviourDoorOpen -> BehaviourDoorOpen")
 			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
 				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})

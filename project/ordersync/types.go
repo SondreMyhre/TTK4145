@@ -36,8 +36,6 @@ type CabCalls struct {
 	Version int
 }
 
-type HallRequests [N_FLOORS][N_HALL]bool
-
 type PeerStatus int
 
 const (
@@ -64,7 +62,7 @@ type NetMsg struct {
 }
 
 type WorldviewMsg struct {
-	HallRequests HallRequests
+	HallRequests [N_FLOORS][N_HALL]bool
 	CabRequests  map[ElevID][N_FLOORS]bool
 	PeerStates   map[ElevID]elevatorcontroller.ElevatorState
 	Peers        []Peer

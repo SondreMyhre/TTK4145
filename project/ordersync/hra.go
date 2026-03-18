@@ -2,7 +2,7 @@ package ordersync
 
 import (
 	"encoding/json"
-	"fmt"
+	// "fmt"
 	"os/exec"
 	elevatorcontroller "project/elevatorcontroller"
 	"runtime"
@@ -54,8 +54,8 @@ func callHRA(input HRAInput) map[string][N_FLOORS][N_BUTTONS]bool {
 	return *output
 }
 
-func AssignRequests(worldview WorldviewMsg, myID ElevID) ([N_FLOORS][N_BUTTONS]bool, error) {
-	var result [N_FLOORS][N_BUTTONS]bool
+func AssignRequests(worldview WorldviewMsg, myID ElevID) (map[string][N_FLOORS][N_BUTTONS]bool, error) {
+	// var result [N_FLOORS][N_BUTTONS]bool
 
 	states := make(map[string]HRAElevState)
 	states[string(myID)] = localStateToHRA(worldview.PeerStates[myID], worldview.CabRequests[myID])
@@ -75,19 +75,20 @@ func AssignRequests(worldview WorldviewMsg, myID ElevID) ([N_FLOORS][N_BUTTONS]b
 	}
 
 	hraResult := callHRA(input)
-	if hraResult == nil {
-		return result, fmt.Errorf("HRA call failed")
-	}
-	myAssignments := hraResult[string(myID)]
+	return hraResult, nil
+	// if hraResult == nil {
+	// 	return result, fmt.Errorf("HRA call failed")
+	// }
+	// myAssignments := hraResult[string(myID)]
 
-	for floor := range N_FLOORS {
-		for button := range N_HALL {
-			result[floor][button] = myAssignments[floor][button]
-		}
-		result[floor][BT_CAB] = worldview.CabRequests[myID][floor]
-	}
+	// for floor := range N_FLOORS {
+	// 	for button := range N_HALL {
+	// 		result[floor][button] = myAssignments[floor][button]
+	// 	}
+	// 	result[floor][BT_CAB] = worldview.CabRequests[myID][floor]
+	// }
 
-	return result, nil
+	// return result, nil
 }
 
 func localStateToHRA(localState elevatorcontroller.ElevatorState, cabRequests [N_FLOORS]bool) HRAElevState {

@@ -41,19 +41,19 @@ func RunWorldview(
 				state, effects = onHallButtonEvent(state, floor, button)
 			}
 			applyEffects(state, myID, effects, netTx, lightCommandChan)
-			publishWorldview(state, myID, worldviewChan)
+			// publishWorldview(state, myID, worldviewChan)
 
 		case newLocalState := <-localStateChan:
 			state.localState = newLocalState
 			effects = []effect{{kind: broadcastNetMessage}}
 			applyEffects(state, myID, effects, netTx, lightCommandChan)
-			publishWorldview(state, myID, worldviewChan)
+			// publishWorldview(state, myID, worldviewChan)
 
 		case cleared := <-clearedOrdersChan:
 			clearedFloors, clearedButtons := convertClearedOrders(cleared)
 			state, effects = onClearedOrders(state, myID, clearedFloors, clearedButtons)
 			applyEffects(state, myID, effects, netTx, lightCommandChan)
-			publishWorldview(state, myID, worldviewChan)
+			// publishWorldview(state, myID, worldviewChan)
 
 		case netMsg := <-netRx:
 			state, effects = onNetMsg(state, myID, netMsg)
