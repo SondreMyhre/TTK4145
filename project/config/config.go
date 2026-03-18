@@ -7,7 +7,7 @@ import(
 const (
     N_FLOORS                = 4
     BROADCAST_PORT          = 50000
-	BROADCAST_ADDRESS       = "255.255.255.255"
+	BROADCAST_ADDRESS       = "10.100.23.255"
     POLL_RATE               = 20 * time.Millisecond
 	MOTORTIMEOUT            = 3500 * time.Millisecond
     PEER_TIMEOUT            = 5 * time.Second
