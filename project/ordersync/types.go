@@ -28,7 +28,10 @@ type OrderMatrixEntry struct {
 
 type HallOrderMatrix [N_FLOORS][N_HALL]OrderMatrixEntry
 
-type CabCallsMap map[ElevID][N_FLOORS]bool
+type CabCalls struct {
+	Map     map[ElevID][N_FLOORS]bool
+	Version int
+}
 
 type HallRequests [N_FLOORS][N_HALL]bool
 
@@ -53,21 +56,20 @@ type PeerUpdate struct {
 type NetMsg struct {
 	SenderID        ElevID
 	HallOrderMatrix HallOrderMatrix
-	CabCalls        CabCallsMap
+	CabCalls        CabCalls
 	SenderState     elevatorcontroller.ElevatorState
 }
 
 type WorldviewMsg struct {
 	HallRequests HallRequests
-	CabRequests  CabCallsMap
+	CabRequests  map[ElevID][N_FLOORS]bool
 	PeerStates   map[ElevID]elevatorcontroller.ElevatorState
 	Peers        []Peer
 }
 
 type worldviewState struct {
 	hallOrderMatrix HallOrderMatrix
-	cabRequests     CabCallsMap
-	pendingCabCalls [N_FLOORS]bool
+	cabCalls        CabCalls
 	peerList        []Peer
 	localState      elevatorcontroller.ElevatorState
 }
