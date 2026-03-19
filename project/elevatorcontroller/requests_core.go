@@ -114,9 +114,12 @@ func clearAtCurrentFloor(elevator elevator) (elevator, []Order) {
 		if elevator.requests[elevator.state.Floor][BtnHallUp] {
 			elevator.requests[elevator.state.Floor][BtnHallUp] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
+			elevator.state.Direction = DirUp
 		} else if elevator.requests[elevator.state.Floor][BtnHallDown] {
 			elevator.requests[elevator.state.Floor][BtnHallDown] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
+			elevator.state.Direction = DirDown
+
 		}
 	}
 

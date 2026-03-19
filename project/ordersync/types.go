@@ -1,8 +1,8 @@
 package ordersync
 
 import (
-	elevatorcontroller "project/elevatorcontroller"
 	config "project/config"
+	elevatorcontroller "project/elevatorcontroller"
 )
 
 const netMsgTickInterval = config.NETMSG_TICK_INTERVAL

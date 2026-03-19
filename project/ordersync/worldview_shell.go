@@ -34,10 +34,9 @@ func RunWorldview(
 			floor := buttonEvent.Floor
 			button := int(buttonEvent.Button)
 
-			switch {
-			case button == BT_CAB:
+			if button == BT_CAB {
 				state, effects = onCabButtonEvent(state, myID, floor)
-			case button < N_HALL:
+			} else {
 				state, effects = onHallButtonEvent(state, floor, button)
 			}
 			applyEffects(state, myID, effects, netTx, lightCommandChan)

@@ -1,8 +1,8 @@
 package peermonitor
 
 import (
-	"time"
 	config "project/config"
+	"time"
 )
 
 func Run(

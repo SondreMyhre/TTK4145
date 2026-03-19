@@ -15,7 +15,6 @@ type PeerStatus = ordersync.PeerStatus
 type PeerUpdate = ordersync.PeerUpdate
 type PeerMsg = []PeerUpdate
 
-
 type HeartBeat struct {
 	SenderID ElevID
 }

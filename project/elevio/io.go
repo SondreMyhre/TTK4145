@@ -3,13 +3,13 @@ package elevio
 import (
 	"fmt"
 	"net"
+	config "project/config"
 	"sync"
 	"time"
-	config "project/config"
 )
 
 const (
-	pollRate = config.POLL_RATE
+	pollRate  = config.POLL_RATE
 	numFloors = config.N_FLOORS
 )
 
