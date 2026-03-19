@@ -54,7 +54,7 @@ Runs the local elevator's state machine and handles local request execution.
 ---
 
 ### 3. **OrderSync** - Distributed Order Coordination
-Manages distributed consensus on all elevator orders and computes assigned requests with the Hall Request Assigner (HRA) script created by [klasbo](https://github.com/klasbo). OrderSync is split into two independent submodules: Worldview and Assigner. This separation ensures that state consensus is kept distinct from assignment decisions.
+Manages distributed consensus on all elevator orders and computes assigned requests with the Hall Request Assigner (HRA) algorithm. OrderSync is split into two independent submodules: Worldview and Assigner. This separation ensures that state consensus is kept distinct from assignment decisions.
 
 #### 3.1 **Worldview** - Distributed State Consensus
 Maintains the global hall order matrix and state synchronization across all elevators.
@@ -69,29 +69,27 @@ Maintains the global hall order matrix and state synchronization across all elev
 **Inputs (receive-only channels):**
 - `buttonChan` - Local button press events (from ElevIO): floor and button type
 - `localStateChan` - Current state of this elevator (from ElevatorController): floor, direction, behavior
-- `clearedOrdersChan` - Orders this elevator just completed (from ElevatorController): list of floors cleared
+- `clearedOrdersChan` - Orders this elevator just completed (from ElevatorController): list of orders cleared
 - `netRx` - Network messages from peer elevators (from Networking): HallOrderMatrix, CabCalls, ElevatorState
 - `peerEventChan` - Peer alive/dead events (from PeerMonitor): peer ID and status
 
 **Outputs (send-only channels):**
-- `netTx` - Broadcast state to all peers (to Networking): HallOrderMatrix, CabCalls, this elevator's state
-- `lightCommandChan` - Hall lamp control commands (to ElevIO): which hall buttons to illuminate
+- `netTx` - Broadcast state to all peers (to Networking): HallOrderMatrix, CabCalls, this elevator's ElevatorState
+- `lightCommandChan` - Button lamp control commands (to ElevIO): which buttons to illuminate
 - `worldviewChan` - Current global state snapshot (to RunAssigner): HallRequests, CabRequests, PeerStates
 
 #### 3.2 **Assigner** - HRA Order Assignment Algorithm
-Computes which orders THIS elevator should execute using deterministic HRA algorithm.
+Computes which orders THIS elevator should serve using the HRA algorithm.
 
 **Responsibility:**
 - Receives the current global state from Worldview
 - Runs the HRA algorithm to compute optimal order assignments
-- Only sends new assignments when they change from previous state
-- Minimizes communication overhead by filtering duplicate assignments
 
 **Inputs (receive-only channels):**
-- `worldviewChan` - Current global state snapshot (from RunWorldview): hall requests, cab requests, peer states
+- `worldviewChan` - Current global state snapshot (from Worldview): hall requests, cab requests, peer states
 
 **Outputs (send-only channels):**
-- `assignedRequestsChan` - New orders for this elevator (to ElevatorController): which floors to serve
+- `assignedRequestsChan` - New orders for this elevator (to ElevatorController): RequestMatrix
 
 ---
 
@@ -102,18 +100,14 @@ Tracks availability of peer elevator nodes.
 - Monitors heartbeat messages from other peers
 - Detects dead peers via timeout
 - Notifies OrderSync when peers become unavailable
-- Sends heartbeats that include this elevator's peerID
+- Sends heartbeats periodically
 
 **Inputs (receive-only channels):**
 - `peerMonitorRx` - Heartbeat messages from other elevators (from Network)
 
 **Outputs (send-only channels):**
-- `peerEventChan` - Peer status changes: alive or dead (to OrderSync)
+- `peerEventChan` - List of peers with status of alive or dead (to OrderSync)
 - `peerMonitorTx` - This elevator's heartbeat (to Network)
-
-**Failure Detection Logic:**
-- Missing heartbeat for `PEER_TIMEOUT` → Mark peer as dead
-- Resuming heartbeats → Mark peer as alive again
 
 ---
 
@@ -124,43 +118,33 @@ Handles all network communication between peers.
 - Sends broadcast UDP messages on `BROADCAST_ADDRESS`
 - Receives UDP messages and routes to correct modules
 - Encodes/decodes network messages
-- Contains NO domain logic (no assignments, no scheduling)
 
 **Inputs (receive-only channels):**
-- `orderSyncTx` - Order state updates to broadcast (from OrderSync)
+- `orderSyncTx` - Net message to broadcast (from OrderSync)
 - `peerMonitorTx` - Heartbeat messages to broadcast (from PeerMonitor)
 
 **Outputs (send-only channels):**
-- `orderSyncRx` - Order state from peer elevators (to OrderSync)
+- `orderSyncRx` - Net messages from peer elevators (to OrderSync)
 - `peerMonitorRx` - Heartbeat messages from peer elevators (to PeerMonitor)
-
-**Data Flow:**
-- OrderSync sends via `orderSyncTx` → UDP broadcast to all peers
-- PeerMonitor sends via `peerMonitorTx` → UDP broadcast to all peers
-- All incoming UDP messages → Routed to both `orderSyncRx` and `peerMonitorRx`
-
-**Key Design:**
-- Pure transport layer: just encode/decode and broadcast
-- Broadcast-only: no directed messages, all peers receive same messages
-- No caching or message ordering: domain modules handle that
-- Resilient to message loss: periodic rebroadcast by OrderSync and PeerMonitor
----
 
 ## Configuration
 
-All parameters in `config/config.go`:
+All parameters in [config/config.go](config/config.go):
 - `N_FLOORS`: Number of floors in the building
-- `BROADCAST_PORT`: UDP port for peer communication
-- `BROADCAST_ADDRESS`: UDP broadcast address
+- `BROADCAST_PORT`: UDP port for peer communication 
+- `BROADCAST_ADDRESS`: UDP broadcast address 
+- `POLL_RATE`: How often to poll hardware sensors 
+- `MOTORTIMEOUT`: How long before declaring motor stuck 
 - `PEER_TIMEOUT`: How long to wait before declaring peer dead
-- `MOTOR_TIMEOUT`: How long before declaring motor stuck
-- ...
+- `PEER_TICK_INTERVAL`: How often to send peer monitor heartbeats 
+- `HEARTBEAT_TICK_INTERVAL`: How often to include heartbeat in network messages
+- `NETMSG_TICK_INTERVAL`: How often to broadcast order state updates
 
 Run multiple elevators:
 ```bash
-./SimElevatorServer --port 15657 &
-./SimElevatorServer --port 15658 &
+./SimElevatorServer --port 15657 
+./SimElevatorServer --port 15658 
 
-go run main.go -peerID 1 -serverAddr localhost:15657 &
-go run main.go -peerID 2 -serverAddr localhost:15658 &
+go run main.go -peerID 1 -serverAddr localhost:15657 
+go run main.go -peerID 2 -serverAddr localhost:15658 
 ```
