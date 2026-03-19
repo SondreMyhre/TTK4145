@@ -131,13 +131,28 @@ Handles all network communication between peers.
 
 **Responsibility:**
 - Sends broadcast UDP messages on `BROADCAST_ADDRESS`
-- Receives UDP messages and routes to correct module
+- Receives UDP messages and routes to correct modules
 - Encodes/decodes network messages
+- Contains NO domain logic (no assignments, no scheduling)
+
+**Inputs (receive-only channels):**
+- `orderSyncTx` - Order state updates to broadcast (from OrderSync)
+- `peerMonitorTx` - Heartbeat messages to broadcast (from PeerMonitor)
+
+**Outputs (send-only channels):**
+- `orderSyncRx` - Order state from peer elevators (to OrderSync)
+- `peerMonitorRx` - Heartbeat messages from peer elevators (to PeerMonitor)
 
 **Data Flow:**
-- OrderSync sends via `orderSyncTx` → Broadcast to all peers
-- PeerMonitor sends via `peerMonitorTx` → Broadcast to all peers
-- All incoming messages → Route to `orderSyncRx` and `peerMonitorRx`
+- OrderSync sends via `orderSyncTx` → UDP broadcast to all peers
+- PeerMonitor sends via `peerMonitorTx` → UDP broadcast to all peers
+- All incoming UDP messages → Routed to both `orderSyncRx` and `peerMonitorRx`
+
+**Key Design:**
+- Pure transport layer: just encode/decode and broadcast
+- Broadcast-only: no directed messages, all peers receive same messages
+- No caching or message ordering: domain modules handle that
+- Resilient to message loss: periodic rebroadcast by OrderSync and PeerMonitor
 ---
 
 ## Configuration
