@@ -96,9 +96,7 @@ func clearAtCurrentFloor(elevator elevator) (elevator, []Order) {
 		if elevator.requests[elevator.state.Floor][BtnHallUp] {
 			elevator.requests[elevator.state.Floor][BtnHallUp] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
-		}
-
-		if !requestsAbove(elevator) && !elevator.requests[elevator.state.Floor][BtnHallUp] && elevator.requests[elevator.state.Floor][BtnHallDown] {
+		} else if !requestsAbove(elevator) && elevator.state.Behaviour != BehaviourDoorOpen && elevator.requests[elevator.state.Floor][BtnHallDown] {
 			elevator.requests[elevator.state.Floor][BtnHallDown] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
 		}
@@ -107,9 +105,7 @@ func clearAtCurrentFloor(elevator elevator) (elevator, []Order) {
 		if elevator.requests[elevator.state.Floor][BtnHallDown] {
 			elevator.requests[elevator.state.Floor][BtnHallDown] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
-		}
-
-		if !requestsBelow(elevator) && !elevator.requests[elevator.state.Floor][BtnHallDown] && elevator.requests[elevator.state.Floor][BtnHallUp] {
+		} else if !requestsBelow(elevator) && elevator.state.Behaviour != BehaviourDoorOpen && elevator.requests[elevator.state.Floor][BtnHallUp] {
 			elevator.requests[elevator.state.Floor][BtnHallUp] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
 		}
@@ -118,9 +114,7 @@ func clearAtCurrentFloor(elevator elevator) (elevator, []Order) {
 		if elevator.requests[elevator.state.Floor][BtnHallUp] {
 			elevator.requests[elevator.state.Floor][BtnHallUp] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
-		}
-
-		if elevator.requests[elevator.state.Floor][BtnHallDown] {
+		} else if elevator.requests[elevator.state.Floor][BtnHallDown] {
 			elevator.requests[elevator.state.Floor][BtnHallDown] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
 		}
