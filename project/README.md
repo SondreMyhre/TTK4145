@@ -1,10 +1,10 @@
 # TTK4145 Distributed Elevator Control System
 
-A distributed elevator control system built in Go that implements peer-to-peer coordination for multiple elevators.
+This project presents a distributed elevator control system, managing multiple elevators, built in Go and was part of the TTK4145 elevator lab assignment.
 
 ## System Architecture
 
-This elevator system is designed as a **peer-to-peer distributed system** where each elevator node operates independently but coordinates via UDP broadcast messages. The system uses the **Hall Request Assignment (HRA) algorithm** to optimally distribute orders among elevators.
+This elevator system is designed as a **peer-to-peer distributed system** where each elevator node operates independently but coordinates via UDP broadcast messages. The system uses a **Hall Request Assignment (HRA) algorithm**, created by [klasbo](https://github.com/klasbo) to optimally distribute orders among elevators.
 
 ## System Modules
 
@@ -51,56 +51,48 @@ Runs the local elevator's state machine and handles local request execution.
 - `clearedOrdersChan` - Orders that were completed at this floor
 - `localStateChan` - Current state for broadcast to other elevators
 
-**Key Decision Logic:**
-- `shouldStop()` - Determines if elevator should stop at current floor
-- `clearAtCurrentFloor()` - Determines which orders to clear at current floor
-- `chooseDirection()` - Decides next direction when idle
-
 ---
 
 ### 3. **OrderSync** - Distributed Order Coordination
-Maintains global order state and runs order assignment algorithm.
+Manages distributed consensus on all elevator orders and computes HRA assignments. OrderSync is split into two independent submodules: Worldview and Assigner. This separation ensures that state consensus is kept distinct from assignment decisions.
+
+#### 3.1 **Worldview** - Distributed State Consensus
+Maintains the global hall order matrix and state synchronization across all elevators.
 
 **Responsibility:**
-- Maintains the global hall order matrix (which hall orders are pending)
-- Maintains cab call state (each elevator's local requests)
-- Receives hall button presses and updates global state
-- Broadcasts state changes to all peers (via networking-module)
-- Receives state updates from other elevators
-- Detects when peers become unavailable (via PeerMonitor)
-- Controls hall lamps (lights in hallway)
-
-**State ownership:**
-- `HallOrderMatrix` - Status of all hall orders globally
-- `CabCalls` - Cab requests for all elevators
-- `PeerList` - Known elevator peers and their status
-
-**Key Submodules:**
-- `RunWorldview()` - Maintains distributed state consensus
-- `RunAssigner()` - Runs HRA algorithm to compute assignments
+- Maintains the distributed hall order matrix with version tracking
+- Merges incoming state updates from peer elevators using versions for conflict resolution
+- Tracks cab call requests from all elevators
+- Publishes the current local state to all peers periodically
+- Clears orders when peers become unavailable
+- Updates hall order lamps to reflect current system state
 
 **Inputs (receive-only channels):**
-- `buttonChan` - Local button presses (from ElevIO)
-- `localStateChan` - My elevator's current state (from ElevatorController)
-- `clearedOrdersChan` - Orders I just completed (from ElevatorController)
-- `orderSyncRx` - Order state from other elevators (from Network)
-- `peerEventChan` - Peer up/down events (from PeerMonitor)
+- `buttonChan` - Local button press events (from ElevIO): floor and button type
+- `localStateChan` - Current state of this elevator (from ElevatorController): floor, direction, behavior
+- `clearedOrdersChan` - Orders this elevator just completed (from ElevatorController): list of floors cleared
+- `netRx` - Network messages from peer elevators (from Networking): HallOrderMatrix, CabCalls, ElevatorState
+- `peerEventChan` - Peer alive/dead events (from PeerMonitor): peer ID and status
 
 **Outputs (send-only channels):**
-- `assignedRequestsChan` - Orders assigned to this elevator (to ElevatorController)
-- `orderSyncTx` - Broadcast of my state (to Network)
-- `driverCommandChan` - Hall lamp commands (to ElevIO)
+- `netTx` - Broadcast state to all peers (to Networking): HallOrderMatrix, CabCalls, this elevator's state
+- `lightCommandChan` - Hall lamp control commands (to ElevIO): which hall buttons to illuminate
+- `worldviewChan` - Current global state snapshot (to RunAssigner): HallRequests, CabRequests, PeerStates
 
-**Information Flow Example - Button Press:**
-```
-User presses button → ElevIO detects → buttonChan → OrderSync receives
-  → HallOrderMatrix updated → Broadcast via orderSyncTx
-  → Network sends to all peers → Other elevators' OrderSync receives
-  → All run HRA algorithm independently → Same assignment computed
-  → My elevator receives assignedRequestsChan → ElevatorController schedules
-  → ElevatorController arrives at floor → clearedOrdersChan
-  → OrderSync notifies other peers
-```
+#### 3.2 **Assigner** - HRA Order Assignment Algorithm
+Computes which orders THIS elevator should execute using deterministic HRA algorithm.
+
+**Responsibility:**
+- Receives the current global state from Worldview
+- Runs the HRA algorithm to compute optimal order assignments
+- Only sends new assignments when they change from previous state
+- Minimizes communication overhead by filtering duplicate assignments
+
+**Inputs (receive-only channels):**
+- `worldviewChan` - Current global state snapshot (from RunWorldview): hall requests, cab requests, peer states
+
+**Outputs (send-only channels):**
+- `assignedRequestsChan` - New orders for this elevator (to ElevatorController): which floors to serve
 
 ---
 
