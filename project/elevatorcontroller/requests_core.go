@@ -1,7 +1,6 @@
 package elevatorcontroller
 
-import (
-)
+import "fmt"
 
 func requestsAbove(elevator elevator) bool {
 	for floor := elevator.state.Floor + 1; floor < N_FLOORS; floor++ {
@@ -87,6 +86,7 @@ func shouldStop(elevator elevator) bool {
 }
 
 func clearAtCurrentFloor(elevator elevator) (elevator, []Order) {
+	fmt.Printf("requests: %v\n", elevator.requests)
 	var clearedOrders []Order
 
 	if elevator.requests[elevator.state.Floor][BtnCab] {
@@ -99,7 +99,7 @@ func clearAtCurrentFloor(elevator elevator) (elevator, []Order) {
 		if elevator.requests[elevator.state.Floor][BtnHallUp] {
 			elevator.requests[elevator.state.Floor][BtnHallUp] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
-		} else if !requestsAbove(elevator) && elevator.state.Behaviour != BehaviourDoorOpen && elevator.requests[elevator.state.Floor][BtnHallDown] {
+		} else if elevator.requests[elevator.state.Floor][BtnHallDown] && elevator.state.Behaviour != BehaviourDoorOpen {
 			elevator.requests[elevator.state.Floor][BtnHallDown] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
 		}
@@ -108,7 +108,7 @@ func clearAtCurrentFloor(elevator elevator) (elevator, []Order) {
 		if elevator.requests[elevator.state.Floor][BtnHallDown] {
 			elevator.requests[elevator.state.Floor][BtnHallDown] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
-		} else if !requestsBelow(elevator) && elevator.state.Behaviour != BehaviourDoorOpen && elevator.requests[elevator.state.Floor][BtnHallUp] {
+		} else if elevator.requests[elevator.state.Floor][BtnHallUp] && elevator.state.Behaviour != BehaviourDoorOpen {
 			elevator.requests[elevator.state.Floor][BtnHallUp] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
 		}
@@ -117,13 +117,19 @@ func clearAtCurrentFloor(elevator elevator) (elevator, []Order) {
 		if elevator.requests[elevator.state.Floor][BtnHallUp] {
 			elevator.requests[elevator.state.Floor][BtnHallUp] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallUp})
-		}
-
-		if elevator.requests[elevator.state.Floor][BtnHallDown] {
+		} else if elevator.requests[elevator.state.Floor][BtnHallDown] {
 			elevator.requests[elevator.state.Floor][BtnHallDown] = false
 			clearedOrders = append(clearedOrders, Order{elevator.state.Floor, BtnHallDown})
 		}
 	}
-
+	fmt.Printf("Clears in clearAtCurrentFloor %d\n", clearedOrders)
 	return elevator, clearedOrders
 }
+
+// func shouldClearImmediately(elevator elevator, floor int, button int) bool {
+// 	return elevator.state.Floor == floor &&
+// 		((elevator.state.Direction == DirUp && button == int(BtnHallUp)) ||
+// 			(elevator.state.Direction == DirDown && button == int(BtnHallDown)) ||
+// 			elevator.state.Direction == DirStop ||
+// 			button == int(BtnCab))
+// }

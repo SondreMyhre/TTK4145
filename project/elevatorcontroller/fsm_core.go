@@ -1,5 +1,6 @@
 package elevatorcontroller
 
+
 func onInitBetweenFloors(elevator elevator) (elevator, []effect) {
 	var effects []effect
 	elevator.state.Direction = DirDown
@@ -17,10 +18,10 @@ func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator,
 	case BehaviourDoorOpen:
 		if shouldStop(elevator) {
 			var cleared []Order
-			effects = append(effects, effect{kind: resetDoorTimer})
 			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
 				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
+				effects = append(effects, effect{kind: resetDoorTimer})
 			}
 		}
 		return elevator, effects
@@ -35,10 +36,10 @@ func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator,
 		case BehaviourDoorOpen:
 			var cleared []Order
 			effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
-			effects = append(effects, effect{kind: resetDoorTimer})
 			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
 				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
+				effects = append(effects, effect{kind: resetDoorTimer})
 			}
 		case BehaviourMoving:
 			effects = append(effects, effect{kind: setMotorDirection, value: elevator.state.Direction})
@@ -71,10 +72,9 @@ func onFloorArrival(elevator elevator, newFloor int) (elevator, []effect) {
 		elevator, cleared = clearAtCurrentFloor(elevator)
 		if len(cleared) > 0 {
 			effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
+			effects = append(effects, effect{kind: resetDoorTimer})
+			elevator.state.Behaviour = BehaviourDoorOpen
 		}
-		effects = append(effects, effect{kind: resetDoorTimer})
-
-		elevator.state.Behaviour = BehaviourDoorOpen
 		effects = append(effects, effect{kind: publishLocalState, value: elevator.state})
 	}
 
@@ -103,10 +103,10 @@ func onDoorTimeout(elevator elevator) (elevator, []effect) {
 		switch elevator.state.Behaviour {
 		case BehaviourDoorOpen:
 			var cleared []Order
-			effects = append(effects, effect{kind: resetDoorTimer})
 			elevator, cleared = clearAtCurrentFloor(elevator)
 			if len(cleared) > 0 {
 				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
+				effects = append(effects, effect{kind: resetDoorTimer})
 			}
 		case BehaviourMoving:
 			effects = append(effects, effect{kind: setDoorOpenLamp, value: false})

@@ -1,6 +1,7 @@
 package elevatorcontroller
 
 import (
+	"fmt"
 	elevio "project/elevio"
 	"time"
 )
@@ -39,6 +40,7 @@ func Run(
 
 		case floor := <-floorChan:
 			motorTimer.Stop()
+			fmt.Printf("Floor Arrived %v\n", floor)
 			elevator, effects = onFloorArrival(elevator, floor)
 			applyEffects(effects, driverCommandChan, localStateChan, clearedOrdersChan, doorTimer, motorTimer)
 

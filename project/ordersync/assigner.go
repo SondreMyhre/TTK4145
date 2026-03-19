@@ -15,31 +15,7 @@ func RunAssigner(
 
 	
 	for worldview := range worldviewChan {
-
-		combined := elevatorcontroller.RequestMatrix{}
-		for floor := 0; floor < N_FLOORS; floor++ {
-			combined[floor][elevatorcontroller.BtnHallUp] = worldview.HallRequests[floor][elevatorcontroller.BtnHallUp]
-			combined[floor][elevatorcontroller.BtnHallDown] = worldview.HallRequests[floor][elevatorcontroller.BtnHallDown]
-			combined[floor][elevatorcontroller.BtnCab] = worldview.CabRequests[myID][floor]
-		}
-
-		hasNew := false
-		for floor := 0; floor < N_FLOORS; floor++ {
-			for button := 0; button < N_BUTTONS; button++ {
-				if combined[floor][button] && !prevAssignments[floor][button] {
-					hasNew = true
-					break
-				}
-			}
-			if hasNew {
-				break
-			}
-		}
-
-		if !hasNew {
-			continue
-		}
-
+		
 
 		hraResult, err := AssignRequests(worldview, myID)
 		if err != nil {
