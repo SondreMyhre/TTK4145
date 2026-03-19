@@ -54,7 +54,7 @@ Runs the local elevator's state machine and handles local request execution.
 ---
 
 ### 3. **OrderSync** - Distributed Order Coordination
-Manages distributed consensus on all elevator orders and computes HRA assignments. OrderSync is split into two independent submodules: Worldview and Assigner. This separation ensures that state consensus is kept distinct from assignment decisions.
+Manages distributed consensus on all elevator orders and computes assigned requests with the Hall Request Assigner (HRA) script created by [klasbo](https://github.com/klasbo). OrderSync is split into two independent submodules: Worldview and Assigner. This separation ensures that state consensus is kept distinct from assignment decisions.
 
 #### 3.1 **Worldview** - Distributed State Consensus
 Maintains the global hall order matrix and state synchronization across all elevators.
@@ -63,9 +63,8 @@ Maintains the global hall order matrix and state synchronization across all elev
 - Maintains the distributed hall order matrix with version tracking
 - Merges incoming state updates from peer elevators using versions for conflict resolution
 - Tracks cab call requests from all elevators
-- Publishes the current local state to all peers periodically
-- Clears orders when peers become unavailable
-- Updates hall order lamps to reflect current system state
+- Publishes local state changes to all peers
+- Updates button lamps to reflect current system state
 
 **Inputs (receive-only channels):**
 - `buttonChan` - Local button press events (from ElevIO): floor and button type
