@@ -1,10 +1,10 @@
 # TTK4145 Distributed Elevator Control System
 
-A distributed elevator control system built in Go that implements peer-to-peer coordination for multi-elevator environments.
+A distributed elevator control system built in Go that implements peer-to-peer coordination for multiple elevators.
 
 ## System Architecture
 
-This elevator system is designed as a **peer-to-peer distributed system** where each elevator node operates independently but coordinates via broadcast messages. The system uses the **Hall Request Assignment (HRA) algorithm** to optimally distribute orders among elevators.
+This elevator system is designed as a **peer-to-peer distributed system** where each elevator node operates independently but coordinates via UDP broadcast messages. The system uses the **Hall Request Assignment (HRA) algorithm** to optimally distribute orders among elevators.
 
 ## System Modules
 

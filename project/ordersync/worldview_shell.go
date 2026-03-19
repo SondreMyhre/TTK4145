@@ -34,7 +34,6 @@ func RunWorldview(
 			floor := buttonEvent.Floor
 			button := int(buttonEvent.Button)
 
-			// ============== Mer oversiktlig med en if-else her???? ==============
 			switch {
 			case button == BT_CAB:
 				state, effects = onCabButtonEvent(state, myID, floor)
