@@ -140,7 +140,7 @@ All parameters in [config/config.go](config/config.go):
 - `HEARTBEAT_TICK_INTERVAL`: How often to include heartbeat in network messages
 - `NETMSG_TICK_INTERVAL`: How often to broadcast order state updates
 
-Run multiple elevators:
+Example of how to run multiple elevators, using the simulator from [TTK4145/Simulator-v2](https://github.com/TTK4145/Simulator-v2).
 For each elevator node run these in seperate terminals with different serverAddr and peerIDs:
 ```bash
 ./SimElevatorServer --port 15657 
