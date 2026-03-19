@@ -94,3 +94,10 @@ When Worldview sends on worldviewChan to Assigner, it's sending a complete snaps
 - `driverCommandChan chan<- DriverCommand` (to ElevIO)
   - Hall lamp commands (light/unlight buttons)
   - Indicates which orders are pending
+
+---
+
+### Configuration
+
+From `config/config.go`:
+- `NETMSG_TICK_INTERVAL`: How often OrderSync broadcasts (e.g., 100ms)

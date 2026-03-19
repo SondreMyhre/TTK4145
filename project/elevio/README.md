@@ -1,35 +1,52 @@
-## ElevIO (Boundary)
+## ElevIO - Hardware Interface
 
-### Responsibility
-- Boundary module that **owns all hardware IO** to the physical (or simulated) elevator.
-- Produces sensor events (based on physical sensors and sends them on the respected channels):
-  - button presses
-  - floor sensor
-  - stop button
-  - obstruction switch
-- Executes actuator commands (listens on driverCommandChan channel for actuator commands):
-  - motor direction
-  - door lamp
-  - button lamps
-  - floor indicator
-  - stop lamp
+### Overall Responsibility
 
-### Owns (mutable state)
-- TCP connection to elevator or simulator / driver state
-- polling goroutines (buttons/floor/stop/obstruction)
-- internal buffers required for IO
+Provides the **low-level interface to the elevator hardware**.
 
-#### Inputs
-- `driverCommandChan <-chan DriverCommand`  
-  Commands produced by LocalSingleElevator (and possibly OrderSync).
+---
 
-#### Outputs
-- `Buttons chan<- ButtonEvent`
-- `Floor chan<- int`
-- `Obstruction chan<- bool`
+### How It Works
 
-### Functional core vs Imperative shell
-- **Shell-only in practice.**
-- Optional pure helpers:
-  - mapping from `DriverCommand` to concrete `elevio.SetX(...)` calls
+ElevIO provides three main polling routines and one command executor:
 
+**Polling (continuously monitoring hardware)**:
+- `PollButtons()` - Detects when user presses buttons (hall/cab)
+- `PollFloorSensor()` - Detects when elevator passes a floor
+- `PollObstructionSwitch()` - Detects when door is obstructed
+
+**Command Execution**:
+- `RunDriver()` - Listens for commands and executes them (motor, door lamp, floor indicator)
+
+**Socket Connection**:
+- Maintains TCP connection to elevator simulator
+- Encodes/decodes command and sensor data
+
+---
+
+### Inputs (receive-only channels)
+
+- `driverCommandChan <-chan elevio.DriverCommand` (from ElevatorController)
+  - Commands to execute on hardware
+  - Types:
+    - `setMotorDirection` - Motor: up/down/stop
+    - `setDoorOpenLamp` - Door lamp: on/off
+    - `setFloorIndicator` - Floor lamp: which floor
+    - `setButtonLamp` - Hall/cab button lamp: on/off
+
+### Outputs (send-only channels)
+
+- `buttonChan chan<- elevio.ButtonEvent` (to OrderSync)
+  - User button presses (hall up/down, cab)
+  - Format: `{Floor int, Button ButtonType}`
+  - Emitted when: user presses button
+
+- `floorChan chan<- int` (to ElevatorController)
+  - Current floor of elevator
+  - Format: floor number (0 to N_FLOORS-1)
+  - Emitted when: elevator passes a floor
+
+- `obstructionChan chan<- bool` (to ElevatorController)
+  - Door obstruction status
+  - Format: true = obstructed, false = clear
+  - Emitted when: obstruction state changes
