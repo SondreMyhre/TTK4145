@@ -13,11 +13,11 @@ import (
 )
 
 func main() {
-	peerID := flag.String("peerID", "non-valid", "Unique identifier for this elevator node in the distributed system")
+	peerID := flag.String("peerID", "nonValidID", "peerID of the elevator to be created")
 	serverAddr := flag.String("serverAddr", "localhost:15657", "Address of the elevatorserver for this node")
 	flag.Parse()
-	if *peerID == "non-valid" {
-		log.Fatal("Non-valid peerID")
+	if *peerID == "nonValidID" {
+		log.Fatal("You must enter a peerID!")
 	}
 
 	elevio.Init(*serverAddr)
