@@ -41,7 +41,6 @@ func onNewRequestMatrix(elevator elevator, newRequests RequestMatrix) (elevator,
 				effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
 			}
 		case BehaviourMoving:
-			effects = append(effects, effect{kind: setDoorOpenLamp, value: false})
 			effects = append(effects, effect{kind: setMotorDirection, value: elevator.state.Direction})
 		}
 		return elevator, effects
@@ -68,12 +67,14 @@ func onFloorArrival(elevator elevator, newFloor int) (elevator, []effect) {
 	if shouldStop(elevator) {
 		var cleared []Order
 		effects = append(effects, effect{kind: setMotorDirection, value: DirStop})
-		effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
 		elevator, cleared = clearAtCurrentFloor(elevator)
 		if len(cleared) > 0 {
 			effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
+			effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
 			effects = append(effects, effect{kind: resetDoorTimer})
 			elevator.state.Behaviour = BehaviourDoorOpen
+		} else {
+			elevator.state.Behaviour = BehaviourIdle
 		}
 		
 	}
