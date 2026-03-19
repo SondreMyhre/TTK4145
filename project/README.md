@@ -1,25 +1,19 @@
 # TTK4145 Distributed Elevator Control System
 
-A highly distributed elevator control system built in Go that implements peer-to-peer coordination for multi-elevator environments.
+A distributed elevator control system built in Go that implements peer-to-peer coordination for multi-elevator environments.
 
 ## System Architecture
 
 This elevator system is designed as a **peer-to-peer distributed system** where each elevator node operates independently but coordinates via broadcast messages. The system uses the **Hall Request Assignment (HRA) algorithm** to optimally distribute orders among elevators.
 
-### Design Pattern: Peer-to-Peer Coordination
-- **No central authority**: Each node runs the same algorithm and makes independent decisions
-- **Consensus-based**: Order assignment is deterministic and the same on all nodes
-- **Fault-tolerant**: System continues if peers fail; others detect via timeouts
-
 ## System Modules
 
 ### 1. **ElevIO** - Hardware Interface
-Provides the low-level interface to the elevator simulator hardware.
+Provides the low-level interface to the elevator hardware.
 
 **Responsibility:**
 - Polls hardware sensors (floor sensor, buttons, obstruction switch)
 - Executes motor commands and lamp controls
-- No business logic; purely a wrapper around hardware
 
 **Inputs (receive-only channels):**
 - `driverCommandChan` - Commands to motor, door, and floor indicator
@@ -71,10 +65,9 @@ Maintains global order state and runs order assignment algorithm.
 - Maintains the global hall order matrix (which hall orders are pending)
 - Maintains cab call state (each elevator's local requests)
 - Receives hall button presses and updates global state
-- Broadcasts state changes to all peers via UDP
+- Broadcasts state changes to all peers (via networking-module)
 - Receives state updates from other elevators
 - Detects when peers become unavailable (via PeerMonitor)
-- Triggers order reassignment when topology changes
 - Controls hall lamps (lights in hallway)
 
 **State ownership:**
@@ -116,9 +109,9 @@ Tracks availability of peer elevator nodes.
 
 **Responsibility:**
 - Monitors heartbeat messages from other peers
-- Detects peer failures via timeout
+- Detects dead peers via timeout
 - Notifies OrderSync when peers become unavailable
-- Sends heartbeats that include this elevator's state
+- Sends heartbeats that include this elevator's peerID
 
 **Inputs (receive-only channels):**
 - `peerMonitorRx` - Heartbeat messages from other elevators (from Network)
@@ -133,65 +126,20 @@ Tracks availability of peer elevator nodes.
 
 ---
 
-### 5. **Networking** - UDP Broadcast Transport
+### 5. **Networking** - UDP Broadcast
 Handles all network communication between peers.
 
 **Responsibility:**
 - Sends broadcast UDP messages on `BROADCAST_ADDRESS`
 - Receives UDP messages and routes to correct module
 - Encodes/decodes network messages
-- Has NO business logic (no assignments, no scheduling)
 
 **Data Flow:**
 - OrderSync sends via `orderSyncTx` → Broadcast to all peers
 - PeerMonitor sends via `peerMonitorTx` → Broadcast to all peers
 - All incoming messages → Route to `orderSyncRx` and `peerMonitorRx`
 
-**Key Design Decisions:**
-- Broadcast addresses all nodes simultaneously
-- Messages can be lost; modules handle retransmission via timers
-- No reliability layer; ordered delivery not guaranteed
-
 ---
-
-## System Startup and Dependencies
-
-The modules must be initialized in this order (see `main.go`):
-
-1. **Hardware Polling** - Start sensor polling routines immediately
-2. **Network Transport** - Must be ready before other modules try to broadcast
-3. **PeerMonitor** - Listens to network for heartbeats
-4. **OrderSync/Worldview** - Maintains distributed state
-5. **OrderSync/Assigner** - Receives worldview and computes assignments
-6. **ElevatorController** - Listens for assignments and controls hardware
-7. **Driver** - Executes commands
-
-This order ensures that when a module tries to send/receive, the channel it depends on is ready.
-
----
-
-## Information Flow During Operation
-
-### Scenario: User presses hall button at floor 3
-```
-F(t=0):    elevio.PollButtons() detects button
-F(t=1):    buttonChan receives event
-F(t=2):    ordersync.RunWorldview() processes it
-F(t=3):    HallOrderMatrix[3][UP] = true
-F(t=4):    orderSyncTx sends state to network
-F(t=5):    networking.Run() broadcasts to all peers
-F(t=6):    Other elevators receive on orderSyncRx
-F(t=7):    ordersync.RunAssigner() runs HRA algorithm
-F(t=8):    assignedRequestsChan updated with my assignments
-F(t=9):    elevatorcontroller.Run() changes its motor/behavior
-F(t=10):   Elevator starts moving toward floor 3
-...
-F(t=N):    elevatorcontroller arrives at floor 3
-F(t=N+1): clearAtCurrentFloor() removes order from my request matrix
-F(t=N+2): clearedOrdersChan notifies ordersync
-F(t=N+3): ordersync broadcasts cleared order
-F(t=N+4): All peers remove order from their HallOrderMatrix
-```
 
 **Key Property**: All peers independently compute the exact same assignments because:
 - All peers receive the same world state (HallOrderMatrix + PeerStates)
@@ -208,6 +156,7 @@ All parameters in `config/config.go`:
 - `BROADCAST_ADDRESS`: UDP broadcast address
 - `PEER_TIMEOUT`: How long to wait before declaring peer dead
 - `MOTOR_TIMEOUT`: How long before declaring motor stuck
+- ...
 
 Run multiple elevators:
 ```bash
@@ -217,27 +166,3 @@ Run multiple elevators:
 go run main.go -peerID 1 -serverAddr localhost:15657 &
 go run main.go -peerID 2 -serverAddr localhost:15658 &
 ```
-
----
-
-## Key Design Decisions
-
-1. **Consensus-based assignment**: Every node independently computes the same assignments
-   - No central bottleneck
-   - Works if network partitions occur
-   - Robust to message loss
-
-2. **Separate assignment from execution**: OrderSync computes, ElevatorController executes
-   - Clean separation of concerns
-   - Controller only knows about its assigned orders
-   - Easy to test each component independently
-
-3. **Peer-to-peer with broadcast**: No master/slave relationship
-   - Symmetric - any elevator can serve any order
-   - Resilient - doesn't fail if one elevator dies
-   - Scales to many elevators
-
-4. **Lean network protocol**: Only essential state is broadcast
-   - Reduce bandwidth and latency
-   - Easier to detect message loss
-   - Less computation at each node
