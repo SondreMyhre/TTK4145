@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	config "project/config"
 	elevatorcontroller "project/elevatorcontroller"
 	elevio "project/elevio"
@@ -14,12 +13,8 @@ import (
 
 func main() {
 	peerID := flag.String("peerID", "0", "Unique identifier for this elevator node in the distributed system")
-	serverAddr := flag.String("serverAddr", "localhost:15657", "Address of the elevator simulator server for this node")
+	serverAddr := flag.String("serverAddr", "localhost:15657", "Address of the elevatorserver for this node")
 	flag.Parse()
-
-	if *peerID == "0" {
-		log.Fatal("Not valid peerID.")
-	}
 
 	elevio.Init(*serverAddr)
 
