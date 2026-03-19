@@ -30,10 +30,10 @@ func Run(
 			}
 
 		case <-peerTicker.C:
-			var timeoutChanged bool
+			var isChanged bool
 			now := time.Now()
-			peerList, timeoutChanged = CheckTimeouts(peerList, now, config.PEER_TIMEOUT)
-			if timeoutChanged {
+			peerList, isChanged = CheckTimeouts(peerList, now, config.PEER_TIMEOUT)
+			if isChanged {
 				peerEventChan <- ToPeerUpdate(peerList)
 			}
 
