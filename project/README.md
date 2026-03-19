@@ -138,14 +138,6 @@ Handles all network communication between peers.
 - OrderSync sends via `orderSyncTx` → Broadcast to all peers
 - PeerMonitor sends via `peerMonitorTx` → Broadcast to all peers
 - All incoming messages → Route to `orderSyncRx` and `peerMonitorRx`
-
----
-
-**Key Property**: All peers independently compute the exact same assignments because:
-- All peers receive the same world state (HallOrderMatrix + PeerStates)
-- HRA algorithm is deterministic
-- No central coordinator needed
-
 ---
 
 ## Configuration
