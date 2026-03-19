@@ -1,4 +1,5 @@
 package conn
+// NOTE: This is handout-code
 
 import (
 	"context"

@@ -26,8 +26,8 @@ func main() {
 	driverCommandChan := make(chan elevio.DriverCommand, 10)
 
 	// Networking
-	orderSyncTx := make(chan ordersync.NetMsg, 1)
-	orderSyncRx := make(chan ordersync.NetMsg, 2)
+	worldViewTx := make(chan ordersync.NetMsg, 1)
+	worldviewRx := make(chan ordersync.NetMsg, 2)
 	peerMonitorTx := make(chan peermonitor.HeartBeat, 1)
 	peerMonitorRx := make(chan peermonitor.HeartBeat, 2)
 
@@ -45,9 +45,9 @@ func main() {
 
 	// ---- Initialize elevator node  ----
 	go elevio.RunDriver(driverCommandChan)
-	go networking.Run(orderSyncTx, peerMonitorTx, orderSyncRx, peerMonitorRx)
+	go networking.Run(worldViewTx, peerMonitorTx, worldviewRx, peerMonitorRx)
 	go peermonitor.Run(*peerID, peerMonitorRx, peerEventChan, peerMonitorTx)
-	go ordersync.RunWorldview(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
+	go ordersync.RunWorldview(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, worldviewRx, peerEventChan, worldViewTx, driverCommandChan, worldviewChan)
 	go ordersync.RunAssigner(ordersync.ElevID(*peerID), worldviewChan, assignedRequestsChan)
 	go elevatorcontroller.Run(assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 

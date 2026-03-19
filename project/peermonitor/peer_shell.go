@@ -2,6 +2,7 @@ package peermonitor
 
 import (
 	"time"
+	config "project/config"
 )
 
 func Run(
@@ -9,36 +10,36 @@ func Run(
 
 	heartBeatRx <-chan HeartBeat,
 
-	ordersyncTx chan<- PeerMsg,
+	peerEventChan chan<- PeerMsg,
 	heartBeatTx chan<- HeartBeat,
-) error {
-	peerTicker := time.NewTicker(PEER_TICK_INTERVAL)
-	heartBeatTicker := time.NewTicker(HEARTBEAT_TICK_INTERVAL)
+) {
+	peerTicker := time.NewTicker(config.PEER_TICK_INTERVAL)
+	heartBeatTicker := time.NewTicker(config.HEARTBEAT_TICK_INTERVAL)
 	defer peerTicker.Stop()
 	defer heartBeatTicker.Stop()
 	peerList := make([]Peer, 0)
 
 	for {
 		select {
-		case msg := <-heartBeatRx:
-			var changed bool
+		case incomingHeartBeat := <-heartBeatRx:
+			var isChanged bool
 			now := time.Now()
-			peerList, changed = HandleHeartbeats(peerList, msg, now)
-			if changed {
-				ordersyncTx <- ToPeerUpdate(peerList)
+			peerList, isChanged = HandleHeartbeats(peerList, incomingHeartBeat, now)
+			if isChanged {
+				peerEventChan <- ToPeerUpdate(peerList)
 			}
 
 		case <-peerTicker.C:
 			var timeoutChanged bool
 			now := time.Now()
-			peerList, timeoutChanged = CheckTimeouts(peerList, now, PEER_TIMEOUT)
+			peerList, timeoutChanged = CheckTimeouts(peerList, now, config.PEER_TIMEOUT)
 			if timeoutChanged {
-				ordersyncTx <- ToPeerUpdate(peerList)
+				peerEventChan <- ToPeerUpdate(peerList)
 			}
 
 		case <-heartBeatTicker.C:
-			heartBeat := HeartBeat{SenderID: ElevID(peerID)}
-			heartBeatTx <- heartBeat
+			outgoingHeartBeat := HeartBeat{SenderID: ElevID(peerID)}
+			heartBeatTx <- outgoingHeartBeat
 		}
 	}
 }

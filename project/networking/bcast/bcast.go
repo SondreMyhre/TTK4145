@@ -1,4 +1,5 @@
 package bcast
+// NOTE: This is handout-code
 
 import (
 	"encoding/json"

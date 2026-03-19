@@ -9,15 +9,15 @@ import (
 )
 
 func Run(
-	ordersyncTx <-chan ordersync.NetMsg,
+	worldViewTx <-chan ordersync.NetMsg,
 	peermonitorTx <-chan peermonitor.HeartBeat,
 
-	ordersyncRx chan<- ordersync.NetMsg,
+	worldViewRx chan<- ordersync.NetMsg,
 	peermonitorRx chan<- peermonitor.HeartBeat,
 ) {
 	broadcastSocket := fmt.Sprintf("%s:%d", config.BROADCAST_ADDRESS, config.BROADCAST_PORT)
-	go bcast.Transmitter(broadcastSocket, config.BROADCAST_PORT, ordersyncTx, peermonitorTx)
-	go bcast.Receiver(config.BROADCAST_PORT, ordersyncRx, peermonitorRx)
+	go bcast.Transmitter(broadcastSocket, config.BROADCAST_PORT, worldViewTx, peermonitorTx)
+	go bcast.Receiver(config.BROADCAST_PORT, worldViewRx, peermonitorRx)
 
 	select {}
 }
