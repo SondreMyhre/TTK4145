@@ -1,7 +1,5 @@
-//go:build linux
-// +build linux
-
 package conn
+// NOTE: This is handout-code
 
 import (
 	"fmt"

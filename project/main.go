@@ -13,12 +13,11 @@ import (
 )
 
 func main() {
-	peerID := flag.String("peerID", "0", "peerID of the elevator to be created")
-	serverAddr := flag.String("serverAddr", "localhost:15657", "address for the elevatorserver")
+	peerID := flag.String("peerID", "nonValidID", "peerID of the elevator to be created")
+	serverAddr := flag.String("serverAddr", "localhost:15657", "Address of the elevatorserver for this node")
 	flag.Parse()
-
-	if *peerID == "0" {
-		log.Fatal("Not valid peerID.")
+	if *peerID == "nonValidID" {
+		log.Fatal("You must enter a peerID!")
 	}
 
 	elevio.Init(*serverAddr)
@@ -31,8 +30,8 @@ func main() {
 	driverCommandChan := make(chan elevio.DriverCommand, 10)
 
 	// Networking
-	orderSyncTx := make(chan ordersync.NetMsg, 1)
-	orderSyncRx := make(chan ordersync.NetMsg, 2)
+	worldViewTx := make(chan ordersync.NetMsg, 1)
+	worldviewRx := make(chan ordersync.NetMsg, 2)
 	peerMonitorTx := make(chan peermonitor.HeartBeat, 1)
 	peerMonitorRx := make(chan peermonitor.HeartBeat, 2)
 
@@ -48,15 +47,15 @@ func main() {
 	go elevio.PollFloorSensor(floorChan)
 	go elevio.PollObstructionSwitch(obstructionChan)
 
-	// ---- Initialize supervised elevator node  ----
+	// ---- Initialize elevator node  ----
 	go elevio.RunDriver(driverCommandChan)
-	go networking.Run(orderSyncTx, peerMonitorTx, orderSyncRx, peerMonitorRx)
+	go networking.Run(worldViewTx, peerMonitorTx, worldviewRx, peerMonitorRx)
 	go peermonitor.Run(*peerID, peerMonitorRx, peerEventChan, peerMonitorTx)
-	go ordersync.RunWorldview(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, orderSyncRx, peerEventChan, orderSyncTx, driverCommandChan, worldviewChan)
+	go ordersync.RunWorldview(ordersync.ElevID(*peerID), buttonChan, localStateChan, clearedOrdersChan, worldviewRx, peerEventChan, worldViewTx, driverCommandChan, worldviewChan)
 	go ordersync.RunAssigner(ordersync.ElevID(*peerID), worldviewChan, assignedRequestsChan)
 	go elevatorcontroller.Run(assignedRequestsChan, floorChan, obstructionChan, driverCommandChan, clearedOrdersChan, localStateChan)
 
-	// Print configuration
+	// ---- Print configuration ----
 	fmt.Println("\n" + "=== Elevator System Started ===")
 	fmt.Println("Elevator ID:              " + *peerID)
 	fmt.Println("Server Address:           " + *serverAddr)
