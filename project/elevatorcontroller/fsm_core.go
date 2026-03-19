@@ -58,7 +58,6 @@ func onFloorArrival(elevator elevator, newFloor int) (elevator, []effect) {
 
 	var effects []effect
 	effects = append(effects, effect{kind: setFloorIndicator, value: elevator.state.Floor})
-	effects = append(effects, effect{kind: publishLocalState, value: elevator.state})
 
 	if elevator.state.Behaviour != BehaviourMoving {
 		return elevator, effects
@@ -67,15 +66,16 @@ func onFloorArrival(elevator elevator, newFloor int) (elevator, []effect) {
 	if shouldStop(elevator) {
 		var cleared []Order
 		effects = append(effects, effect{kind: setMotorDirection, value: DirStop})
+		effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
 		elevator, cleared = clearAtCurrentFloor(elevator)
 		if len(cleared) > 0 {
 			effects = append(effects, effect{kind: publishClearedOrders, value: cleared})
-			effects = append(effects, effect{kind: setDoorOpenLamp, value: true})
-			effects = append(effects, effect{kind: resetDoorTimer})
-			elevator.state.Behaviour = BehaviourDoorOpen
-		} else {
-			elevator.state.Behaviour = BehaviourIdle
 		}
+		effects = append(effects, effect{kind: resetDoorTimer})
+		
+		
+		elevator.state.Behaviour = BehaviourDoorOpen
+		effects = append(effects, effect{kind: publishLocalState, value: elevator.state})
 
 	}
 
