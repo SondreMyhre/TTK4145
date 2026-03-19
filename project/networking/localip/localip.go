@@ -1,4 +1,5 @@
 package localip
+
 // NOTE: This is handout-code
 
 import (

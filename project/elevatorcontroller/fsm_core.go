@@ -76,9 +76,9 @@ func onFloorArrival(elevator elevator, newFloor int) (elevator, []effect) {
 		} else {
 			elevator.state.Behaviour = BehaviourIdle
 		}
-		
+
 	}
-	
+
 	return elevator, effects
 }
 
